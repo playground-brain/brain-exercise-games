@@ -1,0 +1,1256 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Day 3 어제 일 회상 게임</title>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
+    />
+    <style>
+      :root {
+        --bg: #fdf6ec;
+        --bg-soft: #fbeed9;
+        --card: #fffdf8;
+        --ink: #3a2a1c;
+        --ink-soft: #6f5a44;
+        --line: #ecd9bd;
+        --accent: #d95d0f;
+        --accent-strong: #b84a08;
+        --accent-soft: #fdeeda;
+        --good: #2e7d46;
+        --good-soft: #e4f4e8;
+        --bad: #b3402a;
+        --bad-soft: #fbe9e3;
+        --key: #fff7ea;
+        --key-line: #e6cfa8;
+        --shadow: 0 10px 30px rgba(146, 90, 32, 0.14);
+        color-scheme: light;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #221812;
+          --bg-soft: #2c1f16;
+          --card: #2f2118;
+          --ink: #f7ead9;
+          --ink-soft: #cdb59c;
+          --line: #4d3826;
+          --accent: #f08a3c;
+          --accent-strong: #ffb066;
+          --accent-soft: #453022;
+          --good: #7fd79b;
+          --good-soft: #22392a;
+          --bad: #ff9d87;
+          --bad-soft: #40261f;
+          --key: #3a2a1e;
+          --key-line: #57402a;
+          --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+          color-scheme: dark;
+        }
+      }
+      * { box-sizing: border-box; }
+      html { -webkit-text-size-adjust: 100%; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "Pretendard Variable", Pretendard, -apple-system, "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+        font-size: 20px;
+        line-height: 1.6;
+      }
+      .wrap { max-width: 760px; margin: 0 auto; padding: 28px 18px 64px; }
+
+      /* ---------- 언어 선택 ---------- */
+      .lang-switch {
+        display: flex; flex-wrap: wrap; gap: 10px;
+        margin-bottom: 22px;
+      }
+      .lang-btn {
+        flex: 1 1 0; min-width: 100px; min-height: 56px;
+        padding: 10px 14px;
+        font-family: inherit; font-size: 20px; font-weight: 800;
+        color: var(--ink-soft);
+        background: var(--key); border: 2px solid var(--key-line); border-radius: 14px;
+        cursor: pointer;
+      }
+      .lang-btn[aria-pressed="true"] {
+        background: var(--accent); border-color: var(--accent); color: #fff;
+      }
+      .lang-btn:active { background: var(--accent-soft); }
+      .lang-btn[aria-pressed="true"]:active { background: var(--accent-strong); }
+
+      /* ---------- 머리말 ---------- */
+      .day-chip {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: var(--accent-soft); color: var(--accent-strong);
+        font-weight: 800; font-size: 17px;
+        padding: 8px 16px; border-radius: 999px;
+      }
+      .day-chip .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
+      h1 {
+        font-size: clamp(34px, 7.5vw, 46px);
+        line-height: 1.25; font-weight: 900; letter-spacing: -0.02em;
+        margin: 16px 0 10px;
+      }
+      .lede { font-size: 21px; color: var(--ink-soft); margin: 0 0 6px; }
+      .today-line { font-size: 18px; color: var(--ink-soft); margin: 10px 0 0; }
+      .today-line strong { color: var(--accent-strong); }
+
+      /* ---------- 게임 판 ---------- */
+      .game-card {
+        margin-top: 26px;
+        background: var(--card);
+        border: 2px solid var(--line);
+        border-radius: 24px;
+        box-shadow: var(--shadow);
+        padding: 26px 22px 30px;
+      }
+      .game-top {
+        display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+        gap: 10px 16px; margin-bottom: 6px;
+      }
+      .round-label { font-size: 22px; font-weight: 800; }
+      .round-label .of { color: var(--ink-soft); font-weight: 600; font-size: 19px; }
+      .score-label { font-size: 19px; font-weight: 700; color: var(--ink-soft); }
+      .score-label strong { color: var(--accent-strong); font-size: 22px; }
+      .progress-dots { display: flex; gap: 8px; margin: 10px 0 4px; }
+      .progress-dots span {
+        flex: 1; height: 12px; border-radius: 999px; background: var(--bg-soft);
+        border: 1px solid var(--line);
+      }
+      .progress-dots span.done { background: var(--good); border-color: var(--good); }
+      .progress-dots span.now { background: var(--accent); border-color: var(--accent); }
+      .level-line { font-size: 19px; color: var(--ink-soft); margin: 8px 0 0; }
+      .level-line strong { color: var(--ink); }
+
+      .stage { margin-top: 18px; text-align: center; }
+      .stage-msg { font-size: 22px; font-weight: 700; margin: 0 0 6px; }
+      .stage-sub { font-size: 19px; color: var(--ink-soft); margin: 0 0 18px; }
+
+      .who-line {
+        display: inline-block;
+        font-size: 20px; font-weight: 800; color: var(--accent-strong);
+        background: var(--accent-soft); border-radius: 999px;
+        padding: 6px 18px; margin-bottom: 16px;
+      }
+
+      /* 하루 일과 목록 (외우기 화면) */
+      .day-board {
+        background: var(--bg-soft);
+        border: 2px dashed var(--line);
+        border-radius: 18px;
+        padding: 18px 16px;
+        text-align: left;
+      }
+      .day-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+      .day-list li {
+        display: flex; gap: 14px; align-items: center;
+        background: var(--card); border: 2px solid var(--line); border-radius: 14px;
+        padding: 14px 16px;
+        font-size: 21px; font-weight: 700; line-height: 1.45;
+      }
+      .order-num {
+        flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%;
+        background: var(--accent); color: #fff;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 21px; font-weight: 900;
+      }
+      .day-board.hidden-board {
+        min-height: 160px; display: flex; align-items: center; justify-content: center;
+        font-size: 30px; font-weight: 900; color: var(--ink-soft); letter-spacing: 0.08em;
+      }
+      .memorize-note { font-size: 18px; color: var(--ink-soft); margin-top: 14px; }
+
+      /* 고른 순서 표시 */
+      .chosen-box {
+        background: var(--bg-soft); border: 2px solid var(--line); border-radius: 16px;
+        padding: 14px 16px; margin-bottom: 16px; text-align: left;
+      }
+      .chosen-box .chosen-title { font-size: 18px; font-weight: 800; color: var(--ink-soft); margin: 0 0 8px; }
+      .chosen-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+      .chosen-list li {
+        display: flex; gap: 12px; align-items: center;
+        font-size: 20px; font-weight: 700; line-height: 1.45;
+      }
+      .chosen-list .order-num { width: 34px; height: 34px; font-size: 18px; background: var(--good); }
+      .chosen-empty { font-size: 19px; color: var(--ink-soft); margin: 0; }
+
+      /* 순서 고르기 버튼들 */
+      .option-list { display: grid; gap: 10px; text-align: left; }
+      .option-btn {
+        display: flex; gap: 12px; align-items: center; width: 100%;
+        min-height: 60px; padding: 14px 16px;
+        font-family: inherit; font-size: 20px; font-weight: 700; line-height: 1.45;
+        color: var(--ink); text-align: left;
+        background: var(--key); border: 2px solid var(--key-line); border-radius: 14px;
+        cursor: pointer;
+      }
+      .option-btn:active { background: var(--accent-soft); }
+      .option-btn .pick-badge {
+        flex: 0 0 auto; width: 36px; height: 36px; border-radius: 50%;
+        border: 2px dashed var(--key-line);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 18px; font-weight: 900; color: var(--ink-soft);
+      }
+      .option-btn.picked { border-color: var(--good); background: var(--good-soft); }
+      .option-btn.picked .pick-badge { background: var(--good); border-color: var(--good); color: #fff; }
+      .option-btn:disabled { cursor: default; opacity: 1; }
+
+      .btn {
+        display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        min-height: 60px; padding: 14px 30px;
+        font-family: inherit; font-size: 22px; font-weight: 800;
+        border-radius: 16px; border: 2px solid transparent; cursor: pointer;
+      }
+      .btn-primary { background: var(--accent); color: #fff; }
+      .btn-primary:active { background: var(--accent-strong); }
+      .btn-ghost { background: transparent; color: var(--accent-strong); border-color: var(--accent); }
+      .btn-small { min-height: 52px; padding: 10px 22px; font-size: 19px; }
+      .btn-row { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 20px; }
+      button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+      button:disabled { opacity: 0.45; cursor: not-allowed; }
+      .option-btn:disabled { opacity: 1; }
+
+      .feedback {
+        margin-top: 20px; border-radius: 16px; padding: 20px 18px; text-align: center;
+      }
+      .feedback.good { background: var(--good-soft); }
+      .feedback.bad { background: var(--bad-soft); }
+      .feedback .fb-title { font-size: 26px; font-weight: 900; margin: 0 0 6px; }
+      .feedback.good .fb-title { color: var(--good); }
+      .feedback.bad .fb-title { color: var(--bad); }
+      .feedback p { margin: 4px 0; font-size: 20px; }
+      .feedback .answer-list {
+        list-style: none; margin: 14px auto 4px; padding: 0; display: grid; gap: 8px;
+        max-width: 520px; text-align: left;
+      }
+      .feedback .answer-list li {
+        display: flex; gap: 12px; align-items: center;
+        font-size: 20px; font-weight: 700; line-height: 1.45;
+      }
+      .feedback .answer-list .order-num { width: 34px; height: 34px; font-size: 18px; }
+
+      .result-box { text-align: center; padding: 10px 0 2px; }
+      .result-score { font-size: clamp(52px, 14vw, 76px); font-weight: 900; color: var(--accent-strong); line-height: 1.1; margin: 6px 0; }
+      .result-msg { font-size: 22px; font-weight: 700; margin: 0 0 8px; }
+      .result-sub { font-size: 19px; color: var(--ink-soft); margin: 0; }
+
+      /* ---------- 설명 ---------- */
+      section.howto { margin-top: 48px; }
+      h2 {
+        font-size: 28px; font-weight: 900; letter-spacing: -0.01em;
+        margin: 0 0 16px; padding-bottom: 10px; border-bottom: 3px solid var(--accent-soft);
+      }
+      .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+      .steps li {
+        display: flex; gap: 16px; align-items: flex-start;
+        background: var(--card); border: 2px solid var(--line); border-radius: 18px; padding: 18px;
+      }
+      .step-num {
+        flex: 0 0 auto; width: 46px; height: 46px; border-radius: 50%;
+        background: var(--accent); color: #fff;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 23px; font-weight: 900;
+      }
+      .steps h3 { margin: 2px 0 4px; font-size: 22px; font-weight: 800; }
+      .steps p { margin: 0; font-size: 19px; color: var(--ink-soft); }
+      .example {
+        margin-top: 16px;
+        background: var(--bg-soft); border-radius: 18px; padding: 20px 16px;
+        font-size: 20px; font-weight: 700; line-height: 1.7; text-align: center;
+      }
+      .example .arrow { color: var(--accent); font-weight: 900; margin: 0 6px; }
+      .example small { display: block; font-size: 17px; font-weight: 600; color: var(--ink-soft); margin-top: 8px; }
+
+      .level-table { width: 100%; border-collapse: collapse; font-size: 19px; }
+      .level-table th, .level-table td { padding: 12px 10px; text-align: left; border-bottom: 1px solid var(--line); }
+      .level-table th { font-weight: 800; background: var(--bg-soft); }
+      .level-table td.num, .level-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+      .tips { margin: 0; padding-left: 24px; display: grid; gap: 8px; font-size: 19px; }
+      .why p { font-size: 19px; color: var(--ink-soft); margin: 0 0 10px; }
+      .why strong { color: var(--ink); }
+
+      footer {
+        margin-top: 52px; padding-top: 20px; border-top: 2px solid var(--line);
+        font-size: 17px; color: var(--ink-soft); text-align: center;
+      }
+      footer a { color: var(--accent-strong); font-weight: 700; display: inline-block; padding: 10px 6px; }
+      .sr-only {
+        position: absolute; width: 1px; height: 1px; overflow: hidden;
+        clip: rect(0 0 0 0); white-space: nowrap;
+      }
+      [hidden] { display: none !important; }
+
+      @media (prefers-reduced-motion: reduce) {
+        * { transition: none !important; animation: none !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <noscript>
+      <div style="max-width:760px;margin:0 auto;padding:36px 18px;font-size:21px;line-height:1.6">
+        <p><strong>이 게임을 하려면 자바스크립트를 켜 주세요.</strong> 브라우저 설정에서 자바스크립트를 허용한 뒤 다시 열어 주세요.</p>
+        <p><a href="https://blog.naver.com/sin4buja">오늘의 두뇌운동 블로그</a></p>
+      </div>
+    </noscript>
+    <main class="wrap" id="mainContent">
+      <div class="lang-switch" role="group" aria-label="Language / 언어 / 言語">
+        <button type="button" class="lang-btn" data-lang="ko" aria-pressed="true">한국어</button>
+        <button type="button" class="lang-btn" data-lang="en" aria-pressed="false">English</button>
+        <button type="button" class="lang-btn" data-lang="ja" aria-pressed="false">日本語</button>
+      </div>
+      <header>
+        <span class="day-chip"><span class="dot"></span><span id="chipText">오늘의 두뇌운동 · Day 3</span></span>
+        <h1 id="mainTitle">어제 일 회상하기</h1>
+        <p class="lede" id="ledeText">어느 분의 어제 하루를 천천히 보고 외운 뒤, 일어난 순서대로 다시 맞혀 보는 회상 게임이에요. 시간 제한이 없으니 서두르지 않아도 돼요. 오늘은 다섯 게임, 5분이면 충분해요.</p>
+        <p class="today-line" id="todayLine"></p>
+      </header>
+
+      <!-- ============ 게임 ============ -->
+      <div class="game-card" id="gameCard">
+        <div class="game-top">
+          <div class="round-label"><span id="roundWord">게임</span> <span id="roundNow">1</span> <span class="of">/ 5</span></div>
+          <div class="score-label"><span id="scoreWord">맞힌 개수</span> <strong><span id="scoreNow">0</span><span id="scoreUnit">개</span></strong></div>
+        </div>
+        <div class="progress-dots" id="progressDots" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <p class="level-line" id="levelLine"></p>
+
+        <div class="stage" id="stageBox" aria-live="polite"></div>
+      </div>
+
+      <!-- ============ 게임 방법 ============ -->
+      <section class="howto" aria-labelledby="howtoTitle">
+        <h2 id="howtoTitle">게임 방법</h2>
+        <ol class="steps">
+          <li>
+            <div class="step-num">1</div>
+            <div>
+              <h3 id="step1Title">어제 하루를 보고 외워요</h3>
+              <p id="step1Text">「하루 보기」를 누르면 어떤 분이 어제 한 일들이 순서대로 나타나요. 시간 제한이 없으니, 이야기처럼 읽으면서 천천히 외워 두세요.</p>
+            </div>
+          </li>
+          <li>
+            <div class="step-num">2</div>
+            <div>
+              <h3 id="step2Title">하루가 가려져요</h3>
+              <p id="step2Text">하루는 저절로 사라지지 않아요. 다 외웠을 때 「다 외웠어요」를 누르면 그때 가려져요.</p>
+            </div>
+          </li>
+          <li>
+            <div class="step-num">3</div>
+            <div>
+              <h3 id="step3Title">일어난 순서대로 골라요</h3>
+              <p id="step3Text">섞여 있는 일들을, 아침에 일어난 일부터 하나씩 눌러 순서대로 맞춰요. 틀려도 괜찮아요. 떠올리려고 애쓰는 순간 뇌가 가장 활발해져요.</p>
+            </div>
+          </li>
+        </ol>
+        <div class="example" id="exampleBox">
+          공원 산책<span class="arrow">→</span>점심 국수<span class="arrow">→</span>손주와 전화
+          <small>예시예요. 아침에 산책하고, 점심에 국수를 먹고, 저녁에 전화했다면 이 순서가 정답이에요.</small>
+        </div>
+      </section>
+
+      <section class="howto" aria-labelledby="levelTitle">
+        <h2 id="levelTitle">오늘의 다섯 게임</h2>
+        <table class="level-table">
+          <thead>
+            <tr><th scope="col" id="thGame">게임</th><th scope="col" id="thLevel">난이도</th><th scope="col" class="num" id="thCount">기억할 일</th><th scope="col" id="thTime">외우는 시간</th></tr>
+          </thead>
+          <tbody id="levelTableBody"></tbody>
+        </table>
+      </section>
+
+      <section class="howto why" aria-labelledby="whyTitle">
+        <h2 id="whyTitle">왜 좋은 게임인가요?</h2>
+        <p id="whyText1">「어제 뭐 했더라?」하고 하루를 순서대로 떠올리는 것은 <strong>일화 기억</strong>의 일이에요. 아침에 무엇을 먹었는지, 누구를 만났는지 같은 일상의 기억이 바로 이 힘으로 남아요.</p>
+        <p id="whyText2">하루의 일을 이야기처럼 처음부터 끝까지 되짚어 보는 연습은 이 기억을 단련해 줘요. 내 어제를 떠올리는 연습이기도 하니, 게임을 마친 뒤 <strong>실제로 어제 하루를 순서대로 말해 보기</strong>도 권해 드려요. 점수보다 매일 꾸준히 하는 것이 훨씬 중요해요.</p>
+      </section>
+
+      <section class="howto" aria-labelledby="tipTitle">
+        <h2 id="tipTitle">더 잘 외우는 팁</h2>
+        <ul class="tips">
+          <li id="tip1">해가 뜨고 지는 흐름으로 외워 보세요. 아침 일, 낮 일, 저녁 일로 나누면 순서가 잡혀요.</li>
+          <li id="tip2">장면을 그림처럼 떠올려 보세요. 공원, 식탁, 전화기처럼 장소가 단서가 돼요.</li>
+          <li id="tip3">소리 내어 이야기하듯 읽어 보세요. 「일어나서, 그다음에…」 하고 이으면 잘 외워져요.</li>
+          <li id="tip4">틀린 게임은 정답 순서를 보고 한 번 소리 내어 읽어 보세요. 그것만으로도 좋은 복습이에요.</li>
+        </ul>
+      </section>
+
+      <footer>
+        <p id="footerText">오늘의 두뇌운동 · 뇌건강 놀이터지기가 매일 준비하는 치매예방 기억력 게임이에요.<br />
+        이 게임은 놀이와 두뇌 활동 돕기가 목적이며, 의료 진단이나 치료를 대신하지 않아요.</p>
+        <a href="https://blog.naver.com/sin4buja" target="_blank" rel="noopener" id="blogLink">오늘의 두뇌운동 블로그</a>
+      </footer>
+    </main>
+
+    <script>
+      (function () {
+        "use strict";
+
+        /* ---------- 날짜 기반 랜덤 ----------
+           오늘 날짜를 씨앗(seed)으로 삼아 오늘의 하루 이야기 다섯 개를 뽑아요.
+           같은 날에는 같은 이야기가, 다음 날에는 새로운 이야기가 나와요.
+           「새로운 하루로 다시 하기」를 누르면 시도 횟수가 씨앗에 더해져 또 다른 이야기가 돼요.
+           언어와 상관없이 같은 날에는 같은 이야기가 나와요. */
+        function mulberry32(seed) {
+          var a = seed >>> 0;
+          return function () {
+            a |= 0; a = (a + 0x6d2b79f5) | 0;
+            var t = Math.imul(a ^ (a >>> 15), 1 | a);
+            t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+          };
+        }
+
+        var now = new Date();
+        var dateSeed = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
+
+        /* ---------- 언어별 문구 ---------- */
+        var I18N = {
+          ko: {
+            docTitle: "Day 3 어제 일 회상 게임",
+            chip: "오늘의 두뇌운동 · Day 3",
+            title: "어제 일 회상하기",
+            lede: "어느 분의 어제 하루를 천천히 보고 외운 뒤, 일어난 순서대로 다시 맞혀 보는 회상 게임이에요. 시간 제한이 없으니 서두르지 않아도 돼요. 오늘은 다섯 게임, 5분이면 충분해요.",
+            todayFmt: function (y, m, d, w) { return y + "년 " + m + "월 " + d + "일 (" + w + ")"; },
+            week: ["일", "월", "화", "수", "목", "금", "토"],
+            todayTail: " · 오늘의 하루 이야기는 날짜에 맞춰 정해져요. <strong>내일 오면 새로운 하루</strong>가 기다리고 있어요. 어디서든 바로 들어와서 할 수 있어요.",
+            todayHead: "오늘은 ",
+            roundWord: "게임",
+            scoreWord: "맞힌 개수",
+            scoreUnit: "개",
+            levelDone: "오늘의 다섯 게임을 모두 마쳤어요. 수고하셨어요!",
+            levelFmt: function (name, count) { return "난이도 <strong>" + name + "</strong> · 기억할 일 <strong>" + count + "가지</strong> · 외우는 시간 <strong>제한 없음</strong>"; },
+            levels: ["몸풀기", "쉬움", "보통", "어려움", "최종 도전"],
+            readyFirst: "준비되셨나요?",
+            readyNext: "다음 게임이에요",
+            readySub: "아래 버튼을 누르면 어떤 분의 어제 하루가 나타나요.<br />일어난 순서대로, 천천히 외워 두세요.",
+            dayPlaceholder: "어제의 하루 …",
+            btnShow: "하루 보기",
+            showTitle: "지금 외우세요!",
+            showSub: "이야기처럼 처음부터 끝까지 읽으면서 외우면 더 잘 기억돼요.",
+            memorizeNote: "시간 제한이 없어요. 하루는 사라지지 않으니 천천히 외우세요.",
+            btnHide: "다 외웠어요",
+            inputTitle: "하루가 가려졌어요",
+            inputSub: "제일 먼저 일어난 일부터, 순서대로 눌러 주세요.",
+            chosenTitle: "내가 고른 순서",
+            chosenEmpty: "아직 고른 일이 없어요. 아래에서 첫 번째로 일어난 일부터 눌러 주세요.",
+            optionsLabel: "섞여 있는 일들",
+            btnUndo: "하나 지우기",
+            btnClear: "처음부터",
+            btnCheck: "정답 확인",
+            praise: ["완벽해요!", "대단하세요!", "정확해요!", "기억력이 반짝이네요!", "최고예요!"],
+            cheer: ["아쉬워요, 그래도 잘 떠올리셨어요.", "괜찮아요. 떠올리려 애쓴 것 자체가 운동이에요.", "조금만 더! 정답 순서를 보고 한 번 읽어 보세요."],
+            correctFmt: function (who) { return who + "의 순서를 처음부터 끝까지 정확히 맞혔어요!"; },
+            wrongFmt: function (n) { return "맞은 자리는 <strong>" + n + "개</strong>예요. 어제 하루의 진짜 순서는 이랬어요."; },
+            btnNext: "다음 게임으로",
+            btnResult: "오늘의 결과 보기",
+            resultLabel: "오늘의 결과",
+            results: [
+              { msg: "다섯 게임 모두 맞혔어요!", sub: "오늘 뇌가 아주 기분 좋게 운동했어요. 내일도 새로운 하루 이야기가 기다리고 있어요." },
+              { msg: "아주 잘하셨어요!", sub: "틀린 게임이 있어도 괜찮아요. 순서를 떠올리려고 애쓴 순간 뇌는 이미 운동하고 있었어요." },
+              { msg: "좋은 시작이에요!", sub: "처음에는 누구나 어려워요. 매일 5분씩 하다 보면 하루의 일이 조금씩 더 잘 떠오를 거예요." },
+              { msg: "오늘도 해낸 것만으로 충분해요!", sub: "점수보다 매일 하는 것이 중요해요. 내일 새로운 하루 이야기로 다시 만나요." }
+            ],
+            btnAgain: "새로운 하루로 다시 하기",
+            tomorrowNote: "내일 다시 오시면, 날짜가 바뀌어 또 다른 하루 이야기가 준비돼 있어요.",
+            howtoTitle: "게임 방법",
+            step1Title: "어제 하루를 보고 외워요",
+            step1Text: "「하루 보기」를 누르면 어떤 분이 어제 한 일들이 순서대로 나타나요. 시간 제한이 없으니, 이야기처럼 읽으면서 천천히 외워 두세요.",
+            step2Title: "하루가 가려져요",
+            step2Text: "하루는 저절로 사라지지 않아요. 다 외웠을 때 「다 외웠어요」를 누르면 그때 가려져요.",
+            step3Title: "일어난 순서대로 골라요",
+            step3Text: "섞여 있는 일들을, 아침에 일어난 일부터 하나씩 눌러 순서대로 맞춰요. 틀려도 괜찮아요. 떠올리려고 애쓰는 순간 뇌가 가장 활발해져요.",
+            exampleHtml: "공원 산책<span class=\"arrow\">→</span>점심 국수<span class=\"arrow\">→</span>손주와 전화<small>예시예요. 아침에 산책하고, 점심에 국수를 먹고, 저녁에 전화했다면 이 순서가 정답이에요.</small>",
+            levelTitle: "오늘의 다섯 게임",
+            thGame: "게임", thLevel: "난이도", thCount: "기억할 일", thTime: "외우는 시간",
+            gameWord: "게임",
+            countFmt: function (n) { return n + "가지"; },
+            noLimit: "제한 없음",
+            whyTitle: "왜 좋은 게임인가요?",
+            whyText1: "「어제 뭐 했더라?」하고 하루를 순서대로 떠올리는 것은 <strong>일화 기억</strong>의 일이에요. 아침에 무엇을 먹었는지, 누구를 만났는지 같은 일상의 기억이 바로 이 힘으로 남아요.",
+            whyText2: "하루의 일을 이야기처럼 처음부터 끝까지 되짚어 보는 연습은 이 기억을 단련해 줘요. 내 어제를 떠올리는 연습이기도 하니, 게임을 마친 뒤 <strong>실제로 어제 하루를 순서대로 말해 보기</strong>도 권해 드려요. 점수보다 매일 꾸준히 하는 것이 훨씬 중요해요.",
+            tipTitle: "더 잘 외우는 팁",
+            tips: [
+              "해가 뜨고 지는 흐름으로 외워 보세요. 아침 일, 낮 일, 저녁 일로 나누면 순서가 잡혀요.",
+              "장면을 그림처럼 떠올려 보세요. 공원, 식탁, 전화기처럼 장소가 단서가 돼요.",
+              "소리 내어 이야기하듯 읽어 보세요. 「일어나서, 그다음에…」 하고 이으면 잘 외워져요.",
+              "틀린 게임은 정답 순서를 보고 한 번 소리 내어 읽어 보세요. 그것만으로도 좋은 복습이에요."
+            ],
+            footerHtml: "오늘의 두뇌운동 · 뇌건강 놀이터지기가 매일 준비하는 치매예방 기억력 게임이에요.<br />이 게임은 놀이와 두뇌 활동 돕기가 목적이며, 의료 진단이나 치료를 대신하지 않아요.",
+            blogLink: "오늘의 두뇌운동 블로그"
+          },
+          en: {
+            docTitle: "Day 3 Remembering Yesterday Game",
+            chip: "Today's Brain Exercise · Day 3",
+            title: "Remembering Yesterday",
+            lede: "Slowly look at someone's day yesterday, memorize it, then put the events back in the order they happened. There's no time limit, so there's no need to hurry. Five games today — five minutes is plenty.",
+            todayFmt: function (y, m, d, w) {
+              var months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+              return months[m - 1] + " " + d + ", " + y + " (" + w + ")";
+            },
+            week: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+            todayTail: " · Today's day stories are chosen by the date. <strong>Come back tomorrow and a new day</strong> will be waiting. You can jump in right away, from anywhere.",
+            todayHead: "Today is ",
+            roundWord: "Game",
+            scoreWord: "Correct",
+            scoreUnit: "",
+            levelDone: "You've finished all five games today. Great work!",
+            levelFmt: function (name, count) { return "Level <strong>" + name + "</strong> · <strong>" + count + " events</strong> to remember · Time to memorize: <strong>no limit</strong>"; },
+            levels: ["Warm-up", "Easy", "Normal", "Hard", "Final Challenge"],
+            readyFirst: "Are you ready?",
+            readyNext: "Here's the next game",
+            readySub: "Tap the button below and someone's day yesterday will appear.<br />Memorize the events in the order they happened, nice and slow.",
+            dayPlaceholder: "Yesterday's day …",
+            btnShow: "Show the Day",
+            showTitle: "Memorize now!",
+            showSub: "Read it like a story, from beginning to end — it helps the order stick.",
+            memorizeNote: "There's no time limit. The day won't disappear, so take your time.",
+            btnHide: "I've Memorized It",
+            inputTitle: "The day is hidden",
+            inputSub: "Tap the events in order, starting with the first thing that happened.",
+            chosenTitle: "My order",
+            chosenEmpty: "You haven't picked anything yet. Tap the first thing that happened, below.",
+            optionsLabel: "Shuffled events",
+            btnUndo: "Undo One",
+            btnClear: "Start Over",
+            btnCheck: "Check Answer",
+            praise: ["Perfect!", "Amazing!", "Exactly right!", "Your memory is shining!", "Wonderful!"],
+            cheer: ["So close — you still recalled a lot.", "That's okay. Trying to remember is the exercise itself.", "Almost there! Look at the correct order and read it through once."],
+            correctFmt: function (who) { return "You put " + who + " in exactly the right order, from start to finish!"; },
+            wrongFmt: function (n) { return "You placed <strong>" + n + "</strong> correctly. Here is how the day really went."; },
+            btnNext: "Next Game",
+            btnResult: "See Today's Results",
+            resultLabel: "Today's result",
+            results: [
+              { msg: "You got all five games right!", sub: "Your brain had a really happy workout today. A new day story will be waiting tomorrow." },
+              { msg: "Very well done!", sub: "It's fine if some games were wrong. The moment you tried to recall the order, your brain was already exercising." },
+              { msg: "A great start!", sub: "Everyone finds it hard at first. Five minutes a day, and the day's events will come back a little more easily." },
+              { msg: "Finishing today is enough!", sub: "The score matters less than doing it every day. See you tomorrow with a new day story." }
+            ],
+            btnAgain: "Play Again with a New Day",
+            tomorrowNote: "Come back tomorrow — the date changes, and a different day story will be ready.",
+            howtoTitle: "How to Play",
+            step1Title: "Look at yesterday and memorize it",
+            step1Text: "Tap “Show the Day” and the things someone did yesterday appear in order. There's no time limit, so read them like a story and memorize them slowly.",
+            step2Title: "The day gets hidden",
+            step2Text: "The day never disappears on its own. When you've memorized it, tap “I've Memorized It” — only then is it hidden.",
+            step3Title: "Pick them in the order they happened",
+            step3Text: "Tap the shuffled events one by one, starting with the first thing in the morning. It's fine to get some wrong — the moment you try to recall, your brain is at its most active.",
+            exampleHtml: "Walk in the park<span class=\"arrow\">→</span>Noodles for lunch<span class=\"arrow\">→</span>Phone call with a grandchild<small>An example. If they walked in the morning, ate noodles at lunch, and talked on the phone in the evening, this is the right order.</small>",
+            levelTitle: "Today's Five Games",
+            thGame: "Game", thLevel: "Level", thCount: "Events to remember", thTime: "Time to memorize",
+            gameWord: "Game",
+            countFmt: function (n) { return n + " events"; },
+            noLimit: "No limit",
+            whyTitle: "Why is this a good game?",
+            whyText1: "Thinking “What did I do yesterday?” and recalling a day in order is the work of <strong>episodic memory</strong>. Everyday memories — what you ate in the morning, who you met — stay with you through this very strength.",
+            whyText2: "Retracing a day's events like a story, from start to finish, trains this memory. It's also practice for recalling your own yesterday, so after the game, try <strong>saying your real yesterday out loud, in order</strong>. Doing it every day matters far more than the score.",
+            tipTitle: "Tips to memorize better",
+            tips: [
+              "Memorize along the flow of the sun. Split the day into morning, daytime, and evening events, and the order falls into place.",
+              "Picture each scene like a drawing. Places — the park, the table, the phone — become clues.",
+              "Read aloud as if telling a story. “First I got up, and then…” makes it easier to remember.",
+              "For a game you got wrong, read the correct order out loud once. That alone is good review."
+            ],
+            footerHtml: "Today's Brain Exercise · A dementia-prevention memory game prepared every day by the Brain Health Play Keeper.<br />This game is for play and brain activity; it does not replace medical diagnosis or treatment.",
+            blogLink: "Today's Brain Exercise Blog"
+          },
+          ja: {
+            docTitle: "Day 3 昨日の出来事を思い出すゲーム",
+            chip: "今日の脳トレ · Day 3",
+            title: "昨日の出来事を思い出す",
+            lede: "ある人の昨日の一日をゆっくり見て覚え、起きた順番どおりに当て直す回想ゲームです。時間制限はないので、急がなくて大丈夫です。今日は5ゲーム、5分で十分です。",
+            todayFmt: function (y, m, d, w) { return y + "年 " + m + "月 " + d + "日（" + w + "）"; },
+            week: ["日", "月", "火", "水", "木", "金", "土"],
+            todayTail: " · 今日の一日の物語は日付に合わせて決まります。<strong>明日来ると新しい一日</strong>が待っています。どこからでもすぐ始められます。",
+            todayHead: "今日は ",
+            roundWord: "ゲーム",
+            scoreWord: "正解",
+            scoreUnit: "つ",
+            levelDone: "今日の5ゲームをすべて終えました。お疲れさまでした！",
+            levelFmt: function (name, count) { return "難易度 <strong>" + name + "</strong> · 覚える出来事 <strong>" + count + "つ</strong> · 覚える時間 <strong>制限なし</strong>"; },
+            levels: ["ウォーミングアップ", "かんたん", "ふつう", "むずかしい", "最終チャレンジ"],
+            readyFirst: "準備はいいですか？",
+            readyNext: "次のゲームです",
+            readySub: "下のボタンを押すと、ある人の昨日の一日が現れます。<br />起きた順番どおりに、ゆっくり覚えてください。",
+            dayPlaceholder: "昨日の一日 …",
+            btnShow: "一日を見る",
+            showTitle: "今、覚えてください！",
+            showSub: "物語のように最初から最後まで読むと、順番がよく覚えられます。",
+            memorizeNote: "時間制限はありません。一日は消えませんので、ゆっくり覚えてください。",
+            btnHide: "覚えました",
+            inputTitle: "一日が隠れました",
+            inputSub: "最初に起きたことから、順番に押してください。",
+            chosenTitle: "私が選んだ順番",
+            chosenEmpty: "まだ選んでいません。下から、最初に起きたことを押してください。",
+            optionsLabel: "混ざった出来事",
+            btnUndo: "1つ消す",
+            btnClear: "最初から",
+            btnCheck: "答え合わせ",
+            praise: ["完璧です！", "すごいです！", "正確です！", "記憶力が輝いています！", "最高です！"],
+            cheer: ["惜しいです。でもよく思い出せました。", "大丈夫です。思い出そうと努力すること自体が運動です。", "あと少し！正しい順番を見て、一度読んでみてください。"],
+            correctFmt: function (who) { return who + "の順番を、最初から最後まで正確に当てました！"; },
+            wrongFmt: function (n) { return "合った場所は <strong>" + n + "つ</strong>です。昨日の一日の本当の順番はこうでした。"; },
+            btnNext: "次のゲームへ",
+            btnResult: "今日の結果を見る",
+            resultLabel: "今日の結果",
+            results: [
+              { msg: "5ゲームすべて当たりました！", sub: "今日、脳がとても気持ちよく運動しました。明日も新しい一日の物語が待っています。" },
+              { msg: "とてもよくできました！", sub: "間違えたゲームがあっても大丈夫です。順番を思い出そうと努力した瞬間、脳はすでに運動していました。" },
+              { msg: "いいスタートです！", sub: "最初は誰でも難しいものです。毎日5分ずつ続けると、一日の出来事が少しずつ思い出しやすくなります。" },
+              { msg: "今日やり遂げただけで十分です！", sub: "点数より毎日続けることが大切です。明日、新しい一日の物語でまた会いましょう。" }
+            ],
+            btnAgain: "新しい一日でもう一度",
+            tomorrowNote: "明日また来ると、日付が変わって別の日の物語が用意されています。",
+            howtoTitle: "遊び方",
+            step1Title: "昨日の一日を見て覚えます",
+            step1Text: "「一日を見る」を押すと、ある人が昨日したことが順番に現れます。時間制限はないので、物語のように読みながらゆっくり覚えてください。",
+            step2Title: "一日が隠れます",
+            step2Text: "一日はひとりでに消えません。覚え終わったら「覚えました」を押してください。そのとき隠れます。",
+            step3Title: "起きた順番に選びます",
+            step3Text: "混ざった出来事を、朝最初に起きたことから1つずつ押して順番を当てます。間違えても大丈夫です。思い出そうと努力する瞬間、脳が一番活発になります。",
+            exampleHtml: "公園を散歩<span class=\"arrow\">→</span>昼食にカルグクス<span class=\"arrow\">→</span>孫と電話<small>例です。朝に散歩して、昼に麺を食べて、夕方に電話したら、この順番が正解です。</small>",
+            levelTitle: "今日の5ゲーム",
+            thGame: "ゲーム", thLevel: "難易度", thCount: "覚える出来事", thTime: "覚える時間",
+            gameWord: "ゲーム",
+            countFmt: function (n) { return n + "つ"; },
+            noLimit: "制限なし",
+            whyTitle: "なぜ良いゲームなのですか？",
+            whyText1: "「昨日何をしたっけ？」と一日を順番に思い出すのは<strong>エピソード記憶</strong>の仕事です。朝何を食べたか、誰に会ったかといった日常の記憶は、この力で残ります。",
+            whyText2: "一日の出来事を物語のように最初から最後までたどる練習は、この記憶を鍛えてくれます。自分の昨日を思い出す練習にもなるので、ゲームのあとに<strong>実際の昨日を順番に声に出して言ってみる</strong>のもおすすめです。点数より毎日続けることがずっと大切です。",
+            tipTitle: "もっとよく覚えるコツ",
+            tips: [
+              "太陽の流れで覚えてみてください。朝のこと、昼のこと、夕方のことに分けると、順番がつかめます。",
+              "場面を絵のように思い浮かべてみてください。公園、食卓、電話のような場所が手がかりになります。",
+              "声に出して物語のように読んでみてください。「起きて、それから…」とつなぐと、よく覚えられます。",
+              "間違えたゲームは、正しい順番を見て一度声に出して読んでみてください。それだけでも良い復習になります。"
+            ],
+            footerHtml: "今日の脳トレ · 脳の健康のための遊び場の管理人が毎日用意する、認知症予防の記憶力ゲームです。<br />このゲームは遊びと脳の活動のためのもので、医療の診断や治療の代わりにはなりません。",
+            blogLink: "今日の脳トレ ブログ"
+          }
+        };
+
+        /* ---------- 하루 이야기 모음 ----------
+           각 이야기는 어제 하루에 일어난 일이 순서대로 다섯 가지예요.
+           게임마다 앞에서부터 필요한 개수만큼만 보여 줘요.
+           세 언어 모두 같은 순서·같은 이야기로, 언어만 달라요. */
+        var SCENARIOS = {
+          ko: [
+            { who: "순이 님의 어제 하루", events: [
+              "아침에 일어나 창문을 활짝 열었어요",
+              "아침 식사로 따뜻한 미역국을 먹었어요",
+              "동네 공원을 한 바퀴 산책했어요",
+              "점심에 이웃과 함께 국수를 먹었어요",
+              "저녁에 손주와 전화로 이야기했어요" ] },
+            { who: "철수 님의 어제 하루", events: [
+              "새벽에 일어나 가볍게 스트레칭을 했어요",
+              "아침으로 토스트와 우유를 먹었어요",
+              "텃밭에 나가 상추에 물을 줬어요",
+              "오후에 경로당에서 바둑을 뒀어요",
+              "저녁 뉴스를 보고 일찍 잠자리에 들었어요" ] },
+            { who: "영희 님의 어제 하루", events: [
+              "아침에 일어나 고양이에게 밥을 줬어요",
+              "빨래를 해서 베란다에 널었어요",
+              "시장에 가서 두부와 콩나물을 샀어요",
+              "점심에 김치찌개를 끓여 먹었어요",
+              "저녁에 딸과 함께 드라마를 봤어요" ] },
+            { who: "민수 님의 어제 하루", events: [
+              "아침 산책길에 은행잎을 한 장 주웠어요",
+              "집에 와서 아침으로 죽을 먹었어요",
+              "오전에 병원에 가서 혈압을 재고 왔어요",
+              "오후에 마당 의자에서 낮잠을 잤어요",
+              "저녁에 옛날 사진을 꺼내 봤어요" ] },
+            { who: "옥자 님의 어제 하루", events: [
+              "아침에 화분에 물을 줬어요",
+              "동네 빵집에서 갓 구운 빵을 샀어요",
+              "오전에 복지관 노래 교실에 갔어요",
+              "점심에 친구와 비빔밥을 먹었어요",
+              "저녁에 뜨개질로 목도리를 떴어요" ] },
+            { who: "봉수 님의 어제 하루", events: [
+              "아침에 일어나 라디오 체조를 했어요",
+              "아침으로 삶은 달걀과 과일을 먹었어요",
+              "오전에 우체국에 가서 편지를 부쳤어요",
+              "오후에 손자의 숙제를 도와줬어요",
+              "저녁에 아내와 동네를 한 바퀴 돌았어요" ] },
+            { who: "말순 님의 어제 하루", events: [
+              "아침에 일어나 따뜻한 차를 마셨어요",
+              "베란다에서 빨래를 개어 정리했어요",
+              "오전에 도서관에서 큰 글씨 책을 빌렸어요",
+              "점심에 혼자 칼국수를 먹었어요",
+              "저녁에 라디오에서 옛 노래를 들었어요" ] },
+            { who: "재석 님의 어제 하루", events: [
+              "아침에 자전거를 타고 강변을 달렸어요",
+              "집에 와서 씻고 아침을 먹었어요",
+              "오전에 텃밭에서 고추를 땄어요",
+              "오후에 친구 집에서 차를 마셨어요",
+              "저녁에 가족과 함께 저녁 식사를 했어요" ] },
+            { who: "금자 님의 어제 하루", events: [
+              "아침에 일어나 이불을 개고 정리했어요",
+              "아침으로 된장국을 끓여 먹었어요",
+              "오전에 미용실에서 머리를 다듬었어요",
+              "점심에 언니와 전화로 오래 이야기했어요",
+              "저녁에 손녀가 보낸 편지를 읽었어요" ] },
+            { who: "태호 님의 어제 하루", events: [
+              "아침에 공원에서 태극권을 했어요",
+              "아침으로 호박죽을 먹었어요",
+              "오전에 약국에 가서 약을 받아 왔어요",
+              "오후에 집에서 십자말풀이를 풀었어요",
+              "저녁에 아들과 영상 통화를 했어요" ] },
+            { who: "분이 님의 어제 하루", events: [
+              "아침에 마당을 쓸고 청소했어요",
+              "아침으로 떡과 식혜를 먹었어요",
+              "오전에 시장에 가서 저녁 재료를 샀어요",
+              "점심에 이웃집에 김치를 나눠 줬어요",
+              "저녁에 가족과 윷놀이를 했어요" ] },
+            { who: "상호 님의 어제 하루", events: [
+              "아침에 일어나 신문을 읽었어요",
+              "아침으로 커피와 빵을 먹었어요",
+              "오전에 은행에 가서 통장을 정리했어요",
+              "오후에 손주와 공원에서 공을 찼어요",
+              "저녁에 일기장에 오늘 일을 썼어요" ] },
+            { who: "정자 님의 어제 하루", events: [
+              "아침에 일어나 창가에서 햇볕을 쬐었어요",
+              "아침으로 누룽지를 끓여 먹었어요",
+              "오전에 합창단 연습에 다녀왔어요",
+              "점심에 동생과 순댓국을 먹었어요",
+              "저녁에 따뜻한 물로 족욕을 했어요" ] },
+            { who: "용식 님의 어제 하루", events: [
+              "아침에 닭에게 모이를 줬어요",
+              "아침으로 감자전을 부쳐 먹었어요",
+              "오전에 면사무소에 다녀왔어요",
+              "오후에 마을 정자에서 이웃과 이야기했어요",
+              "저녁에 별을 보며 하루를 마쳤어요" ] }
+          ],
+          en: [
+            { who: "Suni's day yesterday", events: [
+              "Woke up in the morning and opened the window wide",
+              "Ate warm seaweed soup for breakfast",
+              "Took a walk around the neighborhood park",
+              "Ate noodles with a neighbor for lunch",
+              "Talked with her grandchild on the phone in the evening" ] },
+            { who: "Cheolsu's day yesterday", events: [
+              "Got up at dawn and did some light stretching",
+              "Ate toast and milk for breakfast",
+              "Watered the lettuce in the vegetable garden",
+              "Played baduk (Go) at the senior center in the afternoon",
+              "Watched the evening news and went to bed early" ] },
+            { who: "Younghee's day yesterday", events: [
+              "Woke up in the morning and fed the cat",
+              "Did the laundry and hung it on the veranda",
+              "Went to the market and bought tofu and bean sprouts",
+              "Cooked kimchi stew for lunch and ate it",
+              "Watched a drama with her daughter in the evening" ] },
+            { who: "Minsu's day yesterday", events: [
+              "Picked up a ginkgo leaf on his morning walk",
+              "Came home and ate porridge for breakfast",
+              "Went to the hospital in the morning to have his blood pressure checked",
+              "Took a nap on a chair in the yard in the afternoon",
+              "Took out old photos and looked at them in the evening" ] },
+            { who: "Okja's day yesterday", events: [
+              "Watered the flower pots in the morning",
+              "Bought freshly baked bread at the neighborhood bakery",
+              "Went to a singing class at the welfare center in the morning",
+              "Ate bibimbap with a friend for lunch",
+              "Knitted a scarf in the evening" ] },
+            { who: "Bongsu's day yesterday", events: [
+              "Woke up in the morning and did radio exercises",
+              "Ate a boiled egg and fruit for breakfast",
+              "Went to the post office in the morning and mailed a letter",
+              "Helped his grandson with his homework in the afternoon",
+              "Walked around the neighborhood with his wife in the evening" ] },
+            { who: "Malsun's day yesterday", events: [
+              "Woke up in the morning and drank a warm cup of tea",
+              "Folded the laundry on the veranda and put it away",
+              "Borrowed a large-print book at the library in the morning",
+              "Ate kalguksu (knife-cut noodles) alone for lunch",
+              "Listened to old songs on the radio in the evening" ] },
+            { who: "Jaeseok's day yesterday", events: [
+              "Rode his bicycle along the river in the morning",
+              "Came home, washed up, and ate breakfast",
+              "Picked peppers in the vegetable garden in the morning",
+              "Had tea at a friend's house in the afternoon",
+              "Ate dinner with his family in the evening" ] },
+            { who: "Geumja's day yesterday", events: [
+              "Woke up in the morning and folded the bedding away",
+              "Cooked soybean paste soup for breakfast and ate it",
+              "Had her hair done at the salon in the morning",
+              "Talked with her older sister on the phone for a long time around lunch",
+              "Read a letter her granddaughter had sent, in the evening" ] },
+            { who: "Taeho's day yesterday", events: [
+              "Did tai chi in the park in the morning",
+              "Ate pumpkin porridge for breakfast",
+              "Went to the pharmacy in the morning to pick up medicine",
+              "Did a crossword puzzle at home in the afternoon",
+              "Had a video call with his son in the evening" ] },
+            { who: "Buni's day yesterday", events: [
+              "Swept the yard and cleaned in the morning",
+              "Ate rice cake and sikhye (sweet rice drink) for breakfast",
+              "Went to the market in the morning to buy ingredients for dinner",
+              "Shared kimchi with a neighbor around lunch",
+              "Played yutnori with her family in the evening" ] },
+            { who: "Sangho's day yesterday", events: [
+              "Woke up in the morning and read the newspaper",
+              "Ate coffee and bread for breakfast",
+              "Went to the bank in the morning to organize his bankbook",
+              "Kicked a ball with his grandchild at the park in the afternoon",
+              "Wrote about the day in his diary in the evening" ] },
+            { who: "Jeongja's day yesterday", events: [
+              "Woke up in the morning and basked in the sun by the window",
+              "Boiled scorched-rice soup for breakfast and ate it",
+              "Went to choir practice in the morning",
+              "Ate sundae soup with her younger sister for lunch",
+              "Soaked her feet in warm water in the evening" ] },
+            { who: "Yongsik's day yesterday", events: [
+              "Fed the chickens in the morning",
+              "Made a potato pancake for breakfast and ate it",
+              "Went to the township office in the morning",
+              "Talked with neighbors at the village pavilion in the afternoon",
+              "Ended the day watching the stars in the evening" ] }
+          ],
+          ja: [
+            { who: "スニさんの昨日の一日", events: [
+              "朝起きて窓を大きく開けました",
+              "朝食に温かいわかめスープを食べました",
+              "近所の公園を一周散歩しました",
+              "昼食に近所の人と一緒に麺を食べました",
+              "夕方、孫と電話で話しました" ] },
+            { who: "チョルスさんの昨日の一日", events: [
+              "夜明けに起きて軽くストレッチをしました",
+              "朝食にトーストと牛乳を食べました",
+              "畑に行ってレタスに水をやりました",
+              "午後に公民館で囲碁を打ちました",
+              "夕方のニュースを見て早く寝ました" ] },
+            { who: "ヨンヒさんの昨日の一日", events: [
+              "朝起きて猫にご飯をあげました",
+              "洗濯をしてベランダに干しました",
+              "市場に行って豆腐ともやしを買いました",
+              "昼食にキムチチゲを作って食べました",
+              "夕方、娘と一緒にドラマを見ました" ] },
+            { who: "ミンスさんの昨日の一日", events: [
+              "朝の散歩道でイチョウの葉を一枚拾いました",
+              "家に帰って朝食におかゆを食べました",
+              "午前中に病院に行って血圧を測ってきました",
+              "午後に庭の椅子で昼寝をしました",
+              "夕方、昔の写真を取り出して見ました" ] },
+            { who: "オクジャさんの昨日の一日", events: [
+              "朝、植木鉢に水をやりました",
+              "近所のパン屋で焼きたてのパンを買いました",
+              "午前中に福祉館の歌の教室に行きました",
+              "昼食に友達とビビンバを食べました",
+              "夕方、編み物でマフラーを編みました" ] },
+            { who: "ボンスさんの昨日の一日", events: [
+              "朝起きてラジオ体操をしました",
+              "朝食にゆで卵と果物を食べました",
+              "午前中に郵便局に行って手紙を出しました",
+              "午後に孫の宿題を手伝いました",
+              "夕方、妻と近所を一周歩きました" ] },
+            { who: "マルスンさんの昨日の一日", events: [
+              "朝起きて温かいお茶を飲みました",
+              "ベランダで洗濯物をたたんで片付けました",
+              "午前中に図書館で大きな文字の本を借りました",
+              "昼食に一人でカルグクス（手打ち麺）を食べました",
+              "夕方、ラジオで懐かしい歌を聞きました" ] },
+            { who: "ジェソクさんの昨日の一日", events: [
+              "朝、自転車に乗って川沿いを走りました",
+              "家に帰って体を洗って朝食を食べました",
+              "午前中に畑で唐辛子を取りました",
+              "午後に友達の家でお茶を飲みました",
+              "夕方、家族と一緒に夕食を食べました" ] },
+            { who: "クムジャさんの昨日の一日", events: [
+              "朝起きて布団をたたんで片付けました",
+              "朝食に味噌汁を作って食べました",
+              "午前中に美容室で髪を整えました",
+              "昼食の頃、姉と電話で長く話しました",
+              "夕方、孫娘から届いた手紙を読みました" ] },
+            { who: "テホさんの昨日の一日", events: [
+              "朝、公園で太極拳をしました",
+              "朝食にかぼちゃのおかゆを食べました",
+              "午前中に薬局に行って薬をもらってきました",
+              "午後に家でクロスワードパズルを解きました",
+              "夕方、息子とビデオ通話をしました" ] },
+            { who: "ブニさんの昨日の一日", events: [
+              "朝、庭を掃いて掃除しました",
+              "朝食にお餅とシッケ（甘い米の飲み物）を食べました",
+              "午前中に市場に行って夕食の材料を買いました",
+              "昼食の頃、近所の家にキムチを分けてあげました",
+              "夕方、家族とユンノリをしました" ] },
+            { who: "サンホさんの昨日の一日", events: [
+              "朝起きて新聞を読みました",
+              "朝食にコーヒーとパンを食べました",
+              "午前中に銀行に行って通帳を整理しました",
+              "午後に孫と公園でボールを蹴りました",
+              "夕方、日記帳に今日のことを書きました" ] },
+            { who: "チョンジャさんの昨日の一日", events: [
+              "朝起きて窓際で日なたぼっこをしました",
+              "朝食におこげのおかゆを煮て食べました",
+              "午前中に合唱団の練習に行ってきました",
+              "昼食に妹とスンデククを食べました",
+              "夕方、温かいお湯で足湯をしました" ] },
+            { who: "ヨンシクさんの昨日の一日", events: [
+              "朝、鶏に餌をやりました",
+              "朝食にじゃがいもチヂミを焼いて食べました",
+              "午前中に役場に行ってきました",
+              "午後に村の東屋で近所の人と話しました",
+              "夕方、星を見ながら一日を終えました" ] }
+          ]
+        };
+
+        var LEVEL_COUNTS = [3, 4, 4, 5, 5];
+
+        function shuffledIndices(rand, n) {
+          var arr = [];
+          for (var i = 0; i < n; i++) arr.push(i);
+          for (var j = arr.length - 1; j > 0; j--) {
+            var k = Math.floor(rand() * (j + 1));
+            var tmp = arr[j]; arr[j] = arr[k]; arr[k] = tmp;
+          }
+          return arr;
+        }
+
+        /* 라운드는 언어와 무관하게 같은 이야기·같은 섞인 순서를 써요.
+           언어 데이터만 바꿔 끼우면 돼요. */
+        function buildRoundMeta(attempt) {
+          var rand = mulberry32(dateSeed * 1000 + attempt * 77 + 303);
+          var picks = shuffledIndices(rand, SCENARIOS.ko.length).slice(0, LEVEL_COUNTS.length);
+          return LEVEL_COUNTS.map(function (count, i) {
+            var order = shuffledIndices(rand, count);
+            var same = order.every(function (v, idx) { return v === idx; });
+            if (same && count > 1) { var t = order[0]; order[0] = order[1]; order[1] = t; }
+            return { pick: picks[i], count: count, shuffled: order };
+          });
+        }
+
+        /* ---------- 상태 ---------- */
+        var lang = "ko";
+        var attempt = 0;
+        var roundMeta = buildRoundMeta(attempt);
+        var roundIdx = 0;
+        var score = 0;
+        var phase = "ready"; /* ready | show | input | feedback | done */
+        var chosen = []; /* 고른 일들의 원래 순서 번호 */
+        var lastFeedback = null; /* { ok, placedRight } — 언어 전환 시 다시 그리기용 */
+
+        function T() { return I18N[lang]; }
+
+        function currentRound() {
+          var meta = roundMeta[roundIdx];
+          var sc = SCENARIOS[lang][meta.pick];
+          return {
+            who: sc.who,
+            name: T().levels[roundIdx],
+            count: meta.count,
+            events: sc.events.slice(0, meta.count),
+            shuffled: meta.shuffled
+          };
+        }
+
+        var stageBox = document.getElementById("stageBox");
+        var roundNowEl = document.getElementById("roundNow");
+        var scoreNowEl = document.getElementById("scoreNow");
+        var levelLineEl = document.getElementById("levelLine");
+        var dotsEl = document.getElementById("progressDots");
+
+        function esc(s) {
+          return s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+        }
+
+        function todayString() {
+          var t = T();
+          return t.todayFmt(now.getFullYear(), now.getMonth() + 1, now.getDate(), t.week[now.getDay()]);
+        }
+
+        /* ---------- 고정 문구(게임 판 밖) ---------- */
+        function applyStatic() {
+          var t = T();
+          document.documentElement.lang = lang;
+          document.title = t.docTitle;
+          document.getElementById("chipText").textContent = t.chip;
+          document.getElementById("mainTitle").textContent = t.title;
+          document.getElementById("ledeText").textContent = t.lede;
+          document.getElementById("todayLine").innerHTML =
+            esc(t.todayHead) + "<strong>" + esc(todayString()) + "</strong>" + t.todayTail;
+          document.getElementById("roundWord").textContent = t.roundWord;
+          document.getElementById("scoreWord").textContent = t.scoreWord;
+          document.getElementById("scoreUnit").textContent = t.scoreUnit;
+          document.getElementById("howtoTitle").textContent = t.howtoTitle;
+          document.getElementById("step1Title").textContent = t.step1Title;
+          document.getElementById("step1Text").textContent = t.step1Text;
+          document.getElementById("step2Title").textContent = t.step2Title;
+          document.getElementById("step2Text").textContent = t.step2Text;
+          document.getElementById("step3Title").textContent = t.step3Title;
+          document.getElementById("step3Text").textContent = t.step3Text;
+          document.getElementById("exampleBox").innerHTML = t.exampleHtml;
+          document.getElementById("levelTitle").textContent = t.levelTitle;
+          document.getElementById("thGame").textContent = t.thGame;
+          document.getElementById("thLevel").textContent = t.thLevel;
+          document.getElementById("thCount").textContent = t.thCount;
+          document.getElementById("thTime").textContent = t.thTime;
+          var rows = "";
+          for (var i = 0; i < LEVEL_COUNTS.length; i++) {
+            rows += "<tr><td>" + esc(t.gameWord) + " " + (i + 1) + "</td><td>" + esc(t.levels[i]) +
+              "</td><td class=\"num\">" + esc(t.countFmt(LEVEL_COUNTS[i])) + "</td><td>" + esc(t.noLimit) + "</td></tr>";
+          }
+          document.getElementById("levelTableBody").innerHTML = rows;
+          document.getElementById("whyTitle").textContent = t.whyTitle;
+          document.getElementById("whyText1").innerHTML = t.whyText1;
+          document.getElementById("whyText2").innerHTML = t.whyText2;
+          document.getElementById("tipTitle").textContent = t.tipTitle;
+          for (var j = 0; j < t.tips.length; j++) {
+            document.getElementById("tip" + (j + 1)).textContent = t.tips[j];
+          }
+          document.getElementById("footerText").innerHTML = t.footerHtml;
+          document.getElementById("blogLink").textContent = t.blogLink;
+          var btns = document.querySelectorAll(".lang-btn");
+          for (var b = 0; b < btns.length; b++) {
+            btns[b].setAttribute("aria-pressed", btns[b].getAttribute("data-lang") === lang ? "true" : "false");
+          }
+        }
+
+        function renderTop() {
+          var t = T();
+          roundNowEl.textContent = String(Math.min(roundIdx + 1, 5));
+          scoreNowEl.textContent = String(score);
+          var dots = dotsEl.children;
+          for (var i = 0; i < dots.length; i++) {
+            dots[i].className = i < roundIdx || phase === "done" ? "done" : i === roundIdx ? "now" : "";
+          }
+          if (phase === "done") {
+            levelLineEl.textContent = t.levelDone;
+          } else {
+            var r = currentRound();
+            levelLineEl.innerHTML = t.levelFmt(esc(r.name), r.count);
+          }
+        }
+
+        function dayListHtml(r) {
+          var html = '<ul class="day-list">';
+          for (var i = 0; i < r.events.length; i++) {
+            html += '<li><span class="order-num">' + (i + 1) + "</span><span>" + esc(r.events[i]) + "</span></li>";
+          }
+          return html + "</ul>";
+        }
+
+        /* ---------- 단계별 화면 ---------- */
+        function showReady() {
+          phase = "ready"; chosen = []; lastFeedback = null; renderTop();
+          var t = T();
+          stageBox.innerHTML =
+            '<p class="stage-msg">' + (roundIdx === 0 ? esc(t.readyFirst) : esc(t.readyNext)) + "</p>" +
+            '<p class="stage-sub">' + t.readySub + "</p>" +
+            '<div class="day-board hidden-board">' + esc(t.dayPlaceholder) + "</div>" +
+            '<div class="btn-row"><button type="button" class="btn btn-primary" id="btnShow">' + esc(t.btnShow) + "</button></div>";
+          document.getElementById("btnShow").addEventListener("click", showDay);
+        }
+
+        function showDay() {
+          phase = "show"; renderTop();
+          var t = T();
+          var r = currentRound();
+          stageBox.innerHTML =
+            '<p class="stage-msg">' + esc(t.showTitle) + "</p>" +
+            '<p class="stage-sub">' + esc(t.showSub) + "</p>" +
+            '<div><span class="who-line">' + esc(r.who) + "</span></div>" +
+            '<div class="day-board">' + dayListHtml(r) + "</div>" +
+            '<p class="memorize-note">' + esc(t.memorizeNote) + "</p>" +
+            '<div class="btn-row"><button type="button" class="btn btn-primary" id="btnHide">' + esc(t.btnHide) + "</button></div>";
+          document.getElementById("btnHide").addEventListener("click", showInput);
+        }
+
+        function chosenHtml() {
+          var t = T();
+          var r = currentRound();
+          if (chosen.length === 0) {
+            return '<div class="chosen-box"><p class="chosen-title">' + esc(t.chosenTitle) + "</p>" +
+              '<p class="chosen-empty">' + esc(t.chosenEmpty) + "</p></div>";
+          }
+          var html = '<div class="chosen-box"><p class="chosen-title">' + esc(t.chosenTitle) + '</p><ul class="chosen-list">';
+          for (var i = 0; i < chosen.length; i++) {
+            html += '<li><span class="order-num">' + (i + 1) + "</span><span>" + esc(r.events[chosen[i]]) + "</span></li>";
+          }
+          return html + "</ul></div>";
+        }
+
+        function optionsHtml() {
+          var t = T();
+          var r = currentRound();
+          var html = '<div class="option-list" role="group" aria-label="' + esc(t.optionsLabel) + '">';
+          for (var i = 0; i < r.shuffled.length; i++) {
+            var orig = r.shuffled[i];
+            var pos = chosen.indexOf(orig);
+            var picked = pos !== -1;
+            html += '<button type="button" class="option-btn' + (picked ? " picked" : "") + '" data-orig="' + orig + '"' +
+              (picked ? " disabled" : "") + ">" +
+              '<span class="pick-badge">' + (picked ? String(pos + 1) : "") + "</span>" +
+              "<span>" + esc(r.events[orig]) + "</span></button>";
+          }
+          return html + "</div>";
+        }
+
+        function showInput() {
+          phase = "input"; renderTop();
+          var t = T();
+          stageBox.innerHTML =
+            '<p class="stage-msg">' + esc(t.inputTitle) + "</p>" +
+            '<p class="stage-sub">' + esc(t.inputSub) + "</p>" +
+            '<div id="chosenWrap">' + chosenHtml() + "</div>" +
+            '<div id="optionsWrap">' + optionsHtml() + "</div>" +
+            '<div class="btn-row">' +
+            '<button type="button" class="btn btn-ghost btn-small" id="btnUndo">' + esc(t.btnUndo) + "</button>" +
+            '<button type="button" class="btn btn-ghost btn-small" id="btnClear">' + esc(t.btnClear) + "</button>" +
+            "</div>" +
+            '<div class="btn-row"><button type="button" class="btn btn-primary" id="btnCheck" disabled>' + esc(t.btnCheck) + "</button></div>";
+          bindInputButtons();
+          refreshInput();
+        }
+
+        function bindInputButtons() {
+          var opts = stageBox.querySelectorAll(".option-btn");
+          for (var i = 0; i < opts.length; i++) {
+            opts[i].addEventListener("click", function () {
+              pick(Number(this.getAttribute("data-orig")));
+            });
+          }
+          document.getElementById("btnUndo").addEventListener("click", function () {
+            if (phase !== "input") return;
+            chosen.pop();
+            refreshInput();
+          });
+          document.getElementById("btnClear").addEventListener("click", function () {
+            if (phase !== "input") return;
+            chosen = [];
+            refreshInput();
+          });
+          document.getElementById("btnCheck").addEventListener("click", checkAnswer);
+        }
+
+        function pick(orig) {
+          if (phase !== "input") return;
+          var r = currentRound();
+          if (chosen.indexOf(orig) !== -1 || chosen.length >= r.count) return;
+          chosen.push(orig);
+          refreshInput();
+        }
+
+        function refreshInput() {
+          var cw = document.getElementById("chosenWrap");
+          if (cw) cw.innerHTML = chosenHtml();
+          var ow = document.getElementById("optionsWrap");
+          if (ow) {
+            ow.innerHTML = optionsHtml();
+            var opts = ow.querySelectorAll(".option-btn");
+            for (var i = 0; i < opts.length; i++) {
+              opts[i].addEventListener("click", function () {
+                pick(Number(this.getAttribute("data-orig")));
+              });
+            }
+          }
+          var btn = document.getElementById("btnCheck");
+          if (btn) btn.disabled = chosen.length !== currentRound().count;
+        }
+
+        function showFeedback() {
+          phase = "feedback"; renderTop();
+          var t = T();
+          var r = currentRound();
+          var ok = lastFeedback.ok;
+          var last = roundIdx === roundMeta.length - 1;
+          var answerHtml = '<ul class="answer-list">';
+          for (var j = 0; j < r.events.length; j++) {
+            answerHtml += '<li><span class="order-num">' + (j + 1) + "</span><span>" + esc(r.events[j]) + "</span></li>";
+          }
+          answerHtml += "</ul>";
+          stageBox.innerHTML =
+            '<div class="feedback ' + (ok ? "good" : "bad") + '">' +
+            '<p class="fb-title">' + esc(ok ? t.praise[roundIdx % t.praise.length] : t.cheer[roundIdx % t.cheer.length]) + "</p>" +
+            (ok
+              ? "<p>" + esc(t.correctFmt(r.who)) + "</p>"
+              : "<p>" + t.wrongFmt(lastFeedback.placedRight) + "</p>") +
+            answerHtml +
+            "</div>" +
+            '<div class="btn-row"><button type="button" class="btn btn-primary" id="btnNext">' +
+            esc(last ? t.btnResult : t.btnNext) + "</button></div>";
+          document.getElementById("btnNext").addEventListener("click", function () {
+            if (last) showResult();
+            else { roundIdx++; showReady(); }
+          });
+        }
+
+        function checkAnswer() {
+          if (phase !== "input") return;
+          var r = currentRound();
+          var ok = chosen.every(function (v, i) { return v === i; });
+          var placedRight = 0;
+          for (var i = 0; i < chosen.length; i++) if (chosen[i] === i) placedRight++;
+          if (ok) score++;
+          lastFeedback = { ok: ok, placedRight: placedRight };
+          showFeedback();
+        }
+
+        function showResult() {
+          phase = "done"; renderTop();
+          var t = T();
+          var res;
+          if (score === 5) res = t.results[0];
+          else if (score >= 3) res = t.results[1];
+          else if (score >= 1) res = t.results[2];
+          else res = t.results[3];
+          stageBox.innerHTML =
+            '<div class="result-box">' +
+            '<p class="stage-sub" style="margin-bottom:0">' + esc(t.resultLabel) + "</p>" +
+            '<p class="result-score">' + score + " / 5</p>" +
+            '<p class="result-msg">' + esc(res.msg) + "</p>" +
+            '<p class="result-sub">' + esc(res.sub) + "</p>" +
+            '<div class="btn-row">' +
+            '<button type="button" class="btn btn-primary" id="btnAgain">' + esc(t.btnAgain) + "</button>" +
+            "</div>" +
+            '<p class="stage-sub" style="margin-top:16px">' + esc(t.tomorrowNote) + "</p>" +
+            "</div>";
+          document.getElementById("btnAgain").addEventListener("click", function () {
+            attempt++;
+            roundMeta = buildRoundMeta(attempt);
+            roundIdx = 0; score = 0;
+            showReady();
+            document.getElementById("gameCard").scrollIntoView({ behavior: "smooth", block: "start" });
+          });
+        }
+
+        /* ---------- 언어 전환 ----------
+           진행 중인 게임(라운드·점수·고른 순서)은 그대로 두고,
+           지금 보고 있는 화면만 새 언어로 다시 그려요. */
+        function renderPhase() {
+          if (phase === "ready") showReady();
+          else if (phase === "show") showDay();
+          else if (phase === "input") showInput();
+          else if (phase === "feedback" && lastFeedback) showFeedback();
+          else if (phase === "done") showResult();
+          else showReady();
+        }
+
+        function setLang(next) {
+          if (!I18N[next] || next === lang) { applyStatic(); return; }
+          lang = next;
+          applyStatic();
+          renderPhase();
+        }
+
+        var langBtns = document.querySelectorAll(".lang-btn");
+        for (var b = 0; b < langBtns.length; b++) {
+          langBtns[b].addEventListener("click", function () {
+            setLang(this.getAttribute("data-lang"));
+          });
+        }
+
+        applyStatic();
+        showReady();
+      })();
+    </script>
+  </body>
+</html>

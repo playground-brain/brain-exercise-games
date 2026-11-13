@@ -1,0 +1,789 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="data:," />
+<title>Day 9 색깔 단어 기억하기 게임</title>
+<style>
+  :root{
+    --bg:#FFF6E9;
+    --bg-soft:#FFEFDB;
+    --card:#FFFDF8;
+    --ink:#3B2314;
+    --ink-soft:#6B4A2F;
+    --accent:#E8641C;
+    --accent-dark:#C24E0E;
+    --accent-soft:#FFE3C7;
+    --line:#F0C9A0;
+    --good:#1E7A34;
+    --good-bg:#E3F4E6;
+    --bad:#B3261E;
+    --bad-bg:#FDE8E6;
+    --focus:#8A4B0F;
+    --shadow:0 4px 0 rgba(194,78,14,.18);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#241610;
+      --bg-soft:#2E1C11;
+      --card:#33200F;
+      --ink:#FFF1DE;
+      --ink-soft:#EBC9A3;
+      --accent:#FF8A3D;
+      --accent-dark:#FFB27A;
+      --accent-soft:#4A2A12;
+      --line:#6B4423;
+      --good:#7BD88F;
+      --good-bg:#1E3A24;
+      --bad:#FF9D94;
+      --bad-bg:#47201C;
+      --focus:#FFD9AE;
+      --shadow:0 4px 0 rgba(0,0,0,.35);
+    }
+  }
+  *{box-sizing:border-box;}
+  html{ -webkit-text-size-adjust:100%; }
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR","Hiragino Sans","Yu Gothic",sans-serif;
+    font-size:20px;
+    line-height:1.55;
+  }
+  .wrap{ max-width:860px; margin:0 auto; padding:20px 18px 56px; }
+
+  /* Language switcher */
+  .lang-bar{
+    display:flex; gap:10px; flex-wrap:wrap; justify-content:center;
+    margin-bottom:18px;
+  }
+  .lang-btn{
+    font:inherit; font-size:20px; font-weight:700;
+    min-height:56px; padding:10px 22px;
+    border-radius:999px; border:3px solid var(--accent);
+    background:var(--card); color:var(--accent-dark);
+    cursor:pointer;
+  }
+  .lang-btn[aria-pressed="true"]{ background:var(--accent); color:#fff; }
+  .lang-btn:focus-visible, button:focus-visible{ outline:4px solid var(--focus); outline-offset:2px; }
+
+  header.top{ text-align:center; margin-bottom:20px; }
+  .day-badge{
+    display:inline-block; background:var(--accent-soft); color:var(--accent-dark);
+    font-weight:800; font-size:19px; padding:6px 18px; border-radius:999px; margin-bottom:10px;
+  }
+  h1{ font-size:40px; line-height:1.25; margin:0 0 10px; font-weight:900; letter-spacing:-.5px; }
+  .subtitle{ font-size:22px; color:var(--ink-soft); margin:0; font-weight:600; }
+
+  .card{
+    background:var(--card);
+    border:2px solid var(--line);
+    border-radius:20px;
+    padding:26px 22px;
+    box-shadow:var(--shadow);
+    margin-bottom:24px;
+  }
+
+  /* Progress */
+  .progress-row{
+    display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+    margin-bottom:16px;
+  }
+  .round-label{ font-size:26px; font-weight:900; }
+  .score-label{ font-size:21px; font-weight:700; color:var(--ink-soft); }
+  .dots{ display:flex; gap:8px; margin-bottom:20px; }
+  .dot{
+    flex:1; height:16px; border-radius:999px; background:var(--accent-soft);
+    border:2px solid var(--line);
+  }
+  .dot.done{ background:var(--accent); border-color:var(--accent); }
+  .dot.now{ background:var(--card); border-color:var(--accent); border-width:3px; }
+
+  .phase-title{ font-size:28px; font-weight:900; text-align:center; margin:0 0 6px; }
+  .phase-desc{ font-size:21px; text-align:center; color:var(--ink-soft); margin:0 0 20px; font-weight:600; }
+
+  /* Memorize words */
+  .word-row{
+    display:flex; flex-wrap:wrap; gap:12px; justify-content:center; align-items:stretch;
+    background:var(--bg-soft); border:2px dashed var(--line); border-radius:16px;
+    padding:22px 14px; margin-bottom:22px;
+  }
+  .word-chip{
+    display:flex; flex-direction:column; align-items:center; gap:2px;
+    background:var(--card); border:2px solid var(--line); border-radius:14px;
+    padding:12px 16px 10px; min-width:86px;
+  }
+  .word-num{ font-size:16px; font-weight:800; color:var(--ink-soft); }
+  .word-text{ font-size:34px; font-weight:900; line-height:1.2; white-space:nowrap; }
+  .hidden-note{
+    font-size:30px; font-weight:900; text-align:center; padding:26px 10px; color:var(--ink-soft);
+  }
+
+  /* Answer slots */
+  .slots{
+    display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-bottom:20px; min-height:64px;
+  }
+  .slot{
+    width:64px; height:64px; border-radius:14px;
+    border:3px dashed var(--line); background:var(--bg-soft);
+    display:flex; align-items:center; justify-content:center;
+    font-size:22px; font-weight:900; color:var(--ink-soft);
+  }
+  .slot.filled{ border-style:solid; border-color:rgba(0,0,0,.15); color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.35); font-size:15px; padding:2px; text-align:center; line-height:1.15; }
+
+  /* Color answer buttons */
+  .color-grid{
+    display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-bottom:18px;
+  }
+  @media (min-width:620px){ .color-grid{ grid-template-columns:repeat(4,1fr); } }
+  .color-btn{
+    font:inherit; font-size:23px; font-weight:900; color:#fff;
+    min-height:76px; padding:12px 8px; border-radius:16px;
+    border:3px solid rgba(0,0,0,.18); cursor:pointer;
+    text-shadow:0 1px 3px rgba(0,0,0,.4);
+    line-height:1.2;
+  }
+  .color-btn:active{ transform:scale(.97); }
+  .color-btn:disabled{ opacity:.45; cursor:default; transform:none; }
+
+  /* Big action buttons */
+  .btn{
+    font:inherit; font-weight:900; cursor:pointer; border-radius:16px;
+    min-height:68px; padding:14px 26px; font-size:24px; width:100%;
+    border:3px solid var(--accent);
+  }
+  .btn-primary{ background:var(--accent); color:#fff; box-shadow:var(--shadow); }
+  .btn-primary:active{ background:var(--accent-dark); }
+  .btn-ghost{ background:var(--card); color:var(--accent-dark); }
+  .btn-row{ display:flex; flex-direction:column; gap:12px; }
+  @media (min-width:620px){ .btn-row{ flex-direction:row; } .btn-row .btn{ flex:1; } }
+  .btn-small{ min-height:56px; font-size:20px; padding:10px 18px; }
+
+  /* Feedback */
+  .feedback{
+    border-radius:16px; padding:20px; text-align:center; margin-bottom:20px;
+    font-size:24px; font-weight:800;
+  }
+  .feedback.good{ background:var(--good-bg); color:var(--good); border:2px solid var(--good); }
+  .feedback.bad{ background:var(--bad-bg); color:var(--bad); border:2px solid var(--bad); }
+  .feedback .big{ font-size:32px; display:block; margin-bottom:6px; }
+  .answer-recap{ font-size:21px; font-weight:700; color:var(--ink); margin-top:10px; }
+
+  /* Final */
+  .final-score{ font-size:56px; font-weight:900; text-align:center; color:var(--accent-dark); margin:6px 0; }
+  .final-msg{ font-size:25px; font-weight:800; text-align:center; margin:0 0 8px; }
+  .final-sub{ font-size:21px; text-align:center; color:var(--ink-soft); margin:0 0 22px; font-weight:600; }
+
+  /* Info sections */
+  h2{ font-size:30px; font-weight:900; margin:0 0 14px; }
+  .howto-list{ margin:0; padding-left:30px; font-size:22px; font-weight:600; }
+  .howto-list li{ margin-bottom:12px; }
+  table.diff{ width:100%; border-collapse:collapse; font-size:21px; }
+  table.diff th, table.diff td{ padding:12px 10px; text-align:left; border-bottom:2px solid var(--line); }
+  table.diff th{ font-weight:900; background:var(--bg-soft); }
+  table.diff td:first-child{ font-weight:900; white-space:nowrap; }
+  .tips-list{ margin:0; padding:0; list-style:none; font-size:22px; font-weight:600; }
+  .tips-list li{ margin-bottom:14px; padding-left:40px; position:relative; }
+  .tips-list li::before{
+    content:""; position:absolute; left:2px; top:8px; width:20px; height:20px;
+    border-radius:50%; background:var(--accent);
+  }
+  .reshuffle-wrap{ text-align:center; margin-bottom:24px; }
+  footer{ text-align:center; color:var(--ink-soft); font-size:18px; font-weight:600; }
+  [hidden]{ display:none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <nav class="lang-bar" aria-label="Language">
+    <button type="button" class="lang-btn" data-lang="ko" aria-pressed="true">한국어</button>
+    <button type="button" class="lang-btn" data-lang="en" aria-pressed="false">English</button>
+    <button type="button" class="lang-btn" data-lang="ja" aria-pressed="false">日本語</button>
+  </nav>
+
+  <header class="top">
+    <span class="day-badge" data-i18n="badge">Day 9 · 오늘의 두뇌운동</span>
+    <h1 data-i18n="title">색깔 단어 기억하기</h1>
+    <p class="subtitle" data-i18n="subtitle">색깔 단어의 순서를 외우고, 같은 순서로 눌러 보세요.</p>
+  </header>
+
+  <!-- GAME CARD -->
+  <section class="card" id="gameCard" aria-live="polite">
+    <div class="progress-row">
+      <span class="round-label" id="roundLabel">1단계 / 5단계</span>
+      <span class="score-label" id="scoreLabel">맞힌 단계: 0</span>
+    </div>
+    <div class="dots" id="dots" aria-hidden="true">
+      <span class="dot now"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    </div>
+
+    <!-- Memorize phase -->
+    <div id="phaseMemorize">
+      <p class="phase-title" data-i18n="memorizeTitle">순서대로 외워 보세요</p>
+      <p class="phase-desc" data-i18n="memorizeDesc">시간 제한이 없어요. 천천히, 소리 내어 읽어 보세요.</p>
+      <div class="word-row" id="wordRow"></div>
+      <button type="button" class="btn btn-primary" id="btnMemorized" data-i18n="btnMemorized">다 외웠어요</button>
+    </div>
+
+    <!-- Answer phase -->
+    <div id="phaseAnswer" hidden>
+      <p class="phase-title" data-i18n="answerTitle">어떤 순서였을까요?</p>
+      <p class="phase-desc" data-i18n="answerDesc">외운 순서대로 색깔 버튼을 눌러 주세요.</p>
+      <div class="slots" id="slots"></div>
+      <div class="color-grid" id="colorGrid"></div>
+      <button type="button" class="btn btn-ghost btn-small" id="btnUndo" data-i18n="btnUndo">하나 지우기</button>
+    </div>
+
+    <!-- Feedback phase -->
+    <div id="phaseFeedback" hidden>
+      <div class="feedback" id="feedbackBox"></div>
+      <div class="word-row" id="recapRow"></div>
+      <button type="button" class="btn btn-primary" id="btnNext" data-i18n="btnNext">다음 단계로</button>
+    </div>
+
+    <!-- Final phase -->
+    <div id="phaseFinal" hidden>
+      <p class="phase-title" data-i18n="finalTitle">오늘의 운동 끝!</p>
+      <p class="final-score" id="finalScore">5 / 5</p>
+      <p class="final-msg" id="finalMsg"></p>
+      <p class="final-sub" data-i18n="finalSub">매일 조금씩 하면 기억력이 튼튼해져요.</p>
+      <div class="btn-row">
+        <button type="button" class="btn btn-ghost" id="btnRetrySame" data-i18n="btnRetry">같은 문제 다시 하기</button>
+        <button type="button" class="btn btn-primary" id="btnNewSetFinal" data-i18n="btnNewSet">새로운 것으로 다시 하기</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="reshuffle-wrap">
+    <button type="button" class="btn btn-ghost" id="btnNewSet" style="max-width:520px;" data-i18n="btnNewSet">새로운 것으로 다시 하기</button>
+  </div>
+
+  <!-- HOW TO -->
+  <section class="card">
+    <h2 data-i18n="howtoTitle">이렇게 해 보세요</h2>
+    <ol class="howto-list">
+      <li data-i18n="howto1">화면에 색깔 단어들이 순서대로 나와요. 각 단어는 자기 색깔로 쓰여 있어요.</li>
+      <li data-i18n="howto2">시간 제한은 없어요. 순서를 충분히 외울 때까지 천천히 보세요.</li>
+      <li data-i18n="howto3">다 외우면 「다 외웠어요」 버튼을 눌러 주세요. 단어가 사라져요.</li>
+      <li data-i18n="howto4">아래의 큰 색깔 버튼을 외운 순서대로 하나씩 눌러 주세요.</li>
+      <li data-i18n="howto5">맞았는지 바로 알려 드려요. 모두 5단계까지 해 보세요.</li>
+    </ol>
+  </section>
+
+  <!-- DIFFICULTY -->
+  <section class="card">
+    <h2 data-i18n="diffTitle">단계별 난이도</h2>
+    <table class="diff">
+      <thead>
+        <tr><th data-i18n="diffColRound">단계</th><th data-i18n="diffColCount">외울 단어</th><th data-i18n="diffColFeel">느낌</th></tr>
+      </thead>
+      <tbody>
+        <tr><td data-i18n="r1">1단계</td><td data-i18n="c3">3개</td><td data-i18n="f1">가볍게 시작해요</td></tr>
+        <tr><td data-i18n="r2">2단계</td><td data-i18n="c4">4개</td><td data-i18n="f2">조금 더 집중해요</td></tr>
+        <tr><td data-i18n="r3">3단계</td><td data-i18n="c5">5개</td><td data-i18n="f3">이야기처럼 묶어 외워요</td></tr>
+        <tr><td data-i18n="r4">4단계</td><td data-i18n="c6">6개</td><td data-i18n="f4">앞부분과 뒷부분으로 나눠요</td></tr>
+        <tr><td data-i18n="r5">5단계</td><td data-i18n="c7">7개</td><td data-i18n="f5">오늘의 마지막 도전!</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- TIPS -->
+  <section class="card">
+    <h2 data-i18n="tipsTitle">잘 외우는 요령</h2>
+    <ul class="tips-list">
+      <li data-i18n="tip1">소리 내어 읽어 보세요. 눈과 귀와 입을 함께 쓰면 더 잘 외워져요.</li>
+      <li data-i18n="tip2">색깔을 차례로 떠올리며 작은 이야기를 만들어 보세요. 예) 빨간 사과를 먹고, 파란 하늘을 봤어요.</li>
+      <li data-i18n="tip3">세 개씩 묶어서 외워 보세요. 7개도 3개 + 4개로 나누면 쉬워요.</li>
+      <li data-i18n="tip4">틀려도 괜찮아요. 정답 순서를 한 번 더 보는 것도 좋은 공부예요.</li>
+      <li data-i18n="tip5">매일 같은 시간에 가볍게 해 보세요. 꾸준함이 가장 큰 힘이에요.</li>
+    </ul>
+  </section>
+
+  <footer data-i18n="footer">오늘의 두뇌운동 · 뇌건강 놀이터</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- Colors ---------- */
+  var COLORS = [
+    { id:"red",    hex:"#D32F2F", dark:false, ko:"빨강",   en:"Red",      ja:"赤" },
+    { id:"blue",   hex:"#1565C0", dark:false, ko:"파랑",   en:"Blue",     ja:"青" },
+    { id:"yellow", hex:"#C78A00", dark:false, ko:"노랑",   en:"Yellow",   ja:"黄" },
+    { id:"green",  hex:"#2E7D32", dark:false, ko:"초록",   en:"Green",    ja:"緑" },
+    { id:"purple", hex:"#7B1FA2", dark:false, ko:"보라",   en:"Purple",   ja:"紫" },
+    { id:"orange", hex:"#E65100", dark:false, ko:"주황",   en:"Orange",   ja:"オレンジ" },
+    { id:"pink",   hex:"#C2185B", dark:false, ko:"분홍",   en:"Pink",     ja:"ピンク" },
+    { id:"sky",    hex:"#0288D1", dark:false, ko:"하늘색", en:"Sky Blue", ja:"水色" }
+  ];
+  /* Button background uses a slightly richer hex for yellow so white text stays readable */
+  var BTN_HEX = { red:"#D32F2F", blue:"#1565C0", yellow:"#B87A00", green:"#2E7D32",
+                  purple:"#7B1FA2", orange:"#E65100", pink:"#C2185B", sky:"#0277BD" };
+
+  /* ---------- i18n ---------- */
+  var T = {
+    ko: {
+      badge:"Day 9 · 오늘의 두뇌운동",
+      title:"색깔 단어 기억하기",
+      subtitle:"색깔 단어의 순서를 외우고, 같은 순서로 눌러 보세요.",
+      memorizeTitle:"순서대로 외워 보세요",
+      memorizeDesc:"시간 제한이 없어요. 천천히, 소리 내어 읽어 보세요.",
+      btnMemorized:"다 외웠어요",
+      answerTitle:"어떤 순서였을까요?",
+      answerDesc:"외운 순서대로 색깔 버튼을 눌러 주세요.",
+      btnUndo:"하나 지우기",
+      btnNext:"다음 단계로",
+      btnFinish:"결과 보기",
+      finalTitle:"오늘의 운동 끝!",
+      finalSub:"매일 조금씩 하면 기억력이 튼튼해져요.",
+      btnRetry:"같은 문제 다시 하기",
+      btnNewSet:"새로운 것으로 다시 하기",
+      roundLabel:function(r){ return r + "단계 / 5단계"; },
+      scoreLabel:function(s){ return "맞힌 단계: " + s; },
+      correctBig:"정답이에요!",
+      correctMsg:"순서를 정확히 기억하셨어요. 참 잘하셨어요!",
+      wrongBig:"아쉬워요, 조금 달랐어요",
+      wrongMsg:"아래가 정답 순서예요. 한 번 더 눈에 담아 보세요.",
+      recapLabel:"정답 순서",
+      finalScoreText:function(s){ return s + " / 5"; },
+      finalMsg5:"완벽해요! 다섯 단계를 모두 맞히셨어요. 오늘 기억력이 반짝반짝 빛나요!",
+      finalMsg4:"대단해요! 거의 다 맞히셨어요. 아주 훌륭한 기억력이에요!",
+      finalMsg3:"잘하셨어요! 절반 넘게 맞히셨네요. 내일도 함께 해요.",
+      finalMsg2:"좋은 시작이에요! 외우는 요령을 읽고 한 번 더 해 보세요.",
+      finalMsg1:"오늘도 끝까지 해내셨어요. 하는 것 자체가 훌륭한 운동이에요!",
+      finalMsg0:"끝까지 해내신 것만으로 충분히 훌륭해요. 요령을 보고 다시 도전해 보세요!",
+      howtoTitle:"이렇게 해 보세요",
+      howto1:"화면에 색깔 단어들이 순서대로 나와요. 각 단어는 자기 색깔로 쓰여 있어요.",
+      howto2:"시간 제한은 없어요. 순서를 충분히 외울 때까지 천천히 보세요.",
+      howto3:"다 외우면 「다 외웠어요」 버튼을 눌러 주세요. 단어가 사라져요.",
+      howto4:"아래의 큰 색깔 버튼을 외운 순서대로 하나씩 눌러 주세요.",
+      howto5:"맞았는지 바로 알려 드려요. 모두 5단계까지 해 보세요.",
+      diffTitle:"단계별 난이도",
+      diffColRound:"단계", diffColCount:"외울 단어", diffColFeel:"느낌",
+      r1:"1단계", r2:"2단계", r3:"3단계", r4:"4단계", r5:"5단계",
+      c3:"3개", c4:"4개", c5:"5개", c6:"6개", c7:"7개",
+      f1:"가볍게 시작해요", f2:"조금 더 집중해요", f3:"이야기처럼 묶어 외워요",
+      f4:"앞부분과 뒷부분으로 나눠요", f5:"오늘의 마지막 도전!",
+      tipsTitle:"잘 외우는 요령",
+      tip1:"소리 내어 읽어 보세요. 눈과 귀와 입을 함께 쓰면 더 잘 외워져요.",
+      tip2:"색깔을 차례로 떠올리며 작은 이야기를 만들어 보세요. 예) 빨간 사과를 먹고, 파란 하늘을 봤어요.",
+      tip3:"세 개씩 묶어서 외워 보세요. 7개도 3개 + 4개로 나누면 쉬워요.",
+      tip4:"틀려도 괜찮아요. 정답 순서를 한 번 더 보는 것도 좋은 공부예요.",
+      tip5:"매일 같은 시간에 가볍게 해 보세요. 꾸준함이 가장 큰 힘이에요.",
+      footer:"오늘의 두뇌운동 · 뇌건강 놀이터"
+    },
+    en: {
+      badge:"Day 9 · Daily Brain Exercise",
+      title:"Remember the Color Words",
+      subtitle:"Memorize the order of the color words, then tap them in the same order.",
+      memorizeTitle:"Memorize them in order",
+      memorizeDesc:"There is no time limit. Take your time and read them out loud.",
+      btnMemorized:"I've memorized them",
+      answerTitle:"What was the order?",
+      answerDesc:"Tap the color buttons in the order you memorized.",
+      btnUndo:"Undo one",
+      btnNext:"Next round",
+      btnFinish:"See my result",
+      finalTitle:"Today's exercise is done!",
+      finalSub:"A little every day keeps your memory strong.",
+      btnRetry:"Try the same set again",
+      btnNewSet:"Play again with new colors",
+      roundLabel:function(r){ return "Round " + r + " of 5"; },
+      scoreLabel:function(s){ return "Rounds correct: " + s; },
+      correctBig:"That's right!",
+      correctMsg:"You remembered the order perfectly. Very well done!",
+      wrongBig:"So close — it was a little different",
+      wrongMsg:"The correct order is below. Take another good look at it.",
+      recapLabel:"Correct order",
+      finalScoreText:function(s){ return s + " / 5"; },
+      finalMsg5:"Perfect! You got all five rounds right. Your memory is shining today!",
+      finalMsg4:"Wonderful! You got almost all of them right. What an excellent memory!",
+      finalMsg3:"Well done! You got more than half right. Let's play again tomorrow.",
+      finalMsg2:"A good start! Read the memory tips and give it another try.",
+      finalMsg1:"You finished all the way to the end today. Playing itself is great exercise!",
+      finalMsg0:"Finishing to the end is already wonderful. Check the tips and try once more!",
+      howtoTitle:"How to play",
+      howto1:"Color words appear in order on the screen. Each word is written in its own color.",
+      howto2:"There is no time limit. Look as long as you need until you remember the order.",
+      howto3:"When you are ready, tap “I've memorized them.” The words will disappear.",
+      howto4:"Tap the big color buttons below, one by one, in the order you memorized.",
+      howto5:"You will see right away if you were correct. Play all 5 rounds.",
+      diffTitle:"Difficulty by round",
+      diffColRound:"Round", diffColCount:"Words to remember", diffColFeel:"How it feels",
+      r1:"Round 1", r2:"Round 2", r3:"Round 3", r4:"Round 4", r5:"Round 5",
+      c3:"3 words", c4:"4 words", c5:"5 words", c6:"6 words", c7:"7 words",
+      f1:"A gentle start", f2:"A little more focus", f3:"Group them like a story",
+      f4:"Split into front and back halves", f5:"Today's final challenge!",
+      tipsTitle:"Tips for remembering",
+      tip1:"Read the words out loud. Using your eyes, ears, and voice together helps a lot.",
+      tip2:"Make a little story with the colors in order. For example: I ate a red apple and saw a blue sky.",
+      tip3:"Group them in threes. Even 7 words get easier as 3 + 4.",
+      tip4:"It's okay to miss. Looking at the correct order once more is good practice too.",
+      tip5:"Play lightly at the same time every day. Steady practice is the greatest strength.",
+      footer:"Daily Brain Exercise · Brain Health Playground"
+    },
+    ja: {
+      badge:"Day 9 · 今日の脳トレ",
+      title:"色の言葉をおぼえよう",
+      subtitle:"色の言葉の順番をおぼえて、同じ順番で押してみましょう。",
+      memorizeTitle:"順番どおりにおぼえましょう",
+      memorizeDesc:"時間制限はありません。ゆっくり、声に出して読んでみましょう。",
+      btnMemorized:"おぼえました",
+      answerTitle:"どんな順番でしたか？",
+      answerDesc:"おぼえた順番どおりに色のボタンを押してください。",
+      btnUndo:"1つ消す",
+      btnNext:"次のステップへ",
+      btnFinish:"結果を見る",
+      finalTitle:"今日のトレーニング終了！",
+      finalSub:"毎日少しずつ続けると、記憶力が元気になります。",
+      btnRetry:"同じ問題をもう一度",
+      btnNewSet:"新しいものでもう一度",
+      roundLabel:function(r){ return r + "ステップ / 5ステップ"; },
+      scoreLabel:function(s){ return "正解したステップ: " + s; },
+      correctBig:"正解です！",
+      correctMsg:"順番を正確におぼえていました。とても上手です！",
+      wrongBig:"おしいです、少し違いました",
+      wrongMsg:"下が正解の順番です。もう一度よく見てみましょう。",
+      recapLabel:"正解の順番",
+      finalScoreText:function(s){ return s + " / 5"; },
+      finalMsg5:"完璧です！5ステップすべて正解しました。今日の記憶力はピカピカです！",
+      finalMsg4:"すごいです！ほとんど正解しました。素晴らしい記憶力ですね！",
+      finalMsg3:"よくできました！半分以上正解ですね。明日も一緒にしましょう。",
+      finalMsg2:"良いスタートです！おぼえるコツを読んで、もう一度やってみましょう。",
+      finalMsg1:"今日も最後までやり遂げました。続けること自体が素晴らしい運動です！",
+      finalMsg0:"最後までできただけでも十分すごいです。コツを見て、もう一度挑戦してみましょう！",
+      howtoTitle:"遊び方",
+      howto1:"画面に色の言葉が順番に並びます。それぞれの言葉は、その色で書かれています。",
+      howto2:"時間制限はありません。順番をしっかりおぼえるまで、ゆっくり見てください。",
+      howto3:"おぼえたら「おぼえました」ボタンを押してください。言葉が消えます。",
+      howto4:"下の大きな色のボタンを、おぼえた順番どおりに1つずつ押してください。",
+      howto5:"正解かどうかすぐにお知らせします。全部で5ステップやってみましょう。",
+      diffTitle:"ステップごとの難しさ",
+      diffColRound:"ステップ", diffColCount:"おぼえる言葉", diffColFeel:"感じ",
+      r1:"1ステップ", r2:"2ステップ", r3:"3ステップ", r4:"4ステップ", r5:"5ステップ",
+      c3:"3つ", c4:"4つ", c5:"5つ", c6:"6つ", c7:"7つ",
+      f1:"軽く始めましょう", f2:"もう少し集中します", f3:"物語のようにまとめておぼえましょう",
+      f4:"前半と後半に分けましょう", f5:"今日の最後の挑戦！",
+      tipsTitle:"上手におぼえるコツ",
+      tip1:"声に出して読んでみましょう。目と耳と口を一緒に使うと、よくおぼえられます。",
+      tip2:"色を順番に思い浮かべて、小さな物語を作ってみましょう。例）赤いリンゴを食べて、青い空を見ました。",
+      tip3:"3つずつまとめておぼえましょう。7つも3つ＋4つに分けると簡単です。",
+      tip4:"間違えても大丈夫です。正解の順番をもう一度見ることも良い勉強です。",
+      tip5:"毎日同じ時間に軽くやってみましょう。続けることが一番の力です。",
+      footer:"今日の脳トレ · 脳健康あそび場"
+    }
+  };
+
+  var lang = "ko";
+
+  /* ---------- Seeded RNG (mulberry32) ---------- */
+  function hashSeed(str){
+    var h = 2166136261;
+    for (var i = 0; i < str.length; i++){
+      h ^= str.charCodeAt(i);
+      h = (h * 16777619) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function mulberry32(seed){
+    var a = seed >>> 0;
+    return function(){
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      var t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function todayKey(){
+    var d = new Date();
+    var m = String(d.getMonth() + 1); if (m.length < 2) m = "0" + m;
+    var day = String(d.getDate()); if (day.length < 2) day = "0" + day;
+    return d.getFullYear() + "-" + m + "-" + day;
+  }
+  function buildRounds(rand){
+    var rounds = [];
+    var lengths = [3, 4, 5, 6, 7];
+    for (var r = 0; r < lengths.length; r++){
+      var seq = [];
+      var prev = -1;
+      for (var i = 0; i < lengths[r]; i++){
+        var idx;
+        do { idx = Math.floor(rand() * COLORS.length); } while (idx === prev);
+        seq.push(idx);
+        prev = idx;
+      }
+      rounds.push(seq);
+    }
+    return rounds;
+  }
+
+  /* ---------- State ---------- */
+  var rounds = buildRounds(mulberry32(hashSeed("day9-colors-" + todayKey())));
+  var roundIdx = 0;      /* 0..4 */
+  var picked = [];       /* indices into COLORS */
+  var score = 0;
+  var phase = "memorize"; /* memorize | answer | feedback | final */
+
+  /* ---------- DOM ---------- */
+  function $(id){ return document.getElementById(id); }
+  var roundLabel = $("roundLabel"), scoreLabel = $("scoreLabel"), dotsEl = $("dots");
+  var phMem = $("phaseMemorize"), phAns = $("phaseAnswer"), phFb = $("phaseFeedback"), phFin = $("phaseFinal");
+  var wordRow = $("wordRow"), slotsEl = $("slots"), colorGrid = $("colorGrid");
+  var feedbackBox = $("feedbackBox"), recapRow = $("recapRow");
+
+  function colorName(c){ return c[lang]; }
+
+  function renderDots(){
+    var dots = dotsEl.children;
+    for (var i = 0; i < dots.length; i++){
+      dots[i].className = "dot" + (i < roundIdx ? " done" : (i === roundIdx && phase !== "final" ? " now" : ""));
+    }
+    if (phase === "final"){
+      for (var j = 0; j < dots.length; j++) dots[j].className = "dot done";
+    }
+  }
+
+  function renderHeader(){
+    roundLabel.textContent = T[lang].roundLabel(Math.min(roundIdx + 1, 5));
+    scoreLabel.textContent = T[lang].scoreLabel(score);
+    renderDots();
+  }
+
+  function showPhase(p){
+    phase = p;
+    phMem.hidden = p !== "memorize";
+    phAns.hidden = p !== "answer";
+    phFb.hidden  = p !== "feedback";
+    phFin.hidden = p !== "final";
+    renderHeader();
+  }
+
+  function renderWords(){
+    wordRow.innerHTML = "";
+    var seq = rounds[roundIdx];
+    for (var i = 0; i < seq.length; i++){
+      var c = COLORS[seq[i]];
+      var chip = document.createElement("div");
+      chip.className = "word-chip";
+      var num = document.createElement("span");
+      num.className = "word-num";
+      num.textContent = (i + 1);
+      var w = document.createElement("span");
+      w.className = "word-text";
+      w.style.color = c.hex;
+      w.textContent = colorName(c);
+      chip.appendChild(num);
+      chip.appendChild(w);
+      wordRow.appendChild(chip);
+    }
+  }
+
+  function renderColorButtons(){
+    colorGrid.innerHTML = "";
+    for (var i = 0; i < COLORS.length; i++){
+      (function(idx){
+        var c = COLORS[idx];
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "color-btn";
+        b.style.background = BTN_HEX[c.id];
+        b.textContent = colorName(c);
+        b.addEventListener("click", function(){ pickColor(idx); });
+        colorGrid.appendChild(b);
+      })(i);
+    }
+  }
+
+  function renderSlots(){
+    slotsEl.innerHTML = "";
+    var seq = rounds[roundIdx];
+    for (var i = 0; i < seq.length; i++){
+      var s = document.createElement("div");
+      if (i < picked.length){
+        var c = COLORS[picked[i]];
+        s.className = "slot filled";
+        s.style.background = BTN_HEX[c.id];
+        s.textContent = colorName(c);
+      } else {
+        s.className = "slot";
+        s.textContent = (i + 1);
+      }
+      slotsEl.appendChild(s);
+    }
+    $("btnUndo").disabled = picked.length === 0;
+    $("btnUndo").style.opacity = picked.length === 0 ? ".5" : "1";
+  }
+
+  function startRound(){
+    picked = [];
+    renderWords();
+    renderColorButtons();
+    renderSlots();
+    showPhase("memorize");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function pickColor(idx){
+    if (phase !== "answer") return;
+    var seq = rounds[roundIdx];
+    if (picked.length >= seq.length) return;
+    picked.push(idx);
+    renderSlots();
+    if (picked.length === seq.length){
+      checkAnswer();
+    }
+  }
+
+  function checkAnswer(){
+    var seq = rounds[roundIdx];
+    var ok = true;
+    for (var i = 0; i < seq.length; i++){
+      if (picked[i] !== seq[i]) { ok = false; break; }
+    }
+    if (ok) score++;
+    var t = T[lang];
+    feedbackBox.className = "feedback " + (ok ? "good" : "bad");
+    feedbackBox.innerHTML = "";
+    var big = document.createElement("span");
+    big.className = "big";
+    big.textContent = ok ? "🎉 " + t.correctBig : t.wrongBig;
+    var msg = document.createElement("span");
+    msg.textContent = ok ? t.correctMsg : t.wrongMsg;
+    var recapLabel = document.createElement("div");
+    recapLabel.className = "answer-recap";
+    recapLabel.textContent = t.recapLabel;
+    feedbackBox.appendChild(big);
+    feedbackBox.appendChild(msg);
+    feedbackBox.appendChild(recapLabel);
+
+    recapRow.innerHTML = "";
+    for (var j = 0; j < seq.length; j++){
+      var c = COLORS[seq[j]];
+      var chip = document.createElement("div");
+      chip.className = "word-chip";
+      var num = document.createElement("span");
+      num.className = "word-num";
+      num.textContent = (j + 1);
+      var w = document.createElement("span");
+      w.className = "word-text";
+      w.style.color = c.hex;
+      w.textContent = colorName(c);
+      chip.appendChild(num);
+      chip.appendChild(w);
+      recapRow.appendChild(chip);
+    }
+    $("btnNext").textContent = (roundIdx === 4) ? t.btnFinish : t.btnNext;
+    showPhase("feedback");
+  }
+
+  function showFinal(){
+    var t = T[lang];
+    $("finalScore").textContent = t.finalScoreText(score);
+    var key = "finalMsg" + score;
+    $("finalMsg").textContent = t[key] || t.finalMsg0;
+    showPhase("final");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function restart(newSeed){
+    if (newSeed){
+      rounds = buildRounds(mulberry32((Math.random() * 0xFFFFFFFF) >>> 0));
+    }
+    roundIdx = 0;
+    score = 0;
+    startRound();
+  }
+
+  /* ---------- Language ---------- */
+  function applyLang(){
+    var t = T[lang];
+    document.documentElement.lang = lang === "ja" ? "ja" : (lang === "en" ? "en" : "ko");
+    var nodes = document.querySelectorAll("[data-i18n]");
+    for (var i = 0; i < nodes.length; i++){
+      var key = nodes[i].getAttribute("data-i18n");
+      if (t[key]) nodes[i].textContent = t[key];
+    }
+    var btns = document.querySelectorAll(".lang-btn");
+    for (var j = 0; j < btns.length; j++){
+      btns[j].setAttribute("aria-pressed", btns[j].getAttribute("data-lang") === lang ? "true" : "false");
+    }
+    /* Re-render dynamic content in the new language */
+    renderWords();
+    renderColorButtons();
+    renderSlots();
+    if (phase === "feedback"){
+      /* Keep feedback text consistent: re-run render of feedback box */
+      var seq = rounds[roundIdx];
+      var wasCorrect = feedbackBox.className.indexOf("good") !== -1;
+      feedbackBox.innerHTML = "";
+      var big = document.createElement("span");
+      big.className = "big";
+      big.textContent = wasCorrect ? "🎉 " + t.correctBig : t.wrongBig;
+      var msg = document.createElement("span");
+      msg.textContent = wasCorrect ? t.correctMsg : t.wrongMsg;
+      var recapLabel = document.createElement("div");
+      recapLabel.className = "answer-recap";
+      recapLabel.textContent = t.recapLabel;
+      feedbackBox.appendChild(big);
+      feedbackBox.appendChild(msg);
+      feedbackBox.appendChild(recapLabel);
+      recapRow.innerHTML = "";
+      for (var k = 0; k < seq.length; k++){
+        var c = COLORS[seq[k]];
+        var chip = document.createElement("div");
+        chip.className = "word-chip";
+        var num = document.createElement("span");
+        num.className = "word-num";
+        num.textContent = (k + 1);
+        var w = document.createElement("span");
+        w.className = "word-text";
+        w.style.color = c.hex;
+        w.textContent = colorName(c);
+        chip.appendChild(num);
+        chip.appendChild(w);
+        recapRow.appendChild(chip);
+      }
+      $("btnNext").textContent = (roundIdx === 4) ? t.btnFinish : t.btnNext;
+    }
+    if (phase === "final"){
+      $("finalScore").textContent = t.finalScoreText(score);
+      $("finalMsg").textContent = t["finalMsg" + score] || t.finalMsg0;
+    }
+    renderHeader();
+  }
+
+  /* ---------- Events ---------- */
+  var langBtns = document.querySelectorAll(".lang-btn");
+  for (var i = 0; i < langBtns.length; i++){
+    langBtns[i].addEventListener("click", function(){
+      lang = this.getAttribute("data-lang");
+      applyLang();
+    });
+  }
+  $("btnMemorized").addEventListener("click", function(){
+    picked = [];
+    renderSlots();
+    showPhase("answer");
+  });
+  $("btnUndo").addEventListener("click", function(){
+    if (picked.length > 0){ picked.pop(); renderSlots(); }
+  });
+  $("btnNext").addEventListener("click", function(){
+    if (roundIdx === 4){ showFinal(); }
+    else { roundIdx++; startRound(); }
+  });
+  $("btnRetrySame").addEventListener("click", function(){ restart(false); });
+  $("btnNewSet").addEventListener("click", function(){ restart(true); });
+  $("btnNewSetFinal").addEventListener("click", function(){ restart(true); });
+
+  /* ---------- Init ---------- */
+  startRound();
+})();
+</script>
+</body>
+</html>

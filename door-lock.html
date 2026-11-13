@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>도어락 안심 실습기</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior: none;
+    }
+    .doorlock-body {
+      background: linear-gradient(145deg, #24272c, #121417);
+      box-shadow:
+        0 15px 40px rgba(0, 0, 0, 0.7),
+        inset 0 2px 3px rgba(255, 255, 255, 0.15),
+        inset 0 -4px 8px rgba(0, 0, 0, 0.6);
+      border: 3px solid #383c44;
+    }
+    .doorlock-screen {
+      background: radial-gradient(circle at 50% 35%, #19222b 0%, #0d1117 100%);
+      box-shadow: inset 0 3px 10px rgba(0, 0, 0, 0.85);
+    }
+    .key-btn {
+      transition: all 0.08s cubic-bezier(0.4, 0, 0.2, 1);
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid rgba(255, 255, 255, 0.14);
+      text-shadow: 0 0 12px rgba(186, 230, 253, 0.6);
+    }
+    .key-btn:active, .key-btn.pressed {
+      transform: scale(0.94);
+      background: rgba(56, 189, 248, 0.32) !important;
+      border-color: #38bdf8 !important;
+      color: #ffffff !important;
+      box-shadow: 0 0 18px rgba(56, 189, 248, 0.75);
+    }
+    .key-btn.sleeping {
+      color: rgba(255, 255, 255, 0.08);
+      text-shadow: none;
+      border-color: rgba(255, 255, 255, 0.04);
+      background: rgba(255, 255, 255, 0.01);
+    }
+    @keyframes pulse-hint {
+      0%, 100% {
+        box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.7), inset 0 0 10px rgba(250, 204, 21, 0.45);
+        border-color: #facc15;
+      }
+      50% {
+        box-shadow: 0 0 0 6px rgba(250, 204, 21, 0), inset 0 0 18px rgba(250, 204, 21, 0.75);
+        border-color: #fef08a;
+      }
+    }
+    .hint-glow {
+      animation: pulse-hint 1.4s infinite;
+      background: rgba(250, 204, 21, 0.2) !important;
+      color: #fef08a !important;
+    }
+    @keyframes shake-error {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-7px); }
+      40%, 80% { transform: translateX(7px); }
+    }
+    .shake {
+      animation: shake-error 0.38s ease-in-out;
+    }
+    .font-scale-normal { font-size: 1rem; }
+    .font-scale-large { font-size: 1.125rem; }
+    .font-scale-xlarge { font-size: 1.25rem; }
+  </style>
+</head>
+<body class="bg-slate-950 text-white h-[100dvh] w-full overflow-hidden flex items-center justify-center p-1.5 sm:p-3">
+
+  <!-- 키패드만 화면에 꽉 차게 나오는 메인 컨테이너 -->
+  <main id="mainContainer" class="w-full h-full flex items-center justify-center font-scale-large">
+
+    <!-- 실물형 디지털 도어락 본체 -->
+    <div id="doorlockUnit" class="doorlock-body w-full max-w-[390px] h-full max-h-[720px] rounded-[32px] sm:rounded-[40px] p-3.5 sm:p-5 text-white flex flex-col justify-between relative overflow-hidden">
+
+      <!-- 1. 상단 바 (도어락 안심 실습기 타이틀, 비밀번호 안내 & 설정 버튼) -->
+      <div class="flex items-center justify-between px-1 mb-2 shrink-0">
+        <div class="flex items-center gap-2">
+          <span class="text-xs sm:text-sm font-black text-slate-200 tracking-tight">도어락 안심 실습기</span>
+          <span class="text-xs font-extrabold bg-sky-950/90 text-sky-300 border border-sky-700/60 px-2 py-0.5 rounded-lg">
+            비번: <strong id="currentPasswordDisplay" class="tracking-widest text-white">2580</strong> + *
+          </span>
+        </div>
+        <button id="btnOpenSettings" type="button" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-xs font-bold text-slate-200 flex items-center gap-1 transition active:scale-95">
+          <span>⚙️</span>
+          <span>설정/모드</span>
+        </button>
+      </div>
+
+      <!-- 3. 3x4 터치 키패드 (*, # 아래 한글 제거, 순수 기호와 숫자만 표시) -->
+      <div class="relative flex-1 min-h-0 flex flex-col">
+        <!-- 화면 깨우기 오버레이 -->
+        <div id="wakeOverlay" class="hidden absolute inset-0 z-20 rounded-2xl bg-slate-950/92 backdrop-blur-[2px] flex flex-col items-center justify-center p-4 text-center border-2 border-amber-400/80 cursor-pointer">
+          <div class="w-16 h-16 rounded-full bg-amber-400/20 border-2 border-amber-300 flex items-center justify-center text-3xl mb-2 animate-bounce">
+            🖐️
+          </div>
+          <div class="text-lg font-black text-amber-300 mb-1">화면을 손바닥으로 터치하세요!</div>
+          <p class="text-xs text-slate-300 font-medium">
+            꺼진 숫자판을 한 번 터치하면 불이 켜집니다.
+          </p>
+        </div>
+
+        <!-- 3열 4행 숫자판 -->
+        <div id="keypadGrid" class="flex-1 min-h-0 grid grid-cols-3 grid-rows-4 gap-2 sm:gap-2.5 p-2.5 rounded-2xl bg-slate-950/90 border border-slate-800">
+          <button type="button" data-key="1" class="key-btn w-full h-full min-h-[48px] rounded-xl flex items-center justify-center text-3xl sm:text-4xl font-black text-sky-100 select-none">
+            <span>1</span>
+          </button>
+          <button type="button" data-key="2" class="key-btn w-full h-full min-h-[48px] rounded-xl flex items-center justify-center text-3xl sm:text-4xl font-black text-sky-100 select-none">
+            <span>2</span>
+          </button>
+          <button type="button" data-key="3" class="key-btn w-full h-full min-h-[48px] rounded-xl flex items-center justify-center text-3xl sm:text-4xl font-black text-sky-100 select-none">
+            <span>3</span>
+          </button>
+
+          <button type="button" data-key="4" class="key-btn w-full h-full min-h-[48px] rounded-xl flex items-center justify-center text-3xl sm:text-4xl font-black text-sky-100 select-none">
+            <span>4</span>
+          </button>
+          <button type="button" data-key="5" class="key-btn w-full h-full min-h-[48px] rounded-xl flex items-center justify-center text-3xl sm:text-4xl font-black text-sky-100 select-none">
+            <span>5</span>
+          </button>
+          <button type="button" data-key="6" class="key-btn w-full h-full min-h-[48px] rounded-xl flex items-center justify-center text-3xl sm:text-4xl font-black text-sky-100 select-none">
+            <span>6</span>
+          </button>
+
+          <button type="button" data-key="7" class="key-btn w-full h-full min-h-[48px] rounded-xl flex items-center justify-center text-3xl sm:text-4xl font-black text-sky-100 select-none">
+            <span>7</span>
+          </button>
+          <button type="button" data-key="8" class="key-btn w-full h-full min-h-[48px] rounded-xl flex items-center justify-center text-3xl sm:text-4xl font-black text-sky-100 select-none">
+            <span>8</span>
+          </button>
+          <button type="button" data-key="9" class="key-btn w-full h-full min-h-[48px] rounded-xl flex items-center justify-center text-3xl sm:text-4xl font-black text-sky-100 select-none">
+            <span>9</span>
+          </button>
+
+          <button type="button" data-key="*" class="key-btn w-full h-full min-h-[48px] rounded-xl flex items-center justify-center text-3xl sm:text-4xl font-black text-sky-100 select-none">
+            <span>*</span>
+          </button>
+          <button type="button" data-key="0" class="key-btn w-full h-full min-h-[48px] rounded-xl flex items-center justify-center text-3xl sm:text-4xl font-black text-sky-100 select-none">
+            <span>0</span>
+          </button>
+          <button type="button" data-key="#" class="key-btn w-full h-full min-h-[48px] rounded-xl flex items-center justify-center text-3xl sm:text-4xl font-black text-sky-100 select-none">
+            <span>#</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 4. 하단 카드키 / 등록 버튼 (문 닫고 다시 잠그기 버튼 제거됨) -->
+      <div class="mt-2 grid grid-cols-2 gap-2 shrink-0">
+        <button id="btnCardTag" type="button" class="py-2 px-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 border border-slate-600 flex items-center justify-center gap-1 text-xs font-bold text-sky-200 transition active:scale-95">
+          <span>💳</span>
+          <span>카드키 접촉하기</span>
+        </button>
+
+        <button id="btnRegisterMode" type="button" class="py-2 px-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 border border-slate-600 flex items-center justify-center gap-1 text-xs font-bold text-amber-200 transition active:scale-95">
+          <span>⚙️</span>
+          <span>[등록] 비번변경</span>
+        </button>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- 숨겨진 설정 및 연습 모드 모달 (상단 [⚙️ 설정/모드] 버튼을 누를 때만 열림) -->
+  <div id="settingsModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 overflow-y-auto">
+    <div class="bg-white text-slate-900 w-full max-w-lg rounded-3xl p-5 shadow-2xl max-h-[90dvh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 mb-4">
+        <h2 class="text-lg font-black text-slate-900 flex items-center gap-2">
+          <span>⚙️</span> 도어락 연습 모드 및 소리 설정
+        </h2>
+        <button id="btnCloseSettings" type="button" class="px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-700">
+          ✕ 닫기
+        </button>
+      </div>
+
+      <!-- 빠른 토글 버튼들 -->
+      <div class="flex flex-wrap gap-2 mb-4">
+        <button id="btnToggleSound" type="button" class="flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold text-xs bg-emerald-600 text-white">
+          <span id="iconSound">🔊</span>
+          <span id="labelSound">효과음 켜짐</span>
+        </button>
+
+        <button id="btnToggleVoice" type="button" class="flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold text-xs bg-sky-600 text-white">
+          <span id="iconVoice">🗣️</span>
+          <span id="labelVoice">음성안내 켜짐</span>
+        </button>
+
+        <button id="btnTestSound" type="button" class="flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold text-xs bg-slate-200 text-slate-800">
+          <span>🎵</span>
+          <span>소리 테스트</span>
+        </button>
+      </div>
+
+      <!-- 연습 모드 선택 -->
+      <div class="mb-4">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-extrabold text-slate-600">연습할 과정을 선택하세요 (선택 시 바로 키패드로 이동)</span>
+          <span id="practiceCountBadge" class="text-xs font-bold bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-full border border-emerald-200">
+            성공 횟수: 0회
+          </span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2" id="modeButtonGroup">
+          <button type="button" data-mode="basic" class="mode-tab text-left p-2.5 rounded-xl border-2 border-sky-600 bg-sky-50 transition flex items-start gap-2">
+            <span class="text-lg">1️⃣</span>
+            <div>
+              <div class="font-extrabold text-slate-900 text-xs">기본 문 열기 연습</div>
+              <div class="text-[11px] text-slate-600">비밀번호 누르고 별표(*) 눌러 열기</div>
+            </div>
+          </button>
+
+          <button type="button" data-mode="wake" class="mode-tab text-left p-2.5 rounded-xl border-2 border-slate-200 bg-white transition flex items-start gap-2">
+            <span class="text-lg">2️⃣</span>
+            <div>
+              <div class="font-extrabold text-slate-900 text-xs">화면 깨워서 열기 연습</div>
+              <div class="text-[11px] text-slate-600">꺼진 화면을 손바닥으로 터치해 깨우기</div>
+            </div>
+          </button>
+
+          <button type="button" data-mode="change" class="mode-tab text-left p-2.5 rounded-xl border-2 border-slate-200 bg-white transition flex items-start gap-2">
+            <span class="text-lg">3️⃣</span>
+            <div>
+              <div class="font-extrabold text-slate-900 text-xs">비밀번호 바꾸기 연습</div>
+              <div class="text-[11px] text-slate-600">[등록] 버튼 누르고 새 번호 + 별표(*)</div>
+            </div>
+          </button>
+
+          <button type="button" data-mode="free" class="mode-tab text-left p-2.5 rounded-xl border-2 border-slate-200 bg-white transition flex items-start gap-2">
+            <span class="text-lg">4️⃣</span>
+            <div>
+              <div class="font-extrabold text-slate-900 text-xs">자유롭게 눌러보기</div>
+              <div class="text-[11px] text-slate-600">숫자키 소리와 카드키를 마음껏 체험</div>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- 현재 단계 안내 요약 -->
+      <div class="bg-slate-50 rounded-2xl p-3.5 border border-slate-200 mb-4">
+        <div class="flex items-center justify-between gap-2 mb-2">
+          <span id="stepBadge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-100 text-sky-800">
+            진행 단계: 1 / 5
+          </span>
+          <button id="btnResetStep" type="button" class="text-xs font-bold text-slate-700 bg-white border border-slate-300 px-2.5 py-1 rounded-lg">
+            🔄 처음부터 다시 하기
+          </button>
+        </div>
+        <div class="text-xs font-bold text-sky-700" id="guideSubTitle">지금 따라 해보세요</div>
+        <p id="guideMainText" class="text-sm font-extrabold text-slate-900 mt-0.5">
+          도어락에서 비밀번호를 누르고 별표(*)를 눌러주세요.
+        </p>
+        <div class="mt-2 flex items-center justify-between text-xs">
+          <span class="text-slate-500 font-bold">입력된 번호: <strong id="enteredSequenceDisplay" class="text-slate-900">없음</strong></span>
+          <button id="btnToggleMask" type="button" class="text-xs font-bold text-sky-600 underline">
+            숫자 그대로 보기 켜짐
+          </button>
+        </div>
+        <div id="sequenceStepBoxes" class="flex flex-wrap items-center gap-1.5 mt-2"></div>
+      </div>
+
+      <!-- 세부 설정 -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+          <div class="flex justify-between items-center mb-1">
+            <label for="volumeSlider" class="text-xs font-bold text-slate-700">🔊 소리 크기</label>
+            <span id="volumeValueLabel" class="text-xs font-black text-sky-700">85%</span>
+          </div>
+          <input id="volumeSlider" type="range" min="10" max="100" value="85" class="w-full accent-sky-600 h-2 bg-slate-200 rounded-lg cursor-pointer" />
+        </div>
+
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+          <label for="soundStyleSelect" class="block text-xs font-bold text-slate-700 mb-1">🎵 버튼 효과음 종류</label>
+          <select id="soundStyleSelect" class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800">
+            <option value="standard">표준 디지털 도어락 소리 (삡!)</option>
+            <option value="soft">부드러운 멜로디음 (딩동~)</option>
+            <option value="dtmf">전화기 다이얼 신호음 (뚜-)</option>
+          </select>
+        </div>
+
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+          <label for="customPwInput" class="block text-xs font-bold text-slate-700 mb-1">🔢 연습 비밀번호 변경 (4~8자리)</label>
+          <div class="flex gap-1.5">
+            <input id="customPwInput" type="text" inputmode="numeric" maxlength="8" value="2580" placeholder="2580" class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-sm font-black tracking-widest text-slate-900" />
+            <button id="btnApplyCustomPw" type="button" class="bg-slate-800 text-white font-bold text-xs px-3 py-1 rounded-lg shrink-0">
+              적용
+            </button>
+          </div>
+        </div>
+
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+          <span class="block text-xs font-bold text-slate-700 mb-1">🔍 글자 크기 조절</span>
+          <div class="grid grid-cols-3 gap-1">
+            <button type="button" data-font="normal" class="font-size-btn py-1 rounded-lg text-xs font-bold bg-white border border-slate-300 text-slate-700">보통</button>
+            <button type="button" data-font="large" class="font-size-btn py-1 rounded-lg text-xs font-bold bg-sky-600 text-white">크게</button>
+            <button type="button" data-font="xlarge" class="font-size-btn py-1 rounded-lg text-xs font-bold bg-white border border-slate-300 text-slate-700">아주 크게</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // 1. 상태 관리 (State Model)
+    // ==========================================
+    const state = {
+      mode: 'free',            // 'basic' | 'wake' | 'change' | 'free'
+      isLocked: true,          // true: 잠김, false: 열림
+      isSleeping: false,       // true: 화면 꺼짐(절전), false: 화면 켜짐
+      isRegistering: false,    // 비밀번호 변경(등록) 진행 여부
+      registerStep: 0,         // 0: 일반, 1: 등록버튼 누름 대기, 2: 새 번호 입력중, 3: 새 번호 확인 입력중
+      tempNewPassword: '',     // 변경 중인 임시 비밀번호
+      password: '2580',        // 현재 설정된 비밀번호
+      inputBuffer: '',         // 현재까지 입력된 숫자열
+      soundEnabled: true,      // 효과음 켜짐 여부
+      voiceEnabled: true,      // 음성 안내(TTS) 켜짐 여부
+      hintEnabled: true,       // 다음 누를 버튼 하이라이트 여부
+      showRawNumbers: true,    // 누른 번호를 숫자로 그대로 보여줄지 여부
+      volume: 0.85,            // 0.1 ~ 1.0
+      soundStyle: 'standard',  // 'standard' | 'soft' | 'dtmf'
+      successCount: 0,         // 연습 성공 횟수
+      autoLockTimer: null
+    };
+
+    // ==========================================
+    // 2. Web Audio API 실제 도어락 효과음 합성기
+    // ==========================================
+    let audioCtx = null;
+
+    function getAudioContext() {
+      if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+          audioCtx = new AudioContextClass();
+        }
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function playTone(freq, durationMs, delayMs = 0, type = 'sine', gainMult = 1.0) {
+      if (!state.soundEnabled) return;
+      const ctx = getAudioContext();
+      if (!ctx) return;
+
+      const startTime = ctx.currentTime + delayMs / 1000;
+      const durationSec = durationMs / 1000;
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, startTime);
+
+      const peakGain = Math.max(0.02, state.volume * 0.35 * gainMult);
+      gain.gain.setValueAtTime(0.0001, startTime);
+      gain.gain.linearRampToValueAtTime(peakGain, startTime + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, startTime + durationSec);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(startTime);
+      osc.stop(startTime + durationSec + 0.02);
+    }
+
+    const keyFrequencies = {
+      '1': 1209, '2': 1336, '3': 1477,
+      '4': 1260, '5': 1400, '6': 1540,
+      '7': 1310, '8': 1450, '9': 1600,
+      '*': 1750, '0': 1380, '#': 1100
+    };
+
+    const softScaleFrequencies = {
+      '1': 523.25, '2': 587.33, '3': 659.25,
+      '4': 698.46, '5': 783.99, '6': 880.00,
+      '7': 987.77, '8': 1046.50, '9': 1174.66,
+      '*': 1318.51, '0': 1046.50, '#': 493.88
+    };
+
+    function playKeyBeep(key) {
+      if (!state.soundEnabled) return;
+      if (state.soundStyle === 'standard') {
+        const baseFreq = 2637;
+        playTone(baseFreq, 95, 0, 'sine', 1.0);
+        playTone(baseFreq * 0.5, 95, 0, 'triangle', 0.35);
+      } else if (state.soundStyle === 'soft') {
+        const freq = softScaleFrequencies[key] || 880;
+        playTone(freq, 140, 0, 'triangle', 1.0);
+      } else {
+        const freq = keyFrequencies[key] || 1400;
+        playTone(freq, 110, 0, 'sine', 0.9);
+        playTone(770, 110, 0, 'sine', 0.6);
+      }
+    }
+
+    function playWakeSound() {
+      playTone(1318.5, 80, 0, 'sine', 0.9);
+      playTone(1567.98, 80, 85, 'sine', 0.9);
+      playTone(2093.0, 140, 170, 'sine', 1.0);
+    }
+
+    function playUnlockMelody() {
+      playTone(1046.5, 110, 0, 'sine', 1.0);
+      playTone(1318.5, 110, 115, 'sine', 1.0);
+      playTone(1567.98, 110, 230, 'sine', 1.0);
+      playTone(2093.0, 260, 345, 'sine', 1.1);
+      playTone(180, 120, 620, 'sawtooth', 0.45);
+      playTone(240, 90, 740, 'square', 0.35);
+    }
+
+    function playErrorAlarm() {
+      playTone(392, 160, 0, 'sawtooth', 0.85);
+      playTone(349.2, 160, 200, 'sawtooth', 0.85);
+      playTone(311.1, 240, 400, 'sawtooth', 0.95);
+    }
+
+    function playRegisterChime() {
+      playTone(1567.98, 100, 0, 'sine', 0.9);
+      playTone(1975.53, 100, 110, 'sine', 0.9);
+      playTone(2349.32, 200, 220, 'sine', 1.0);
+    }
+
+    function playLockSound() {
+      playTone(220, 110, 0, 'sawtooth', 0.4);
+      playTone(1567.98, 120, 140, 'sine', 0.8);
+      playTone(1046.5, 180, 270, 'sine', 0.9);
+    }
+
+    // ==========================================
+    // 3. 한국어 음성 안내 (Web Speech API)
+    // ==========================================
+    function speakKorean(text) {
+      if (!state.voiceEnabled) return;
+      if (!('speechSynthesis' in window)) return;
+      try {
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.lang = 'ko-KR';
+        utter.rate = 0.95;
+        utter.pitch = 1.0;
+        utter.volume = state.volume;
+        window.speechSynthesis.speak(utter);
+      } catch (e) {
+        // 브라우저 TTS 제한 시 무시
+      }
+    }
+
+    // ==========================================
+    // 4. 다음 누를 버튼 계산 (반짝임 힌트용)
+    // ==========================================
+    function getNextRecommendedKey() {
+      if (!state.hintEnabled) return null;
+
+      if (state.isSleeping) return 'WAKE';
+      if (state.mode === 'free' && !state.isRegistering) return null;
+
+      if (state.mode === 'change' || state.isRegistering) {
+        if (!state.isRegistering && state.registerStep === 0) {
+          return 'REGISTER_BTN';
+        }
+        if (state.registerStep === 2) {
+          const sampleNew = '2580';
+          if (state.inputBuffer.length === 0) return sampleNew[0];
+          if (state.inputBuffer.length < 4) {
+            if (sampleNew.startsWith(state.inputBuffer)) {
+              return sampleNew[state.inputBuffer.length];
+            }
+            return '0';
+          }
+          return '*';
+        }
+        if (state.registerStep === 3) {
+          const target = state.tempNewPassword;
+          if (target.startsWith(state.inputBuffer)) {
+            if (state.inputBuffer.length < target.length) {
+              return target[state.inputBuffer.length];
+            }
+            return '*';
+          }
+          return '*';
+        }
+      }
+
+      if (!state.isLocked) return null;
+
+      const target = state.password;
+      if (target.startsWith(state.inputBuffer)) {
+        if (state.inputBuffer.length < target.length) {
+          return target[state.inputBuffer.length];
+        } else {
+          return '*';
+        }
+      } else {
+        return '*';
+      }
+    }
+
+    // ==========================================
+    // 5. 도어락 키 입력 처리 로직
+    // ==========================================
+    function handleKeyPress(key) {
+      if (state.isSleeping) {
+        wakeUpScreen();
+        return;
+      }
+
+      if (!state.isLocked) {
+        if (state.autoLockTimer) {
+          clearTimeout(state.autoLockTimer);
+          state.autoLockTimer = null;
+        }
+        state.isLocked = true;
+      }
+
+      const btnEl = document.querySelector(`.key-btn[data-key="${key}"]`);
+      if (btnEl) {
+        btnEl.classList.add('pressed');
+        setTimeout(() => btnEl.classList.remove('pressed'), 150);
+      }
+
+      playKeyBeep(key);
+
+      if (key === '#') {
+        updateUI('# 버튼이 입력되었습니다');
+        return;
+      }
+
+      if (key === '*') {
+        processAsteriskConfirm();
+        return;
+      }
+
+      if (state.inputBuffer.length >= 12) {
+        state.inputBuffer = '';
+      }
+      state.inputBuffer += key;
+
+      updateUI(`숫자 ${key}번 입력됨 — 다 누른 뒤 *를 누르세요`);
+    }
+
+    function processAsteriskConfirm() {
+      if (state.isRegistering) {
+        if (state.registerStep === 2) {
+          if (state.inputBuffer.length < 4) {
+            playErrorAlarm();
+            shakeDoorlock();
+            updateUI('비밀번호는 4자리 이상 누른 뒤 *를 눌러주세요');
+            state.inputBuffer = '';
+            return;
+          }
+          state.tempNewPassword = state.inputBuffer;
+          state.inputBuffer = '';
+          state.registerStep = 3;
+          playRegisterChime();
+          updateUI(`새 번호 [${state.tempNewPassword}]를 한 번 더 누르고 *를 누르세요`);
+          return;
+        }
+
+        if (state.registerStep === 3) {
+          if (state.inputBuffer === state.tempNewPassword) {
+            state.password = state.tempNewPassword;
+            document.getElementById('customPwInput').value = state.password;
+            state.isRegistering = false;
+            state.registerStep = 0;
+            state.inputBuffer = '';
+            state.successCount += 1;
+            playUnlockMelody();
+            updateUI(`비밀번호가 [${state.password}](으)로 변경되었습니다!`);
+          } else {
+            state.inputBuffer = '';
+            playErrorAlarm();
+            shakeDoorlock();
+            updateUI(`처음 번호(${state.tempNewPassword})와 다릅니다. 다시 입력 후 *를 누르세요`);
+          }
+          return;
+        }
+      }
+
+      if (state.inputBuffer.length === 0) {
+        playErrorAlarm();
+        updateUI('먼저 비밀번호 숫자를 누른 뒤 *를 눌러주세요');
+        return;
+      }
+
+      if (state.inputBuffer === state.password) {
+        unlockDoor('문이 열렸습니다! (잠시 후 자동으로 다시 준비됩니다)');
+      } else {
+        const wrongInput = state.inputBuffer;
+        state.inputBuffer = '';
+        playErrorAlarm();
+        shakeDoorlock();
+        updateUI(`입력번호(${wrongInput}) 오류! 비밀번호(${state.password}) + *를 누르세요`);
+      }
+    }
+
+    function unlockDoor(customMessage) {
+      if (state.autoLockTimer) {
+        clearTimeout(state.autoLockTimer);
+        state.autoLockTimer = null;
+      }
+      state.isLocked = false;
+      state.inputBuffer = '';
+      state.successCount += 1;
+      playUnlockMelody();
+      updateUI(customMessage || '문이 열렸습니다!');
+
+      // 실제 도어락처럼 3초 후 자동으로 초기 상태 복귀
+      state.autoLockTimer = setTimeout(() => {
+        state.isLocked = true;
+        state.inputBuffer = '';
+        if (state.mode === 'wake') {
+          state.isSleeping = true;
+        }
+        playLockSound();
+        updateUI('다시 비밀번호를 눌러 연습해 보세요');
+      }, 3000);
+    }
+
+    function wakeUpScreen() {
+      state.isSleeping = false;
+      state.inputBuffer = '';
+      playWakeSound();
+      updateUI(`화면 켜짐! 비밀번호(${state.password})를 누르고 *를 누르세요`);
+      speakKorean('화면이 켜졌습니다. 비밀번호를 눌러주세요.');
+    }
+
+    function startRegisterMode() {
+      if (state.autoLockTimer) {
+        clearTimeout(state.autoLockTimer);
+        state.autoLockTimer = null;
+      }
+      state.isSleeping = false;
+      state.isLocked = true;
+      state.isRegistering = true;
+      state.registerStep = 2;
+      state.inputBuffer = '';
+      state.tempNewPassword = '';
+      playRegisterChime();
+      updateUI('새 비밀번호 4자리(예: 2580)를 누르고 *를 누르세요');
+      speakKorean('등록 모드입니다. 새로운 비밀번호를 입력하고 별표를 눌러주세요.');
+    }
+
+    function shakeDoorlock() {
+      const unit = document.getElementById('doorlockUnit');
+      unit.classList.remove('shake');
+      void unit.offsetWidth;
+      unit.classList.add('shake');
+    }
+
+    // ==========================================
+    // 6. 실습 모드 변경
+    // ==========================================
+    function setPracticeMode(newMode) {
+      if (state.autoLockTimer) {
+        clearTimeout(state.autoLockTimer);
+        state.autoLockTimer = null;
+      }
+      state.mode = newMode;
+      state.inputBuffer = '';
+      state.isLocked = true;
+      state.isRegistering = false;
+      state.registerStep = 0;
+
+      if (newMode === 'wake') {
+        state.isSleeping = true;
+        speakKorean('화면 깨우기 연습입니다. 꺼진 숫자판을 터치해 보세요.');
+      } else if (newMode === 'change') {
+        state.isSleeping = false;
+        speakKorean('비밀번호 바꾸기 연습입니다. 아래쪽 등록 비번변경 버튼을 눌러보세요.');
+      } else if (newMode === 'free') {
+        state.isSleeping = false;
+        speakKorean('자유 연습 모드입니다.');
+      } else {
+        state.isSleeping = false;
+        speakKorean('기본 문 열기 연습입니다.');
+      }
+
+      updateUI();
+    }
+
+    // ==========================================
+    // 7. 화면 렌더링 및 시각 안내 업데이트
+    // ==========================================
+    function updateUI(transientNotice) {
+      document.querySelectorAll('.mode-tab').forEach(btn => {
+        const isCurrent = btn.getAttribute('data-mode') === state.mode;
+        btn.className = isCurrent
+          ? 'mode-tab text-left p-2.5 rounded-xl border-2 border-sky-600 bg-sky-50 transition flex items-start gap-2 shadow-sm'
+          : 'mode-tab text-left p-2.5 rounded-xl border-2 border-slate-200 bg-white transition flex items-start gap-2';
+      });
+
+      document.getElementById('practiceCountBadge').textContent = `성공 횟수: ${state.successCount}회`;
+      document.getElementById('currentPasswordDisplay').textContent = state.password;
+
+      const enteredEl = document.getElementById('enteredSequenceDisplay');
+      if (state.inputBuffer.length === 0) {
+        enteredEl.textContent = '없음';
+      } else {
+        enteredEl.textContent = state.showRawNumbers
+          ? state.inputBuffer.split('').join(' ')
+          : '●'.repeat(state.inputBuffer.length);
+      }
+
+      const nextKey = getNextRecommendedKey();
+
+      const wakeOverlay = document.getElementById('wakeOverlay');
+      if (state.isSleeping) {
+        wakeOverlay.classList.remove('hidden');
+      } else {
+        wakeOverlay.classList.add('hidden');
+      }
+
+      document.querySelectorAll('.key-btn').forEach(btn => {
+        const k = btn.getAttribute('data-key');
+        btn.classList.toggle('sleeping', state.isSleeping);
+        btn.classList.toggle('hint-glow', !state.isSleeping && nextKey === k);
+      });
+
+      const btnRegisterMode = document.getElementById('btnRegisterMode');
+      btnRegisterMode.classList.toggle('hint-glow', nextKey === 'REGISTER_BTN');
+
+      renderStepGuide(transientNotice);
+    }
+
+    function renderStepGuide(transientNotice) {
+      const guideSubTitle = document.getElementById('guideSubTitle');
+      const guideMainText = document.getElementById('guideMainText');
+      const stepBadge = document.getElementById('stepBadge');
+      const boxesContainer = document.getElementById('sequenceStepBoxes');
+      boxesContainer.innerHTML = '';
+
+      if (!state.isLocked) {
+        stepBadge.textContent = '완료! 문이 열렸습니다';
+        guideSubTitle.textContent = '참 잘하셨습니다! 🎉';
+        guideMainText.textContent = '문이 성공적으로 열렸습니다!';
+        return;
+      }
+
+      if (state.isSleeping) {
+        stepBadge.textContent = '1단계: 화면 깨우기';
+        guideSubTitle.textContent = '꺼진 화면 깨우기';
+        guideMainText.textContent = '도어락 숫자판 위의 손바닥 그림을 터치해 불을 켜주세요.';
+        return;
+      }
+
+      if (state.mode === 'change' || state.isRegistering) {
+        if (!state.isRegistering) {
+          stepBadge.textContent = '1단계: 등록 버튼 누르기';
+          guideSubTitle.textContent = '[등록] 비번변경 버튼 누르기';
+          guideMainText.textContent = '도어락 아래쪽의 [⚙️ [등록] 비번변경] 버튼을 먼저 눌러주세요.';
+          return;
+        }
+        if (state.registerStep === 2) {
+          stepBadge.textContent = '2단계: 새 비밀번호 입력';
+          guideSubTitle.textContent = '새로운 비밀번호와 별표(*) 누르기';
+          guideMainText.textContent = '새로 쓸 숫자 4자리 이상을 누른 뒤 별표(*)를 눌러주세요.';
+          return;
+        }
+        if (state.registerStep === 3) {
+          stepBadge.textContent = '3단계: 새 번호 다시 확인';
+          guideSubTitle.textContent = '방금 입력한 번호 다시 누르기';
+          guideMainText.textContent = `방금 입력한 [${state.tempNewPassword}]번을 한 번 더 누르고 별표(*)를 눌러주세요.`;
+          renderSequenceBoxes(state.tempNewPassword);
+          return;
+        }
+      }
+
+      const pwChars = state.password.split('');
+      stepBadge.textContent = `진행 단계: ${Math.min(state.inputBuffer.length + 1, pwChars.length + 1)} / ${pwChars.length + 1}`;
+      guideSubTitle.textContent = transientNotice || '차례대로 눌러보세요';
+      guideMainText.textContent = `비밀번호 ${pwChars.join(', ')}번을 누르고 마지막에 별표(*)를 눌러주세요.`;
+
+      renderSequenceBoxes(state.password);
+    }
+
+    function renderSequenceBoxes(targetPw) {
+      const boxesContainer = document.getElementById('sequenceStepBoxes');
+      const steps = [...targetPw.split(''), '*'];
+      const isPrefixMatch = targetPw.startsWith(state.inputBuffer);
+
+      steps.forEach((char, idx) => {
+        const box = document.createElement('div');
+        const isDone = isPrefixMatch && idx < state.inputBuffer.length;
+        const isCurrent = isPrefixMatch && idx === state.inputBuffer.length;
+
+        if (isDone) {
+          box.className = 'w-8 h-8 rounded-lg bg-emerald-600 text-white font-black text-sm flex items-center justify-center';
+          box.textContent = char;
+        } else if (isCurrent) {
+          box.className = 'w-8 h-8 rounded-lg bg-amber-400 text-slate-950 border border-slate-900 font-black text-base flex items-center justify-center';
+          box.textContent = char;
+        } else {
+          box.className = 'w-8 h-8 rounded-lg bg-slate-100 text-slate-500 border border-slate-300 font-bold text-sm flex items-center justify-center';
+          box.textContent = char;
+        }
+        boxesContainer.appendChild(box);
+      });
+    }
+
+    // ==========================================
+    // 8. 이벤트 리스너 연결
+    // ==========================================
+    function initEvents() {
+      document.querySelectorAll('.key-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const key = btn.getAttribute('data-key');
+          handleKeyPress(key);
+        });
+      });
+
+      document.getElementById('wakeOverlay').addEventListener('click', () => {
+        wakeUpScreen();
+      });
+
+      document.getElementById('btnCardTag').addEventListener('click', () => {
+        playKeyBeep('*');
+        setTimeout(() => {
+          unlockDoor('카드키 인식 완료! 문이 열렸습니다.');
+        }, 120);
+      });
+
+      document.getElementById('btnRegisterMode').addEventListener('click', () => {
+        startRegisterMode();
+      });
+
+      document.getElementById('btnResetStep').addEventListener('click', () => {
+        setPracticeMode(state.mode);
+      });
+
+      const settingsModal = document.getElementById('settingsModal');
+      document.getElementById('btnOpenSettings').addEventListener('click', () => {
+        settingsModal.classList.remove('hidden');
+      });
+      document.getElementById('btnCloseSettings').addEventListener('click', () => {
+        settingsModal.classList.add('hidden');
+      });
+      settingsModal.addEventListener('click', (e) => {
+        if (e.target === settingsModal) {
+          settingsModal.classList.add('hidden');
+        }
+      });
+
+      document.querySelectorAll('.mode-tab').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const selectedMode = btn.getAttribute('data-mode');
+          setPracticeMode(selectedMode);
+          settingsModal.classList.add('hidden');
+        });
+      });
+
+      document.getElementById('btnToggleSound').addEventListener('click', () => {
+        state.soundEnabled = !state.soundEnabled;
+        const btn = document.getElementById('btnToggleSound');
+        document.getElementById('iconSound').textContent = state.soundEnabled ? '🔊' : '🔇';
+        document.getElementById('labelSound').textContent = state.soundEnabled ? '효과음 켜짐' : '효과음 꺼짐';
+        btn.className = state.soundEnabled
+          ? 'flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold text-xs bg-emerald-600 text-white'
+          : 'flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold text-xs bg-slate-300 text-slate-700';
+        if (state.soundEnabled) playWakeSound();
+      });
+
+      document.getElementById('btnToggleVoice').addEventListener('click', () => {
+        state.voiceEnabled = !state.voiceEnabled;
+        const btn = document.getElementById('btnToggleVoice');
+        document.getElementById('iconVoice').textContent = state.voiceEnabled ? '🗣️' : '🙊';
+        document.getElementById('labelVoice').textContent = state.voiceEnabled ? '음성안내 켜짐' : '음성안내 꺼짐';
+        btn.className = state.voiceEnabled
+          ? 'flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold text-xs bg-sky-600 text-white'
+          : 'flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold text-xs bg-slate-300 text-slate-700';
+        if (state.voiceEnabled) speakKorean('음성 안내가 켜졌습니다.');
+      });
+
+      document.getElementById('btnTestSound').addEventListener('click', () => {
+        state.soundEnabled = true;
+        playWakeSound();
+        speakKorean('도어락 소리가 잘 들리시나요? 숫자 버튼을 눌러 연습해 보세요.');
+      });
+
+      document.getElementById('btnToggleMask').addEventListener('click', () => {
+        state.showRawNumbers = !state.showRawNumbers;
+        document.getElementById('btnToggleMask').textContent = state.showRawNumbers
+          ? '숫자 그대로 보기 켜짐'
+          : '별표(●)로 가리기 켜짐';
+        updateUI();
+      });
+
+      document.getElementById('volumeSlider').addEventListener('input', (e) => {
+        const val = parseInt(e.target.value, 10);
+        state.volume = val / 100;
+        document.getElementById('volumeValueLabel').textContent = `${val}%`;
+        playKeyBeep('5');
+      });
+
+      document.getElementById('soundStyleSelect').addEventListener('change', (e) => {
+        state.soundStyle = e.target.value;
+        playKeyBeep('1');
+      });
+
+      document.getElementById('btnApplyCustomPw').addEventListener('click', () => {
+        const raw = document.getElementById('customPwInput').value.replace(/[^0-9]/g, '');
+        if (raw.length < 4 || raw.length > 8) {
+          playErrorAlarm();
+          updateUI('비밀번호는 4~8자리 숫자로 입력해 주세요');
+          return;
+        }
+        state.password = raw;
+        state.inputBuffer = '';
+        document.getElementById('customPwInput').value = raw;
+        playRegisterChime();
+        updateUI(`비밀번호가 [${raw}]번으로 설정되었습니다!`);
+        speakKorean('연습 비밀번호가 변경되었습니다.');
+        settingsModal.classList.add('hidden');
+      });
+
+      document.querySelectorAll('.font-size-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const size = btn.getAttribute('data-font');
+          const mainEl = document.getElementById('mainContainer');
+          mainEl.classList.remove('font-scale-normal', 'font-scale-large', 'font-scale-xlarge');
+          mainEl.classList.add(`font-scale-${size}`);
+
+          document.querySelectorAll('.font-size-btn').forEach(b => {
+            const active = b.getAttribute('data-font') === size;
+            b.className = active
+              ? 'font-size-btn py-1 rounded-lg text-xs font-bold bg-sky-600 text-white'
+              : 'font-size-btn py-1 rounded-lg text-xs font-bold bg-white border border-slate-300 text-slate-700';
+          });
+        });
+      });
+
+      window.addEventListener('keydown', (e) => {
+        if (document.activeElement && document.activeElement.id === 'customPwInput') {
+          if (e.key === 'Enter') {
+            document.getElementById('btnApplyCustomPw').click();
+          }
+          return;
+        }
+        if (/^[0-9]$/.test(e.key)) {
+          handleKeyPress(e.key);
+        } else if (e.key === '*' || e.key === 'Enter') {
+          e.preventDefault();
+          handleKeyPress('*');
+        } else if (e.key === '#' || e.key === 'Backspace' || e.key === 'Escape') {
+          e.preventDefault();
+          handleKeyPress('#');
+        }
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initEvents();
+      updateUI();
+    });
+  </script>
+</body>
+</html>

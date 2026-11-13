@@ -1,0 +1,854 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Day 2 단어 기억 게임</title>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
+    />
+    <style>
+      :root {
+        --bg: #fdf6ec;
+        --bg-soft: #fbeed9;
+        --card: #fffdf8;
+        --ink: #3a2a1c;
+        --ink-soft: #6f5a44;
+        --line: #ecd9bd;
+        --accent: #d95d0f;
+        --accent-strong: #b84a08;
+        --accent-soft: #fdeeda;
+        --good: #2e7d46;
+        --good-soft: #e4f4e8;
+        --bad: #b3402a;
+        --bad-soft: #fbe9e3;
+        --key: #fff7ea;
+        --key-line: #e6cfa8;
+        --shadow: 0 10px 30px rgba(146, 90, 32, 0.14);
+        color-scheme: light;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #221812;
+          --bg-soft: #2c1f16;
+          --card: #2f2118;
+          --ink: #f7ead9;
+          --ink-soft: #cdb59c;
+          --line: #4d3826;
+          --accent: #f08a3c;
+          --accent-strong: #ffb066;
+          --accent-soft: #453022;
+          --good: #7fd79b;
+          --good-soft: #22392a;
+          --bad: #ff9d87;
+          --bad-soft: #40261f;
+          --key: #3a2a1e;
+          --key-line: #57402a;
+          --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+          color-scheme: dark;
+        }
+      }
+      * { box-sizing: border-box; }
+      html { -webkit-text-size-adjust: 100%; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "Pretendard Variable", Pretendard, -apple-system, "Malgun Gothic", "Apple SD Gothic Neo", "Hiragino Sans", "Noto Sans JP", sans-serif;
+        font-size: 20px;
+        line-height: 1.6;
+      }
+      .wrap { max-width: 760px; margin: 0 auto; padding: 28px 18px 64px; }
+      .lang-switch {
+        display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;
+      }
+      .lang-switch button {
+        flex: 1 1 auto; min-height: 54px; padding: 10px 18px;
+        font-family: inherit; font-size: 20px; font-weight: 800; color: var(--ink);
+        background: var(--key); border: 2px solid var(--key-line); border-radius: 999px;
+        cursor: pointer;
+      }
+      .lang-switch button[aria-pressed="true"] {
+        background: var(--accent); border-color: var(--accent); color: #fff;
+      }
+      .day-chip {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: var(--accent-soft); color: var(--accent-strong);
+        font-weight: 800; font-size: 17px;
+        padding: 8px 16px; border-radius: 999px;
+      }
+      .day-chip .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
+      h1 {
+        font-size: clamp(34px, 7.5vw, 46px);
+        line-height: 1.25; font-weight: 900; letter-spacing: -0.02em;
+        margin: 16px 0 10px;
+      }
+      .lede { font-size: 21px; color: var(--ink-soft); margin: 0 0 6px; }
+      .today-line { font-size: 18px; color: var(--ink-soft); margin: 10px 0 0; }
+      .today-line strong { color: var(--accent-strong); }
+      .game-card {
+        margin-top: 26px;
+        background: var(--card);
+        border: 2px solid var(--line);
+        border-radius: 24px;
+        box-shadow: var(--shadow);
+        padding: 26px 22px 30px;
+      }
+      .game-top {
+        display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+        gap: 10px 16px; margin-bottom: 6px;
+      }
+      .round-label { font-size: 22px; font-weight: 800; }
+      .round-label .of { color: var(--ink-soft); font-weight: 600; font-size: 19px; }
+      .score-label { font-size: 19px; font-weight: 700; color: var(--ink-soft); }
+      .score-label strong { color: var(--accent-strong); font-size: 22px; }
+      .progress-dots { display: flex; gap: 8px; margin: 10px 0 4px; }
+      .progress-dots span {
+        flex: 1; height: 12px; border-radius: 999px; background: var(--bg-soft);
+        border: 1px solid var(--line);
+      }
+      .progress-dots span.done { background: var(--good); border-color: var(--good); }
+      .progress-dots span.now { background: var(--accent); border-color: var(--accent); }
+      .level-line { font-size: 19px; color: var(--ink-soft); margin: 8px 0 0; }
+      .level-line strong { color: var(--ink); }
+      .stage { margin-top: 18px; text-align: center; }
+      .stage-msg { font-size: 22px; font-weight: 700; margin: 0 0 6px; }
+      .stage-sub { font-size: 19px; color: var(--ink-soft); margin: 0 0 18px; }
+      .word-board {
+        background: var(--bg-soft);
+        border: 2px dashed var(--line);
+        border-radius: 18px;
+        padding: 20px 14px;
+      }
+      .word-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+      .word-chip {
+        background: var(--card); border: 2px solid var(--key-line); border-radius: 999px;
+        padding: 10px 20px; font-size: 26px; font-weight: 800; line-height: 1.3;
+      }
+      .word-chip.mini { font-size: 21px; padding: 7px 14px; }
+      .memorize-note { font-size: 18px; color: var(--ink-soft); margin-top: 14px; }
+      .select-count { font-size: 20px; font-weight: 700; margin: 0 0 14px; }
+      .select-count strong { color: var(--accent-strong); }
+      .option-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; max-width: 520px; margin: 0 auto; text-align: center; }
+      @media (min-width: 560px) { .option-grid { grid-template-columns: repeat(3, 1fr); } }
+      .option-grid button {
+        min-height: 62px; padding: 10px 8px;
+        font-family: inherit; font-size: 23px; font-weight: 800; color: var(--ink);
+        background: var(--key); border: 2px solid var(--key-line); border-radius: 14px;
+        cursor: pointer;
+      }
+      .option-grid button[aria-pressed="true"] {
+        background: var(--accent); border-color: var(--accent); color: #fff;
+      }
+      .btn {
+        display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        min-height: 60px; padding: 14px 30px;
+        font-family: inherit; font-size: 22px; font-weight: 800;
+        border-radius: 16px; border: 2px solid transparent; cursor: pointer;
+      }
+      .btn-primary { background: var(--accent); color: #fff; }
+      .btn-primary:active { background: var(--accent-strong); }
+      .btn-ghost { background: transparent; color: var(--accent-strong); border-color: var(--accent); }
+      .btn-row { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 20px; }
+      button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+      button:disabled { opacity: 0.45; cursor: not-allowed; }
+      .feedback { margin-top: 20px; border-radius: 16px; padding: 20px 18px; text-align: center; }
+      .feedback.good { background: var(--good-soft); }
+      .feedback.mid { background: var(--accent-soft); }
+      .feedback .fb-title { font-size: 26px; font-weight: 900; margin: 0 0 6px; }
+      .feedback.good .fb-title { color: var(--good); }
+      .feedback.mid .fb-title { color: var(--accent-strong); }
+      .feedback p { margin: 6px 0; font-size: 20px; }
+      .feedback .fb-label { font-size: 18px; font-weight: 700; color: var(--ink-soft); margin-top: 14px; }
+      .result-box { text-align: center; padding: 10px 0 2px; }
+      .result-score { font-size: clamp(52px, 14vw, 76px); font-weight: 900; color: var(--accent-strong); line-height: 1.1; margin: 6px 0; }
+      .result-msg { font-size: 22px; font-weight: 700; margin: 0 0 8px; }
+      .result-sub { font-size: 19px; color: var(--ink-soft); margin: 0; }
+      section.howto { margin-top: 48px; }
+      h2 {
+        font-size: 28px; font-weight: 900; letter-spacing: -0.01em;
+        margin: 0 0 16px; padding-bottom: 10px; border-bottom: 3px solid var(--accent-soft);
+      }
+      .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+      .steps li {
+        display: flex; gap: 16px; align-items: flex-start;
+        background: var(--card); border: 2px solid var(--line); border-radius: 18px; padding: 18px;
+      }
+      .step-num {
+        flex: 0 0 auto; width: 46px; height: 46px; border-radius: 50%;
+        background: var(--accent); color: #fff;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 23px; font-weight: 900;
+      }
+      .steps h3 { margin: 2px 0 4px; font-size: 22px; font-weight: 800; }
+      .steps p { margin: 0; font-size: 19px; color: var(--ink-soft); }
+      .example {
+        margin-top: 16px; text-align: center;
+        background: var(--bg-soft); border-radius: 18px; padding: 20px 14px;
+      }
+      .example small { display: block; font-size: 17px; font-weight: 600; color: var(--ink-soft); margin-top: 10px; }
+      .level-table { width: 100%; border-collapse: collapse; font-size: 19px; }
+      .level-table th, .level-table td { padding: 12px 10px; text-align: left; border-bottom: 1px solid var(--line); }
+      .level-table th { font-weight: 800; background: var(--bg-soft); }
+      .level-table td.num, .level-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+      .tips { margin: 0; padding-left: 24px; display: grid; gap: 8px; font-size: 19px; }
+      .why p { font-size: 19px; color: var(--ink-soft); margin: 0 0 10px; }
+      .why strong { color: var(--ink); }
+      footer {
+        margin-top: 52px; padding-top: 20px; border-top: 2px solid var(--line);
+        font-size: 17px; color: var(--ink-soft); text-align: center;
+      }
+      footer a { color: var(--accent-strong); font-weight: 700; display: inline-block; padding: 10px 6px; min-height: 44px; }
+      [hidden] { display: none !important; }
+      @media (prefers-reduced-motion: reduce) {
+        * { transition: none !important; animation: none !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <noscript>
+      <div style="max-width:760px;margin:0 auto;padding:36px 18px;font-size:21px;line-height:1.6">
+        <p><strong>이 게임을 하려면 자바스크립트를 켜 주세요.</strong> 브라우저 설정에서 자바스크립트를 허용한 뒤 다시 열어 주세요.</p>
+        <p><a href="https://blog.naver.com/sin4buja">오늘의 두뇌운동 블로그</a></p>
+      </div>
+    </noscript>
+    <main class="wrap" id="mainContent">
+      <div class="lang-switch" role="group" aria-label="Language / 언어 / 言語">
+        <button type="button" data-lang="ko" aria-pressed="true">한국어</button>
+        <button type="button" data-lang="en" aria-pressed="false">English</button>
+        <button type="button" data-lang="ja" aria-pressed="false">日本語</button>
+      </div>
+      <header>
+        <span class="day-chip"><span class="dot"></span><span id="chipText">오늘의 두뇌운동 · Day 2</span></span>
+        <h1 id="mainTitle">단어 기억하기</h1>
+        <p class="lede" id="ledeText">단어들을 천천히 보고 외운 뒤, 가려진 화면에서 기억나는 단어를 골라 맞히는 기억력 게임이에요. 시간 제한이 없으니 서두르지 않아도 돼요. 오늘은 다섯 게임, 5분이면 충분해요.</p>
+        <p class="today-line" id="todayLine"></p>
+      </header>
+
+      <div class="game-card" id="gameCard">
+        <div class="game-top">
+          <div class="round-label"><span id="gameLabelText">게임</span> <span id="roundNow">1</span> <span class="of">/ 5</span></div>
+          <div class="score-label"><span id="scoreLabelText">맞힌 단어</span> <strong><span id="scoreNow">0</span><span id="scoreUnit">개</span></strong></div>
+        </div>
+        <div class="progress-dots" id="progressDots" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <p class="level-line" id="levelLine"></p>
+        <div class="stage" id="stageBox" aria-live="polite"></div>
+      </div>
+
+      <section class="howto" aria-labelledby="howtoTitle">
+        <h2 id="howtoTitle">게임 방법</h2>
+        <ol class="steps">
+          <li>
+            <div class="step-num">1</div>
+            <div>
+              <h3 id="step1Title">단어를 보고 외워요</h3>
+              <p id="step1Body">「단어 보기」를 누르면 단어들이 나타나요. 시간 제한이 없으니 천천히, 소리 내어 읽으면서 외우면 더 잘 기억돼요.</p>
+            </div>
+          </li>
+          <li>
+            <div class="step-num">2</div>
+            <div>
+              <h3 id="step2Title">단어가 가려져요</h3>
+              <p id="step2Body">단어는 저절로 사라지지 않아요. 다 외웠을 때 「다 외웠어요」를 누르면 그때 단어가 가려져요.</p>
+            </div>
+          </li>
+          <li>
+            <div class="step-num">3</div>
+            <div>
+              <h3 id="step3Title">기억나는 단어를 골라요</h3>
+              <p id="step3Body">보기 중에서 아까 본 단어를 모두 눌러 고르고 「정답 확인」을 눌러요. 틀려도 괜찮아요. 뇌는 떠올리려고 애쓰는 순간 가장 활발해져요.</p>
+            </div>
+          </li>
+        </ol>
+        <div class="example">
+          <div class="word-grid" id="exampleGrid" aria-hidden="true"></div>
+          <small id="exampleNote">예시예요. 위 다섯 단어를 외운 뒤, 보기에서 이 단어들을 다시 골라내면 돼요.</small>
+        </div>
+      </section>
+
+      <section class="howto" aria-labelledby="levelTitle">
+        <h2 id="levelTitle">오늘의 다섯 게임</h2>
+        <table class="level-table">
+          <thead>
+            <tr><th scope="col" id="thGame">게임</th><th scope="col" id="thDiff">난이도</th><th scope="col" class="num" id="thWords">외울 단어</th><th scope="col" id="thTime">외우는 시간</th></tr>
+          </thead>
+          <tbody id="levelRows"></tbody>
+        </table>
+        <p style="font-size:19px;color:var(--ink-soft)" id="scoreNote">점수는 다섯 게임에서 맞힌 단어 수를 모두 더한 거예요. 만점은 36개예요.</p>
+      </section>
+
+      <section class="howto why" aria-labelledby="whyTitle">
+        <h2 id="whyTitle">왜 좋은 게임인가요?</h2>
+        <p id="why1"></p>
+        <p id="why2"></p>
+      </section>
+
+      <section class="howto" aria-labelledby="tipTitle">
+        <h2 id="tipTitle">더 잘 외우는 팁</h2>
+        <ul class="tips" id="tipsList"></ul>
+      </section>
+
+      <footer>
+        <p><span id="footerIntro">오늘의 두뇌운동 · 뇌건강 놀이터지기가 매일 준비하는 치매예방 기억력 게임이에요.</span><br />
+        <span id="disclaimerText">이 게임은 놀이와 두뇌 활동 돕기가 목적이며, 의료 진단이나 치료를 대신하지 않아요.</span></p>
+        <a href="https://blog.naver.com/sin4buja" target="_blank" rel="noopener" id="blogLink">오늘의 두뇌운동 블로그</a>
+      </footer>
+    </main>
+
+    <script>
+      (function () {
+        "use strict";
+
+        function mulberry32(seed) {
+          var a = seed >>> 0;
+          return function () {
+            a |= 0; a = (a + 0x6d2b79f5) | 0;
+            var t = Math.imul(a ^ (a >>> 15), 1 | a);
+            t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+          };
+        }
+
+        var now = new Date();
+        var dateSeed = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
+
+        var POOLS = {
+          ko: [
+            "사과","바나나","포도","딸기","수박","복숭아","귤","배","감","자두",
+            "밥","국수","빵","우유","치즈","달걀","고기","생선","김치","된장",
+            "강아지","고양이","토끼","호랑이","코끼리","기린","원숭이","돼지","소","말",
+            "닭","오리","곰","사자","여우",
+            "의자","책상","침대","거울","시계","우산","안경","열쇠","가방","신발",
+            "모자","장갑","수건","비누","칫솔",
+            "바다","산","강","하늘","구름","비","눈","바람","나무","꽃",
+            "풀","돌","해","달","별",
+            "학교","병원","시장","공원","도서관","기차","버스","비행기","자전거","전화",
+            "텔레비전","냉장고","세탁기","연필","공책"
+          ],
+          en: [
+            "apple","banana","grape","strawberry","watermelon","peach","orange","pear","plum","rice",
+            "noodle","bread","milk","cheese","egg","meat","fish","soup","cake","salad",
+            "dog","cat","rabbit","tiger","elephant","giraffe","monkey","pig","cow","horse",
+            "chicken","duck","bear","lion","fox",
+            "chair","desk","bed","mirror","clock","umbrella","glasses","key","bag","shoes",
+            "hat","glove","towel","soap","toothbrush",
+            "sea","mountain","river","sky","cloud","rain","snow","wind","tree","flower",
+            "grass","stone","sun","moon","star",
+            "school","hospital","market","park","library","train","bus","airplane","bicycle","phone",
+            "television","fridge","washer","pencil","book"
+          ],
+          ja: [
+            "りんご","バナナ","ぶどう","いちご","すいか","もも","みかん","なし","うめ","ごはん",
+            "うどん","パン","牛乳","チーズ","たまご","肉","魚","みそ汁","ケーキ","サラダ",
+            "犬","猫","うさぎ","トラ","ゾウ","キリン","サル","ブタ","牛","馬",
+            "ニワトリ","アヒル","クマ","ライオン","キツネ",
+            "椅子","机","ベッド","鏡","時計","傘","眼鏡","鍵","かばん","靴",
+            "帽子","手袋","タオル","石けん","歯ブラシ",
+            "海","山","川","空","雲","雨","雪","風","木","花",
+            "草","石","太陽","月","星",
+            "学校","病院","市場","公園","図書館","電車","バス","飛行機","自転車","電話",
+            "テレビ","冷蔵庫","洗濯機","鉛筆","ノート"
+          ]
+        };
+
+        var COUNTS = [5, 6, 7, 8, 10];
+        var TOTAL = COUNTS.reduce(function (s, c) { return s + c; }, 0);
+
+        var I18N = {
+          ko: {
+            htmlLang: "ko",
+            pageTitle: "Day 2 단어 기억 게임",
+            chip: "오늘의 두뇌운동 · Day 2",
+            title: "단어 기억하기",
+            lede: "단어들을 천천히 보고 외운 뒤, 가려진 화면에서 기억나는 단어를 골라 맞히는 기억력 게임이에요. 시간 제한이 없으니 서두르지 않아도 돼요. 오늘은 다섯 게임, 5분이면 충분해요.",
+            todayBefore: "오늘은 ",
+            todayMid: " · 오늘의 단어는 날짜에 맞춰 정해져요. ",
+            todayStrong: "내일 오면 새로운 단어",
+            todayAfter: "로 바뀌어 있어요. 어디서든 바로 들어와서 할 수 있어요.",
+            weekNames: ["일", "월", "화", "수", "목", "금", "토"],
+            gameLabel: "게임",
+            scoreLabel: "맞힌 단어",
+            scoreUnit: "개",
+            levels: ["몸풀기", "쉬움", "보통", "어려움", "최종 도전"],
+            howtoTitle: "게임 방법",
+            step1Title: "단어를 보고 외워요",
+            step1Body: "「단어 보기」를 누르면 단어들이 나타나요. 시간 제한이 없으니 천천히, 소리 내어 읽으면서 외우면 더 잘 기억돼요.",
+            step2Title: "단어가 가려져요",
+            step2Body: "단어는 저절로 사라지지 않아요. 다 외웠을 때 「다 외웠어요」를 누르면 그때 단어가 가려져요.",
+            step3Title: "기억나는 단어를 골라요",
+            step3Body: "보기 중에서 아까 본 단어를 모두 눌러 고르고 「정답 확인」을 눌러요. 틀려도 괜찮아요. 뇌는 떠올리려고 애쓰는 순간 가장 활발해져요.",
+            example: ["사과", "연필", "바다", "시계", "토끼"],
+            exampleNote: "예시예요. 위 다섯 단어를 외운 뒤, 보기에서 이 단어들을 다시 골라내면 돼요.",
+            levelTitle: "오늘의 다섯 게임",
+            thGame: "게임", thDiff: "난이도", thWords: "외울 단어", thTime: "외우는 시간",
+            noLimit: "제한 없음",
+            countUnit: "개",
+            scoreNote: "점수는 다섯 게임에서 맞힌 단어 수를 모두 더한 거예요. 만점은 36개예요.",
+            whyTitle: "왜 좋은 게임인가요?",
+            why1: "여러 단어를 한꺼번에 외우고 잠시 뒤에 다시 떠올리는 것은 <strong>단기기억과 주의력</strong>을 함께 쓰는 활동이에요. 장보기 목록을 머릿속에 담아 두는 것, 방금 들은 이름을 기억하는 것이 모두 같은 힘이에요.",
+            why2: "단어끼리 이야기를 만들거나 종류별로 묶어 외우면 기억이 훨씬 오래 남아요. 하루 다섯 게임, 딱 5분이면 충분합니다. 점수보다 <strong>매일 꾸준히 하는 것</strong>이 훨씬 중요해요.",
+            tipTitle: "더 잘 외우는 팁",
+            tips: [
+              "비슷한 종류끼리 묶어 보세요. 과일은 과일끼리, 동물은 동물끼리 묶으면 개수가 정리돼요.",
+              "단어들로 짧은 이야기를 만들어 보세요. 「토끼가 사과를 들고 바다에 갔다」처럼 엮으면 잘 안 잊혀요.",
+              "단어를 소리 내어 읽으면서 머릿속에 그림을 그려 보세요.",
+              "놓친 단어는 정답을 보고 한 번 더 소리 내어 읽어 보세요."
+            ],
+            footerIntro: "오늘의 두뇌운동 · 뇌건강 놀이터지기가 매일 준비하는 치매예방 기억력 게임이에요.",
+            disclaimer: "이 게임은 놀이와 두뇌 활동 돕기가 목적이며, 의료 진단이나 치료를 대신하지 않아요.",
+            blogLink: "오늘의 두뇌운동 블로그",
+            levelLineDone: "오늘의 다섯 게임을 모두 마쳤어요. 수고하셨어요!",
+            levelDiff: "난이도", levelWords: "외울 단어", levelTime: "외우는 시간",
+            readyFirst: "준비되셨나요?", readyNext: "다음 게임이에요",
+            readySubA: "아래 버튼을 누르면 단어 ", readySubB: "개가 나타나요.", readySubC: "시간 제한이 없으니 천천히 외워 두세요.",
+            btnShow: "단어 보기",
+            showMsg: "지금 외우세요!",
+            showSub: "소리 내어 읽으면서 외우면 더 잘 기억돼요. 종류끼리 묶어 보는 것도 좋아요.",
+            memorizeNote: "시간 제한이 없어요. 단어는 사라지지 않으니 천천히 외우세요.",
+            btnHide: "다 외웠어요",
+            pickMsg: "단어가 가려졌어요",
+            pickSubA: "아까 본 단어 ", pickSubB: "개를 모두 골라 주세요.",
+            selLabel: "고른 단어", selUnit: "개",
+            btnCheck: "정답 확인",
+            ariaOptions: "단어 보기",
+            fbPerfect: "완벽해요! 다 맞혔어요!", fbGreat: "아주 잘하셨어요!", fbGood: "잘 떠올리셨어요!",
+            fbLineA: "단어 ", fbLineB: "개 중 <strong>", fbLineC: "개</strong>를 맞혔어요.",
+            fbMissed: "놓친 단어예요. 한 번 읽어 보세요",
+            fbWrong: "이 단어는 아까 없었어요",
+            btnResult: "오늘의 결과 보기", btnNext: "다음 게임으로",
+            resultLabel: "오늘의 결과 · 맞힌 단어",
+            resPerfectMsg: "모든 단어를 다 맞혔어요!", resPerfectSub: "오늘 뇌가 아주 기분 좋게 운동했어요. 내일도 새로운 단어가 기다리고 있어요.",
+            resGreatMsg: "아주 잘하셨어요!", resGreatSub: "놓친 단어가 있어도 괜찮아요. 떠올리려고 애쓴 순간 뇌는 이미 운동하고 있었어요.",
+            resGoodMsg: "좋은 시작이에요!", resGoodSub: "처음에는 누구나 어려워요. 매일 5분씩 하다 보면 조금씩 더 잘 외워질 거예요.",
+            resLowMsg: "오늘도 해낸 것만으로 충분해요!", resLowSub: "점수보다 매일 하는 것이 중요해요. 내일 새로운 단어로 다시 만나요.",
+            btnAgain: "새로운 단어로 다시 하기",
+            resultNote: "내일 다시 오시면, 날짜가 바뀌어 또 다른 단어가 준비돼 있어요."
+          },
+          en: {
+            htmlLang: "en",
+            pageTitle: "Day 2 Word Memory Game",
+            chip: "Today's Brain Exercise · Day 2",
+            title: "Remember the Words",
+            lede: "Look at the words slowly and memorize them, then pick the ones you remember from the covered screen. There is no time limit, so there is no need to hurry. Five games today — 5 minutes is enough.",
+            todayBefore: "Today is ",
+            todayMid: " · Today's words are chosen by the date. ",
+            todayStrong: "Come back tomorrow for new words",
+            todayAfter: ". You can jump in and play right away, from anywhere.",
+            weekNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+            monthNames: ["January","February","March","April","May","June","July","August","September","October","November","December"],
+            gameLabel: "Game",
+            scoreLabel: "Words correct",
+            scoreUnit: "",
+            levels: ["Warm-up", "Easy", "Normal", "Hard", "Final challenge"],
+            howtoTitle: "How to Play",
+            step1Title: "Look at the words and memorize them",
+            step1Body: "Tap “Show words” and the words will appear. There is no time limit, so take your time — reading them out loud helps you remember them better.",
+            step2Title: "The words get covered",
+            step2Body: "The words never disappear on their own. When you have memorized them, tap “I've memorized them” — only then are the words covered.",
+            step3Title: "Pick the words you remember",
+            step3Body: "Tap all the words you saw before, then tap “Check answers”. It's okay to get some wrong. Your brain is most active at the moment you try hard to recall.",
+            example: ["apple", "pencil", "sea", "clock", "rabbit"],
+            exampleNote: "This is an example. Memorize the five words above, then pick those same words out of the choices.",
+            levelTitle: "Today's Five Games",
+            thGame: "Game", thDiff: "Difficulty", thWords: "Words to memorize", thTime: "Time to memorize",
+            noLimit: "No limit",
+            countUnit: "",
+            scoreNote: "Your score is the total number of words you got right across all five games. A perfect score is 36.",
+            whyTitle: "Why is this a good game?",
+            why1: "Memorizing several words at once and recalling them a moment later is an activity that uses your <strong>short-term memory and attention</strong> together. Keeping a shopping list in your head and remembering a name you just heard use exactly the same skill.",
+            why2: "Making a story out of the words, or grouping them by type, helps them stay in your memory much longer. Five games a day — just 5 minutes — is enough. More than your score, <strong>doing it every day</strong> matters most.",
+            tipTitle: "Tips to memorize better",
+            tips: [
+              "Group similar words together. Fruits with fruits, animals with animals — the count becomes easier to keep track of.",
+              "Make a short story with the words. “A rabbit took an apple to the sea” — a story is hard to forget.",
+              "Read the words out loud while picturing them in your mind.",
+              "For any word you missed, look at the answer and read it out loud once more."
+            ],
+            footerIntro: "Today's Brain Exercise · A memory game for brain health, prepared every day.",
+            disclaimer: "This game is for play and brain activity; it does not replace medical diagnosis or treatment.",
+            blogLink: "Today's Brain Exercise Blog",
+            levelLineDone: "You have finished all five games today. Great job!",
+            levelDiff: "Difficulty", levelWords: "Words to memorize", levelTime: "Time to memorize",
+            readyFirst: "Are you ready?", readyNext: "Here is the next game",
+            readySubA: "Tap the button below and ", readySubB: " words will appear.", readySubC: "There is no time limit, so memorize them slowly.",
+            btnShow: "Show words",
+            showMsg: "Memorize them now!",
+            showSub: "Reading them out loud helps you remember. Grouping them by type helps too.",
+            memorizeNote: "There is no time limit. The words will not disappear, so take your time.",
+            btnHide: "I've memorized them",
+            pickMsg: "The words are covered",
+            pickSubA: "Please pick all ", pickSubB: " words you saw before.",
+            selLabel: "Selected", selUnit: "",
+            btnCheck: "Check answers",
+            ariaOptions: "Word choices",
+            fbPerfect: "Perfect! You got them all!", fbGreat: "Great job!", fbGood: "Good recall!",
+            fbLineA: "You got <strong>", fbLineB: "</strong> of ", fbLineC: " words right.",
+            fbMissed: "Words you missed — read them once",
+            fbWrong: "These words were not there before",
+            btnResult: "See today's results", btnNext: "Next game",
+            resultLabel: "Today's result · Words correct",
+            resPerfectMsg: "You got every word right!", resPerfectSub: "Your brain had a really good workout today. New words will be waiting for you tomorrow.",
+            resGreatMsg: "Great job!", resGreatSub: "It's okay if you missed a few words. Your brain was already exercising while you tried to recall them.",
+            resGoodMsg: "A good start!", resGoodSub: "Everyone finds it hard at first. Five minutes a day, and you will memorize a little more each time.",
+            resLowMsg: "Finishing today is enough!", resLowSub: "Doing it every day matters more than your score. See you tomorrow with new words.",
+            btnAgain: "Play again with new words",
+            resultNote: "Come back tomorrow and a new set of words will be ready, chosen by the date."
+          },
+          ja: {
+            htmlLang: "ja",
+            pageTitle: "Day 2 単語記憶ゲーム",
+            chip: "今日の脳トレ · Day 2",
+            title: "単語を覚えよう",
+            lede: "単語をゆっくり見て覚えたあと、隠れた画面で覚えている単語を選んで当てる記憶ゲームです。時間制限はないので、急がなくて大丈夫です。今日は5つのゲーム、5分で十分です。",
+            todayBefore: "今日は ",
+            todayMid: " · 今日の単語は日付に合わせて決まります。",
+            todayStrong: "明日来ると新しい単語",
+            todayAfter: "に変わっています。どこからでもすぐに始められます。",
+            weekNames: ["日", "月", "火", "水", "木", "金", "土"],
+            gameLabel: "ゲーム",
+            scoreLabel: "当たった単語",
+            scoreUnit: "個",
+            levels: ["ウォームアップ", "簡単", "普通", "難しい", "最終チャレンジ"],
+            howtoTitle: "遊び方",
+            step1Title: "単語を見て覚えます",
+            step1Body: "「単語を見る」を押すと単語が現れます。時間制限はないので、声に出して読みながらゆっくり覚えると、よりよく記憶できます。",
+            step2Title: "単語が隠れます",
+            step2Body: "単語は勝手に消えません。覚え終わったら「覚えました」を押してください。そのときに単語が隠れます。",
+            step3Title: "覚えている単語を選びます",
+            step3Body: "選択肢の中からさっき見た単語をすべて選んで、「答え合わせ」を押してください。間違えても大丈夫です。思い出そうと頑張る瞬間、脳は一番活発になります。",
+            example: ["りんご", "鉛筆", "海", "時計", "うさぎ"],
+            exampleNote: "例です。上の5つの単語を覚えたあと、選択肢からその単語をもう一度選んでください。",
+            levelTitle: "今日の5つのゲーム",
+            thGame: "ゲーム", thDiff: "難易度", thWords: "覚える単語", thTime: "覚える時間",
+            noLimit: "制限なし",
+            countUnit: "個",
+            scoreNote: "スコアは5つのゲームで当たった単語の数をすべて合計したものです。満点は36個です。",
+            whyTitle: "なぜ良いゲームなのですか？",
+            why1: "いくつかの単語を一度に覚えて、少しあとに思い出すのは、<strong>短期記憶と注意力</strong>を一緒に使う活動です。買い物リストを頭の中に入れておくこと、聞いたばかりの名前を覚えることも、すべて同じ力です。",
+            why2: "単語同士で物語を作ったり、種類ごとにまとめたりして覚えると、記憶はずっと長く残ります。1日5つのゲーム、たった5分で十分です。スコアよりも<strong>毎日続けること</strong>がずっと大切です。",
+            tipTitle: "もっとよく覚えるコツ",
+            tips: [
+              "似た種類同士でまとめてみてください。果物は果物同士、動物は動物同士にまとめると、数が整理できます。",
+              "単語で短い物語を作ってみてください。「うさぎがりんごを持って海に行った」のようにつなげると、忘れにくくなります。",
+              "単語を声に出して読みながら、頭の中で絵を描いてみてください。",
+              "見逃した単語は、答えを見てもう一度声に出して読んでみてください。"
+            ],
+            footerIntro: "今日の脳トレ · 脳の健康のために毎日用意する記憶ゲームです。",
+            disclaimer: "このゲームは遊びと脳の活動のためのもので、医療の診断や治療の代わりにはなりません。",
+            blogLink: "今日の脳トレブログ",
+            levelLineDone: "今日の5つのゲームをすべて終えました。お疲れさまでした！",
+            levelDiff: "難易度", levelWords: "覚える単語", levelTime: "覚える時間",
+            readyFirst: "準備はできましたか？", readyNext: "次のゲームです",
+            readySubA: "下のボタンを押すと単語が", readySubB: "個現れます。", readySubC: "時間制限はないので、ゆっくり覚えてください。",
+            btnShow: "単語を見る",
+            showMsg: "今、覚えてください！",
+            showSub: "声に出して読みながら覚えると、よりよく記憶できます。種類ごとにまとめるのもおすすめです。",
+            memorizeNote: "時間制限はありません。単語は消えないので、ゆっくり覚えてください。",
+            btnHide: "覚えました",
+            pickMsg: "単語が隠れました",
+            pickSubA: "さっき見た単語を", pickSubB: "個すべて選んでください。",
+            selLabel: "選んだ単語", selUnit: "個",
+            btnCheck: "答え合わせ",
+            ariaOptions: "単語の選択肢",
+            fbPerfect: "完璧です！全部当たりました！", fbGreat: "とてもよくできました！", fbGood: "よく思い出せました！",
+            fbLineA: "単語", fbLineB: "個のうち<strong>", fbLineC: "個</strong>当たりました。",
+            fbMissed: "見逃した単語です。一度読んでみてください",
+            fbWrong: "この単語はさっきありませんでした",
+            btnResult: "今日の結果を見る", btnNext: "次のゲームへ",
+            resultLabel: "今日の結果 · 当たった単語",
+            resPerfectMsg: "全部の単語が当たりました！", resPerfectSub: "今日は脳がとても気持ちよく運動しました。明日も新しい単語が待っています。",
+            resGreatMsg: "とてもよくできました！", resGreatSub: "見逃した単語があっても大丈夫です。思い出そうと頑張った瞬間、脳はすでに運動していました。",
+            resGoodMsg: "良いスタートです！", resGoodSub: "最初は誰でも難しいものです。毎日5分ずつ続けると、少しずつ覚えられるようになります。",
+            resLowMsg: "今日やり遂げただけで十分です！", resLowSub: "スコアよりも毎日続けることが大切です。明日、新しい単語でまた会いましょう。",
+            btnAgain: "新しい単語でもう一度",
+            resultNote: "明日また来ると、日付が変わって別の単語が用意されています。"
+          }
+        };
+
+        var currentLang = "ko";
+        function t() { return I18N[currentLang]; }
+
+        function formatDate() {
+          var tr = t();
+          if (currentLang === "en") {
+            return tr.weekNames[now.getDay()] + ", " + tr.monthNames[now.getMonth()] + " " + now.getDate() + ", " + now.getFullYear();
+          }
+          if (currentLang === "ja") {
+            return now.getFullYear() + "年" + (now.getMonth() + 1) + "月" + now.getDate() + "日（" + tr.weekNames[now.getDay()] + "）";
+          }
+          return now.getFullYear() + "년 " + (now.getMonth() + 1) + "월 " + now.getDate() + "일 (" + tr.weekNames[now.getDay()] + ")";
+        }
+
+        function shuffled(arr, rand) {
+          var a = arr.slice();
+          for (var i = a.length - 1; i > 0; i--) {
+            var j = Math.floor(rand() * (i + 1));
+            var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+          }
+          return a;
+        }
+
+        function buildRounds(attempt) {
+          var rand = mulberry32(dateSeed * 1000 + attempt * 131 + 202);
+          var pool = POOLS[currentLang];
+          var tr = t();
+          return COUNTS.map(function (count, i) {
+            var pick = shuffled(pool, rand);
+            var targets = pick.slice(0, count);
+            var distractors = pick.slice(count, count * 2);
+            var options = shuffled(targets.concat(distractors), rand);
+            return { count: count, name: tr.levels[i], targets: targets, options: options };
+          });
+        }
+
+        var attempt = 0;
+        var rounds = buildRounds(attempt);
+        var roundIdx = 0;
+        var score = 0;
+        var phase = "ready";
+        var selected = {};
+
+        var stageBox = document.getElementById("stageBox");
+        var roundNowEl = document.getElementById("roundNow");
+        var scoreNowEl = document.getElementById("scoreNow");
+        var levelLineEl = document.getElementById("levelLine");
+        var dotsEl = document.getElementById("progressDots");
+
+        function esc(s) {
+          return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+        }
+        function chips(words, mini) {
+          return words.map(function (w) {
+            return '<span class="word-chip' + (mini ? " mini" : "") + '">' + esc(w) + "</span>";
+          }).join("");
+        }
+        function setText(id, text) { document.getElementById(id).textContent = text; }
+
+        function applyStatic() {
+          var tr = t();
+          document.documentElement.lang = tr.htmlLang;
+          document.title = tr.pageTitle;
+          setText("chipText", tr.chip);
+          setText("mainTitle", tr.title);
+          setText("ledeText", tr.lede);
+          document.getElementById("todayLine").innerHTML =
+            esc(tr.todayBefore) + "<strong>" + esc(formatDate()) + "</strong>" + esc(tr.todayMid) +
+            "<strong>" + esc(tr.todayStrong) + "</strong>" + esc(tr.todayAfter);
+          setText("gameLabelText", tr.gameLabel);
+          setText("scoreLabelText", tr.scoreLabel);
+          setText("scoreUnit", tr.scoreUnit);
+          setText("howtoTitle", tr.howtoTitle);
+          setText("step1Title", tr.step1Title);
+          setText("step1Body", tr.step1Body);
+          setText("step2Title", tr.step2Title);
+          setText("step2Body", tr.step2Body);
+          setText("step3Title", tr.step3Title);
+          setText("step3Body", tr.step3Body);
+          document.getElementById("exampleGrid").innerHTML = chips(tr.example, true);
+          setText("exampleNote", tr.exampleNote);
+          setText("levelTitle", tr.levelTitle);
+          setText("thGame", tr.thGame);
+          setText("thDiff", tr.thDiff);
+          setText("thWords", tr.thWords);
+          setText("thTime", tr.thTime);
+          var rows = "";
+          for (var i = 0; i < COUNTS.length; i++) {
+            rows += "<tr><td>" + esc(tr.gameLabel) + " " + (i + 1) + "</td><td>" + esc(tr.levels[i]) +
+              '</td><td class="num">' + COUNTS[i] + esc(tr.countUnit) + "</td><td>" + esc(tr.noLimit) + "</td></tr>";
+          }
+          document.getElementById("levelRows").innerHTML = rows;
+          setText("scoreNote", tr.scoreNote);
+          setText("whyTitle", tr.whyTitle);
+          document.getElementById("why1").innerHTML = tr.why1;
+          document.getElementById("why2").innerHTML = tr.why2;
+          setText("tipTitle", tr.tipTitle);
+          document.getElementById("tipsList").innerHTML = tr.tips.map(function (tip) {
+            return "<li>" + esc(tip) + "</li>";
+          }).join("");
+          setText("footerIntro", tr.footerIntro);
+          setText("disclaimerText", tr.disclaimer);
+          setText("blogLink", tr.blogLink);
+          var btns = document.querySelectorAll(".lang-switch button");
+          for (var b = 0; b < btns.length; b++) {
+            btns[b].setAttribute("aria-pressed", String(btns[b].getAttribute("data-lang") === currentLang));
+          }
+        }
+
+        function renderTop() {
+          var tr = t();
+          roundNowEl.textContent = String(Math.min(roundIdx + 1, 5));
+          scoreNowEl.textContent = String(score);
+          var dots = dotsEl.children;
+          for (var i = 0; i < dots.length; i++) {
+            dots[i].className = i < roundIdx || phase === "done" ? "done" : i === roundIdx ? "now" : "";
+          }
+          if (phase === "done") {
+            levelLineEl.textContent = tr.levelLineDone;
+          } else {
+            var r = rounds[roundIdx];
+            levelLineEl.innerHTML =
+              esc(tr.levelDiff) + " <strong>" + esc(r.name) + "</strong> · " + esc(tr.levelWords) + " <strong>" + r.count + esc(tr.countUnit) + "</strong> · " + esc(tr.levelTime) + " <strong>" + esc(tr.noLimit) + "</strong>";
+          }
+        }
+
+        function showReady() {
+          phase = "ready"; selected = {}; renderTop();
+          var tr = t();
+          var r = rounds[roundIdx];
+          stageBox.innerHTML =
+            '<p class="stage-msg">' + esc(roundIdx === 0 ? tr.readyFirst : tr.readyNext) + "</p>" +
+            '<p class="stage-sub">' + esc(tr.readySubA) + r.count + esc(tr.readySubB) + "<br />" + esc(tr.readySubC) + "</p>" +
+            '<div class="word-board"><span style="font-size:26px;font-weight:800;color:var(--ink-soft)">? ? ?</span></div>' +
+            '<div class="btn-row"><button type="button" class="btn btn-primary" id="btnShow">' + esc(tr.btnShow) + "</button></div>";
+          document.getElementById("btnShow").addEventListener("click", showWords);
+        }
+
+        function showWords() {
+          phase = "show"; renderTop();
+          var tr = t();
+          var r = rounds[roundIdx];
+          stageBox.innerHTML =
+            '<p class="stage-msg">' + esc(tr.showMsg) + "</p>" +
+            '<p class="stage-sub">' + esc(tr.showSub) + "</p>" +
+            '<div class="word-board"><div class="word-grid">' + chips(r.targets, false) + "</div></div>" +
+            '<p class="memorize-note">' + esc(tr.memorizeNote) + "</p>" +
+            '<div class="btn-row"><button type="button" class="btn btn-primary" id="btnHide">' + esc(tr.btnHide) + "</button></div>";
+          document.getElementById("btnHide").addEventListener("click", showPick);
+        }
+
+        function selectedCount() {
+          var n = 0;
+          for (var k in selected) if (selected[k]) n++;
+          return n;
+        }
+
+        function showPick() {
+          phase = "pick"; selected = {}; renderTop();
+          var tr = t();
+          var r = rounds[roundIdx];
+          var btns = r.options.map(function (w) {
+            return '<button type="button" data-word="' + esc(w) + '" aria-pressed="false">' + esc(w) + "</button>";
+          }).join("");
+          stageBox.innerHTML =
+            '<p class="stage-msg">' + esc(tr.pickMsg) + "</p>" +
+            '<p class="stage-sub">' + esc(tr.pickSubA) + r.count + esc(tr.pickSubB) + "</p>" +
+            '<p class="select-count">' + esc(tr.selLabel) + ' <strong><span id="selCount">0</span>' + esc(tr.selUnit) + "</strong> / " + r.count + esc(tr.selUnit) + "</p>" +
+            '<div class="option-grid" role="group" aria-label="' + esc(tr.ariaOptions) + '">' + btns + "</div>" +
+            '<div class="btn-row"><button type="button" class="btn btn-primary" id="btnCheck" disabled>' + esc(tr.btnCheck) + "</button></div>";
+          var keys = stageBox.querySelectorAll("[data-word]");
+          for (var i = 0; i < keys.length; i++) {
+            keys[i].addEventListener("click", function () { toggleWord(this); });
+          }
+          document.getElementById("btnCheck").addEventListener("click", checkAnswer);
+        }
+
+        function toggleWord(btn) {
+          if (phase !== "pick") return;
+          var w = btn.getAttribute("data-word");
+          var on = btn.getAttribute("aria-pressed") === "true";
+          if (!on && selectedCount() >= rounds[roundIdx].count) return;
+          selected[w] = !on;
+          btn.setAttribute("aria-pressed", String(!on));
+          var c = document.getElementById("selCount");
+          if (c) c.textContent = String(selectedCount());
+          var check = document.getElementById("btnCheck");
+          if (check) check.disabled = selectedCount() !== rounds[roundIdx].count;
+        }
+
+        function checkAnswer() {
+          if (phase !== "pick") return;
+          phase = "feedback";
+          var tr = t();
+          var r = rounds[roundIdx];
+          var hit = [], missed = [], wrong = [];
+          r.targets.forEach(function (w) {
+            if (selected[w]) hit.push(w); else missed.push(w);
+          });
+          r.options.forEach(function (w) {
+            if (selected[w] && r.targets.indexOf(w) === -1) wrong.push(w);
+          });
+          score += hit.length;
+          renderTop();
+          var all = hit.length === r.count;
+          var last = roundIdx === rounds.length - 1;
+          var title = all ? tr.fbPerfect : hit.length >= r.count - 1 ? tr.fbGreat : tr.fbGood;
+          var html =
+            '<div class="feedback ' + (all ? "good" : "mid") + '">' +
+            '<p class="fb-title">' + esc(title) + "</p>" +
+            "<p>" + feedbackLine(r.count, hit.length) + "</p>";
+          if (missed.length) {
+            html += '<p class="fb-label">' + esc(tr.fbMissed) + '</p><div class="word-grid">' + chips(missed, true) + "</div>";
+          }
+          if (wrong.length) {
+            html += '<p class="fb-label">' + esc(tr.fbWrong) + '</p><div class="word-grid">' + chips(wrong, true) + "</div>";
+          }
+          html += "</div>" +
+            '<div class="btn-row"><button type="button" class="btn btn-primary" id="btnNext">' +
+            esc(last ? tr.btnResult : tr.btnNext) + "</button></div>";
+          stageBox.innerHTML = html;
+          document.getElementById("btnNext").addEventListener("click", function () {
+            if (last) showResult();
+            else { roundIdx++; showReady(); }
+          });
+        }
+
+        function feedbackLine(count, hitCount) {
+          if (currentLang === "en") return "You got <strong>" + hitCount + "</strong> of " + count + " words right.";
+          if (currentLang === "ja") return "単語" + count + "個のうち<strong>" + hitCount + "個</strong>当たりました。";
+          return "단어 " + count + "개 중 <strong>" + hitCount + "개</strong>를 맞혔어요.";
+        }
+
+        function showResult() {
+          phase = "done"; renderTop();
+          var tr = t();
+          var msg, sub;
+          if (score === TOTAL) { msg = tr.resPerfectMsg; sub = tr.resPerfectSub; }
+          else if (score >= 28) { msg = tr.resGreatMsg; sub = tr.resGreatSub; }
+          else if (score >= 18) { msg = tr.resGoodMsg; sub = tr.resGoodSub; }
+          else { msg = tr.resLowMsg; sub = tr.resLowSub; }
+          stageBox.innerHTML =
+            '<div class="result-box">' +
+            '<p class="stage-sub" style="margin-bottom:0">' + esc(tr.resultLabel) + "</p>" +
+            '<p class="result-score">' + score + " / " + TOTAL + "</p>" +
+            '<p class="result-msg">' + esc(msg) + "</p>" +
+            '<p class="result-sub">' + esc(sub) + "</p>" +
+            '<div class="btn-row">' +
+            '<button type="button" class="btn btn-primary" id="btnAgain">' + esc(tr.btnAgain) + "</button>" +
+            "</div>" +
+            '<p class="stage-sub" style="margin-top:16px">' + esc(tr.resultNote) + "</p>" +
+            "</div>";
+          document.getElementById("btnAgain").addEventListener("click", function () {
+            attempt++;
+            rounds = buildRounds(attempt);
+            roundIdx = 0; score = 0;
+            showReady();
+            document.getElementById("gameCard").scrollIntoView({ behavior: "smooth", block: "start" });
+          });
+        }
+
+        function setLanguage(lang) {
+          if (!I18N[lang]) return;
+          currentLang = lang;
+          applyStatic();
+          rounds = buildRounds(attempt);
+          roundIdx = 0; score = 0;
+          showReady();
+        }
+
+        var langBtns = document.querySelectorAll(".lang-switch button");
+        for (var lb = 0; lb < langBtns.length; lb++) {
+          langBtns[lb].addEventListener("click", function () { setLanguage(this.getAttribute("data-lang")); });
+        }
+
+        applyStatic();
+        showReady();
+      })();
+    </script>
+  </body>
+</html>

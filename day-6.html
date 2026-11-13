@@ -1,0 +1,991 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Day 6 노래 제목 게임</title>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
+    />
+    <style>
+      :root {
+        --bg: #fdf6ec;
+        --bg-soft: #fbeed9;
+        --card: #fffdf8;
+        --ink: #3a2a1c;
+        --ink-soft: #6f5a44;
+        --line: #ecd9bd;
+        --accent: #d95d0f;
+        --accent-strong: #b84a08;
+        --accent-soft: #fdeeda;
+        --good: #2e7d46;
+        --good-soft: #e4f4e8;
+        --bad: #b3402a;
+        --bad-soft: #fbe9e3;
+        --key: #fff7ea;
+        --key-line: #e6cfa8;
+        --shadow: 0 10px 30px rgba(146, 90, 32, 0.14);
+        color-scheme: light;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #221812;
+          --bg-soft: #2c1f16;
+          --card: #2f2118;
+          --ink: #f7ead9;
+          --ink-soft: #cdb59c;
+          --line: #4d3826;
+          --accent: #f08a3c;
+          --accent-strong: #ffb066;
+          --accent-soft: #453022;
+          --good: #7fd79b;
+          --good-soft: #22392a;
+          --bad: #ff9d87;
+          --bad-soft: #40261f;
+          --key: #3a2a1e;
+          --key-line: #57402a;
+          --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+          color-scheme: dark;
+        }
+      }
+      * { box-sizing: border-box; }
+      html { -webkit-text-size-adjust: 100%; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "Pretendard Variable", Pretendard, -apple-system, "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+        font-size: 20px;
+        line-height: 1.6;
+      }
+      .wrap { max-width: 760px; margin: 0 auto; padding: 28px 18px 64px; }
+
+      /* ---------- 언어 선택 ---------- */
+      .lang-bar {
+        display: flex; flex-wrap: wrap; gap: 10px;
+        margin-bottom: 22px;
+      }
+      .lang-btn {
+        flex: 1 1 0; min-width: 104px; min-height: 56px;
+        padding: 10px 14px;
+        font-family: inherit; font-size: 20px; font-weight: 800;
+        color: var(--accent-strong);
+        background: var(--card); border: 2px solid var(--accent);
+        border-radius: 14px; cursor: pointer;
+      }
+      .lang-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+      /* ---------- 머리말 ---------- */
+      .day-chip {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: var(--accent-soft); color: var(--accent-strong);
+        font-weight: 800; font-size: 17px;
+        padding: 8px 16px; border-radius: 999px;
+      }
+      .day-chip .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
+      h1 {
+        font-size: clamp(34px, 7.5vw, 46px);
+        line-height: 1.25; font-weight: 900; letter-spacing: -0.02em;
+        margin: 16px 0 10px;
+      }
+      .lede { font-size: 21px; color: var(--ink-soft); margin: 0 0 6px; }
+      .today-line { font-size: 18px; color: var(--ink-soft); margin: 10px 0 0; }
+      .today-line strong { color: var(--accent-strong); }
+
+      /* ---------- 게임 판 ---------- */
+      .game-card {
+        margin-top: 26px;
+        background: var(--card);
+        border: 2px solid var(--line);
+        border-radius: 24px;
+        box-shadow: var(--shadow);
+        padding: 26px 22px 30px;
+      }
+      .game-top {
+        display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+        gap: 10px 16px; margin-bottom: 6px;
+      }
+      .round-label { font-size: 22px; font-weight: 800; }
+      .round-label .of { color: var(--ink-soft); font-weight: 600; font-size: 19px; }
+      .score-label { font-size: 19px; font-weight: 700; color: var(--ink-soft); }
+      .score-label strong { color: var(--accent-strong); font-size: 22px; }
+      .progress-dots { display: flex; gap: 8px; margin: 10px 0 4px; }
+      .progress-dots span {
+        flex: 1; height: 12px; border-radius: 999px; background: var(--bg-soft);
+        border: 1px solid var(--line);
+      }
+      .progress-dots span.done { background: var(--good); border-color: var(--good); }
+      .progress-dots span.now { background: var(--accent); border-color: var(--accent); }
+      .level-line { font-size: 19px; color: var(--ink-soft); margin: 8px 0 0; }
+      .level-line strong { color: var(--ink); }
+
+      .stage { margin-top: 18px; text-align: center; }
+      .stage-msg { font-size: 22px; font-weight: 700; margin: 0 0 6px; }
+      .stage-sub { font-size: 19px; color: var(--ink-soft); margin: 0 0 18px; }
+
+      .lyric-board {
+        min-height: 128px;
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+        background: var(--bg-soft);
+        border: 2px dashed var(--line);
+        border-radius: 18px;
+        padding: 22px 16px;
+      }
+      .lyric-label { font-size: 17px; font-weight: 700; color: var(--ink-soft); margin: 0; }
+      .lyric {
+        font-size: clamp(26px, 6.5vw, 36px);
+        font-weight: 900; line-height: 1.4; margin: 0;
+      }
+      .lyric::before { content: "♪ "; color: var(--accent); }
+      .lyric::after { content: " ♪"; color: var(--accent); }
+
+      .singer-hint {
+        margin-top: 14px; font-size: 19px; font-weight: 700; color: var(--accent-strong);
+        background: var(--accent-soft); border-radius: 12px; padding: 12px 16px;
+      }
+      .hint-btn-row { margin-top: 14px; }
+
+      .options {
+        display: grid; grid-template-columns: 1fr; gap: 12px;
+        max-width: 560px; margin: 22px auto 0; text-align: left;
+      }
+      @media (min-width: 580px) {
+        .options { grid-template-columns: 1fr 1fr; }
+      }
+      .opt-btn {
+        min-height: 68px; padding: 14px 18px;
+        font-family: inherit; font-size: 22px; font-weight: 800; color: var(--ink);
+        background: var(--key); border: 2px solid var(--key-line); border-radius: 16px;
+        cursor: pointer; text-align: center; line-height: 1.35;
+      }
+      .opt-btn:active { background: var(--accent-soft); }
+      .opt-btn.picked-good { background: var(--good-soft); border-color: var(--good); color: var(--good); }
+      .opt-btn.picked-bad { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+      .opt-btn.reveal-good { background: var(--good-soft); border-color: var(--good); color: var(--good); }
+
+      .btn {
+        display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        min-height: 60px; padding: 14px 30px;
+        font-family: inherit; font-size: 22px; font-weight: 800;
+        border-radius: 16px; border: 2px solid transparent; cursor: pointer;
+      }
+      .btn-primary { background: var(--accent); color: #fff; }
+      .btn-primary:active { background: var(--accent-strong); }
+      .btn-ghost { background: transparent; color: var(--accent-strong); border-color: var(--accent); }
+      .btn-row { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 20px; }
+      button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+      button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+      .feedback {
+        margin-top: 20px; border-radius: 16px; padding: 20px 18px; text-align: center;
+      }
+      .feedback.good { background: var(--good-soft); }
+      .feedback.bad { background: var(--bad-soft); }
+      .feedback .fb-title { font-size: 26px; font-weight: 900; margin: 0 0 6px; }
+      .feedback.good .fb-title { color: var(--good); }
+      .feedback.bad .fb-title { color: var(--bad); }
+      .feedback p { margin: 4px 0; font-size: 20px; }
+      .feedback .fb-answer { font-size: 24px; font-weight: 900; }
+      .feedback .fb-note { font-size: 18px; color: var(--ink-soft); }
+
+      .result-box { text-align: center; padding: 10px 0 2px; }
+      .result-score { font-size: clamp(52px, 14vw, 76px); font-weight: 900; color: var(--accent-strong); line-height: 1.1; margin: 6px 0; }
+      .result-msg { font-size: 22px; font-weight: 700; margin: 0 0 8px; }
+      .result-sub { font-size: 19px; color: var(--ink-soft); margin: 0; }
+
+      /* ---------- 설명 ---------- */
+      section.howto { margin-top: 48px; }
+      h2 {
+        font-size: 28px; font-weight: 900; letter-spacing: -0.01em;
+        margin: 0 0 16px; padding-bottom: 10px; border-bottom: 3px solid var(--accent-soft);
+      }
+      .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+      .steps li {
+        display: flex; gap: 16px; align-items: flex-start;
+        background: var(--card); border: 2px solid var(--line); border-radius: 18px; padding: 18px;
+      }
+      .step-num {
+        flex: 0 0 auto; width: 46px; height: 46px; border-radius: 50%;
+        background: var(--accent); color: #fff;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 23px; font-weight: 900;
+      }
+      .steps h3 { margin: 2px 0 4px; font-size: 22px; font-weight: 800; }
+      .steps p { margin: 0; font-size: 19px; color: var(--ink-soft); }
+      .example {
+        margin-top: 16px; text-align: center;
+        background: var(--bg-soft); border-radius: 18px; padding: 20px 14px;
+        font-size: clamp(22px, 6vw, 30px); font-weight: 900; line-height: 1.45;
+      }
+      .example .arrow { color: var(--accent); margin: 0 10px; }
+      .example small { display: block; font-size: 17px; font-weight: 600; color: var(--ink-soft); margin-top: 8px; }
+
+      .level-table { width: 100%; border-collapse: collapse; font-size: 19px; }
+      .level-table th, .level-table td { padding: 12px 10px; text-align: left; border-bottom: 1px solid var(--line); }
+      .level-table th { font-weight: 800; background: var(--bg-soft); }
+
+      .tips { margin: 0; padding-left: 24px; display: grid; gap: 8px; font-size: 19px; }
+      .why p { font-size: 19px; color: var(--ink-soft); margin: 0 0 10px; }
+      .why strong { color: var(--ink); }
+
+      footer {
+        margin-top: 52px; padding-top: 20px; border-top: 2px solid var(--line);
+        font-size: 17px; color: var(--ink-soft); text-align: center;
+      }
+      footer a { color: var(--accent-strong); font-weight: 700; display: inline-block; padding: 10px 6px; }
+      [hidden] { display: none !important; }
+
+      @media (prefers-reduced-motion: reduce) {
+        * { transition: none !important; animation: none !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <noscript>
+      <div style="max-width:760px;margin:0 auto;padding:36px 18px;font-size:21px;line-height:1.6">
+        <p><strong>이 게임을 하려면 자바스크립트를 켜 주세요.</strong> 브라우저 설정에서 자바스크립트를 허용한 뒤 다시 열어 주세요.</p>
+        <p><a href="https://blog.naver.com/sin4buja">오늘의 두뇌운동 블로그</a></p>
+      </div>
+    </noscript>
+    <main class="wrap" id="mainContent">
+      <!-- ============ 언어 선택 ============ -->
+      <nav class="lang-bar" id="langBar" aria-label="Language / 언어 / 言語">
+        <button type="button" class="lang-btn active" data-lang="ko" aria-pressed="true">한국어</button>
+        <button type="button" class="lang-btn" data-lang="en" aria-pressed="false">English</button>
+        <button type="button" class="lang-btn" data-lang="ja" aria-pressed="false">日本語</button>
+      </nav>
+
+      <header>
+        <span class="day-chip"><span class="dot"></span><span id="chipText">오늘의 두뇌운동 · Day 6</span></span>
+        <h1 id="h1Text">노래 제목 맞히기</h1>
+        <p class="lede" id="ledeText">옛 노래의 첫 소절을 보고, 어떤 노래인지 제목을 맞히는 기억력 게임이에요. 가사를 흥얼거리다 보면 제목이 떠오를 거예요. 시간 제한이 없으니 천천히 즐기세요. 오늘은 다섯 곡, 5분이면 충분해요.</p>
+        <p class="today-line" id="todayLine"></p>
+      </header>
+
+      <!-- ============ 게임 ============ -->
+      <div class="game-card" id="gameCard">
+        <div class="game-top">
+          <div class="round-label"><span id="roundWord">게임</span> <span id="roundNow">1</span> <span class="of">/ 5</span></div>
+          <div class="score-label"><span id="scoreWord">맞힌 개수</span> <strong><span id="scoreNow">0</span><span id="scoreUnit">개</span></strong></div>
+        </div>
+        <div class="progress-dots" id="progressDots" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <p class="level-line" id="levelLine"></p>
+
+        <div class="stage" id="stageBox" aria-live="polite"></div>
+      </div>
+
+      <!-- ============ 게임 방법 ============ -->
+      <section class="howto" aria-labelledby="howtoTitle">
+        <h2 id="howtoTitle">게임 방법</h2>
+        <ol class="steps" id="stepsList"></ol>
+        <div class="example" id="exampleBox"></div>
+      </section>
+
+      <section class="howto" aria-labelledby="levelTitle">
+        <h2 id="levelTitle">오늘의 다섯 게임</h2>
+        <table class="level-table">
+          <thead>
+            <tr><th scope="col" id="thGame">게임</th><th scope="col" id="thLevel">난이도</th><th scope="col" id="thKind">어떤 노래인가요</th></tr>
+          </thead>
+          <tbody id="levelBody"></tbody>
+        </table>
+      </section>
+
+      <section class="howto why" aria-labelledby="whyTitle">
+        <h2 id="whyTitle">왜 좋은 게임인가요?</h2>
+        <div id="whyBody"></div>
+      </section>
+
+      <section class="howto" aria-labelledby="tipTitle">
+        <h2 id="tipTitle">더 잘 떠올리는 팁</h2>
+        <ul class="tips" id="tipsList"></ul>
+      </section>
+
+      <footer>
+        <p id="footerText"></p>
+        <a href="https://blog.naver.com/sin4buja" target="_blank" rel="noopener" id="blogLink">오늘의 두뇌운동 블로그</a>
+      </footer>
+    </main>
+
+    <script>
+      (function () {
+        "use strict";
+
+        /* ================================================================
+           언어별 화면 문구
+           ================================================================ */
+        var STR = {
+          ko: {
+            docLang: "ko",
+            title: "Day 6 노래 제목 게임",
+            chip: "오늘의 두뇌운동 · Day 6",
+            h1: "노래 제목 맞히기",
+            lede: "옛 노래의 첫 소절을 보고, 어떤 노래인지 제목을 맞히는 기억력 게임이에요. 가사를 흥얼거리다 보면 제목이 떠오를 거예요. 시간 제한이 없으니 천천히 즐기세요. 오늘은 다섯 곡, 5분이면 충분해요.",
+            todayA: "오늘은 ",
+            todayB: " · 오늘의 노래는 날짜에 맞춰 정해져요. ",
+            todayC: "내일 오면 새로운 노래",
+            todayD: "로 바뀌어 있어요. 어디서든 바로 들어와서 할 수 있어요.",
+            roundWord: "게임",
+            scoreWord: "맞힌 개수",
+            scoreUnit: "개",
+            levelDone: "오늘의 다섯 곡을 모두 맞혀 봤어요. 수고하셨어요!",
+            levelPrefix: "난이도 ",
+            levelSuffix: " · 가사 첫 소절을 보고 제목을 맞혀요",
+            readyFirst: "준비되셨나요?",
+            readyNext: "다음 노래예요",
+            readySub: "아래 버튼을 누르면 옛 노래의 첫 소절이 나타나요.<br />가사를 보고 어떤 노래인지 제목을 맞혀 보세요.",
+            lyricLabel: "가사 첫 소절",
+            lyricMystery: "어떤 노래일까요?",
+            showBtn: "노래 문제 보기",
+            quizMsg: "이 가사의 노래 제목은 무엇일까요?",
+            quizSub: "가사를 흥얼거리며 떠올려 보고, 아래에서 제목을 골라 눌러 주세요.",
+            hintBtn: "가수 힌트 보기",
+            hintText: function (singer) { return "힌트 · " + singer + " 님이 부른 노래예요"; },
+            optionsLabel: "노래 제목 보기",
+            answerIs: "정답은 ",
+            answerWas: "정답은 ",
+            answerEndGood: " 예요!",
+            answerEndBad: " 였어요.",
+            sungBy: function (singer) { return singer + " 님이 부른 노래예요."; },
+            nextBtn: "다음 노래로",
+            resultBtn: "오늘의 결과 보기",
+            resultLabel: "오늘의 결과",
+            againBtn: "새로운 노래로 다시 하기",
+            tomorrowNote: "내일 다시 오시면, 날짜가 바뀌어 또 다른 노래가 준비돼 있어요.",
+            praise: ["완벽해요!", "대단하세요!", "정확해요!", "기억력이 반짝이네요!", "최고예요!"],
+            cheer: ["아쉬워요, 그래도 잘 떠올리셨어요.", "괜찮아요. 흥얼거리며 떠올린 것 자체가 운동이에요.", "조금만 더! 정답 노래를 한 번 흥얼거려 보세요."],
+            results: [
+              { msg: "다섯 곡 모두 맞혔어요!", sub: "옛 노래가 머릿속에 생생하게 살아 있네요. 내일도 새로운 노래가 기다리고 있어요." },
+              { msg: "아주 잘하셨어요!", sub: "틀린 곡이 있어도 괜찮아요. 가사를 흥얼거리며 떠올린 순간 뇌는 이미 운동하고 있었어요." },
+              { msg: "좋은 시작이에요!", sub: "오래된 노래일수록 처음에는 제목이 가물가물해요. 매일 5분씩 하다 보면 점점 잘 떠오를 거예요." },
+              { msg: "오늘도 해낸 것만으로 충분해요!", sub: "점수보다 매일 하는 것이 중요해요. 내일 새로운 노래로 다시 만나요." }
+            ],
+            howtoTitle: "게임 방법",
+            steps: [
+              { h: "가사 첫 소절을 읽어요", p: "「노래 문제 보기」를 누르면 옛 노래의 첫 소절이 크게 나타나요. 음원은 저작권 때문에 넣지 않았어요. 대신 가사를 보며 멜로디를 떠올려 보세요." },
+              { h: "흥얼거리며 떠올려요", p: "가사를 소리 내어 읽거나 흥얼거리면 제목이 떠올라요. 도저히 생각나지 않으면 「가수 힌트 보기」를 눌러도 돼요. 힌트를 봐도 감점은 없어요." },
+              { h: "제목을 골라요", p: "네 개의 보기 중에서 이 가사의 노래 제목을 골라 눌러요. 바로 정답과 함께 노래 이야기도 알려 드려요. 틀려도 괜찮아요." }
+            ],
+            exampleLyric: "\"꽃피는 동백섬에 봄이 왔건만\"",
+            exampleTitle: "돌아와요 부산항에",
+            exampleNote: "예시예요. 조용필 님이 부른 「돌아와요 부산항에」의 첫 소절이에요.",
+            levelTitle: "오늘의 다섯 게임",
+            thGame: "게임",
+            thLevel: "난이도",
+            thKind: "어떤 노래인가요",
+            gameWord: "게임",
+            tierDesc: ["누구나 아는 국민 트로트", "들으면 바로 아는 히트곡", "추억의 명곡", "옛 가요의 명곡", "1920~40년대의 오래된 명곡"],
+            whyTitle: "왜 좋은 게임인가요?",
+            why: [
+              "젊은 시절에 듣던 노래는 <strong>장기기억</strong> 속에 멜로디와 가사, 그 시절의 풍경까지 함께 저장돼 있어요. 첫 소절을 보고 제목을 떠올리는 일은 그 기억을 꺼내 오는 <strong>회상 활동</strong>이에요.",
+              "노래를 떠올리며 자연스럽게 따라 부르게 되는 것도 좋아요. 점수보다 <strong>매일 꾸준히 하는 것</strong>이 훨씬 중요해요. 하루 다섯 곡, 딱 5분이면 충분합니다."
+            ],
+            tipTitle: "더 잘 떠올리는 팁",
+            tips: [
+              "가사를 읽고 나서 눈을 감고 멜로디를 흥얼거려 보세요. 제목이 따라 나와요.",
+              "생각나지 않을 때는 「가수 힌트 보기」를 눌러 보세요. 가수 얼굴이 떠오르면 제목도 떠올라요.",
+              "맞힌 노래는 그 시절에 어디서, 누구와 들었는지 잠깐 이야기해 보세요. 회상이 깊어져요.",
+              "가족과 함께 하면 더 재미있어요. 서로 문제를 내고 맞혀 보세요."
+            ],
+            footer: "오늘의 두뇌운동 · 뇌건강 놀이터지기가 매일 준비하는 치매예방 기억력 게임이에요.<br />이 게임은 놀이와 두뇌 활동 돕기가 목적이며, 의료 진단이나 치료를 대신하지 않아요.",
+            blogLink: "오늘의 두뇌운동 블로그"
+          },
+          en: {
+            docLang: "en",
+            title: "Day 6 Song Title Game",
+            chip: "Daily Brain Exercise · Day 6",
+            h1: "Guess the Song Title",
+            lede: "A memory game: read the first line of a classic song and guess its title. Hum the tune and the title will come back to you. There is no time limit, so take it slowly. Five songs today — five minutes is plenty.",
+            todayA: "Today is ",
+            todayB: " · Today's songs are chosen by the date. ",
+            todayC: "Come back tomorrow for new songs",
+            todayD: ". You can play right away, from anywhere.",
+            roundWord: "Song",
+            scoreWord: "Correct",
+            scoreUnit: "",
+            levelDone: "You tried all five of today's songs. Well done!",
+            levelPrefix: "Level: ",
+            levelSuffix: " · Read the first lyric line and guess the title",
+            readyFirst: "Are you ready?",
+            readyNext: "Here is the next song",
+            readySub: "Press the button below and the first line of a classic song will appear.<br />Read the line and guess the song's title.",
+            lyricLabel: "First lyric line",
+            lyricMystery: "Which song is it?",
+            showBtn: "Show the song",
+            quizMsg: "What is the title of this song?",
+            quizSub: "Hum the line, recall the tune, then tap the title below.",
+            hintBtn: "See singer hint",
+            hintText: function (singer) { return "Hint · Sung by " + singer; },
+            optionsLabel: "Song title choices",
+            answerIs: "The answer is ",
+            answerWas: "The answer was ",
+            answerEndGood: "!",
+            answerEndBad: ".",
+            sungBy: function (singer) { return "Sung by " + singer + "."; },
+            nextBtn: "Next song",
+            resultBtn: "See today's result",
+            resultLabel: "Today's result",
+            againBtn: "Play again with new songs",
+            tomorrowNote: "Come back tomorrow — the date changes and a new set of songs will be waiting.",
+            praise: ["Perfect!", "Wonderful!", "Exactly right!", "What a shining memory!", "Superb!"],
+            cheer: ["So close — you recalled it well.", "That's all right. Humming and recalling is the exercise itself.", "Almost! Try humming the right song once."],
+            results: [
+              { msg: "You got all five songs!", sub: "The old songs are still vivid in your memory. New songs are waiting tomorrow." },
+              { msg: "Very well done!", sub: "Missing a song or two is fine. The moment you hummed and recalled, your brain was already exercising." },
+              { msg: "A good start!", sub: "Older songs can feel faint at first. Five minutes a day and they will come back more easily." },
+              { msg: "Finishing today is enough!", sub: "Playing every day matters far more than the score. See you tomorrow with new songs." }
+            ],
+            howtoTitle: "How to play",
+            steps: [
+              { h: "Read the first lyric line", p: "Press “Show the song” and the first line of a classic song appears in large type. There is no audio, for copyright reasons — recall the melody from the words instead." },
+              { h: "Hum and recall", p: "Read the line aloud or hum it, and the title will come to mind. If it won't come, press “See singer hint.” Using a hint costs no points." },
+              { h: "Pick the title", p: "Choose the song's title from the four options. You'll see the answer right away, along with a short story about the song. It's fine to miss." }
+            ],
+            exampleLyric: "\"Yesterday, all my troubles seemed so far away\"",
+            exampleTitle: "Yesterday",
+            exampleNote: "An example: the first line of “Yesterday” by The Beatles.",
+            levelTitle: "Today's five songs",
+            thGame: "Song",
+            thLevel: "Level",
+            thKind: "What kind of song?",
+            gameWord: "Song",
+            tierDesc: ["A timeless classic everyone knows", "A hit you'll recognize at once", "A beloved standard", "A classic from the golden age", "An old standard from the 1920s–50s"],
+            whyTitle: "Why is this a good game?",
+            why: [
+              "Songs from our younger days are stored in <strong>long-term memory</strong> together with their melodies, lyrics, and the scenes of that time. Reading a first line and recalling the title is a <strong>reminiscence activity</strong> that brings those memories back.",
+              "You will naturally sing along as you remember, and that is good too. <strong>Playing a little every day</strong> matters far more than the score. Five songs a day — just five minutes is enough."
+            ],
+            tipTitle: "Tips for remembering",
+            tips: [
+              "After reading the line, close your eyes and hum the melody. The title will follow.",
+              "If it won't come, press “See singer hint.” Picturing the singer often brings the title back.",
+              "For each song you get, talk for a moment about where and with whom you used to hear it. It deepens the memory.",
+              "It's more fun with family. Take turns quizzing each other."
+            ],
+            footer: "Daily Brain Exercise · A memory game prepared every day for brain health.<br />This game is for play and brain activity; it does not replace medical diagnosis or treatment.",
+            blogLink: "Daily Brain Exercise Blog"
+          },
+          ja: {
+            docLang: "ja",
+            title: "Day 6 歌の題名ゲーム",
+            chip: "今日の脳トレ · Day 6",
+            h1: "歌の題名あて",
+            lede: "懐かしい歌の最初の一節を見て、題名をあてる記憶力ゲームです。口ずさんでいると、題名が浮かんでくるはずです。時間制限はないので、ゆっくり楽しんでください。今日は5曲、5分で十分です。",
+            todayA: "今日は",
+            todayB: "です · 今日の歌は日付に合わせて決まります。",
+            todayC: "明日来ると新しい歌",
+            todayD: "に変わっています。どこからでも、すぐ始められます。",
+            roundWord: "曲",
+            scoreWord: "正解",
+            scoreUnit: "曲",
+            levelDone: "今日の5曲をすべてやってみました。お疲れさまでした！",
+            levelPrefix: "難しさ ",
+            levelSuffix: " · 歌詞の最初の一節を見て題名をあてます",
+            readyFirst: "準備はいいですか？",
+            readyNext: "次の歌です",
+            readySub: "下のボタンを押すと、懐かしい歌の最初の一節が出てきます。<br />歌詞を見て、どの歌か題名をあててください。",
+            lyricLabel: "歌詞の最初の一節",
+            lyricMystery: "どの歌でしょう？",
+            showBtn: "歌の問題を見る",
+            quizMsg: "この歌詞の歌の題名は何でしょう？",
+            quizSub: "口ずさみながら思い出して、下から題名を選んで押してください。",
+            hintBtn: "歌手のヒントを見る",
+            hintText: function (singer) { return "ヒント · " + singer + "さんが歌った曲です"; },
+            optionsLabel: "歌の題名の選択肢",
+            answerIs: "正解は",
+            answerWas: "正解は",
+            answerEndGood: "です！",
+            answerEndBad: "でした。",
+            sungBy: function (singer) { return singer + "さんが歌った歌です。"; },
+            nextBtn: "次の歌へ",
+            resultBtn: "今日の結果を見る",
+            resultLabel: "今日の結果",
+            againBtn: "新しい歌でもう一度",
+            tomorrowNote: "明日また来ると、日付が変わって別の歌が用意されています。",
+            praise: ["完璧です！", "すばらしい！", "その通りです！", "記憶がキラリと光りますね！", "最高です！"],
+            cheer: ["惜しい！でもよく思い出しました。", "大丈夫です。口ずさんで思い出すこと自体が運動です。", "あと少し！正解の歌を一度口ずさんでみてください。"],
+            results: [
+              { msg: "5曲すべて正解しました！", sub: "懐かしい歌が頭の中に生き生きと残っていますね。明日も新しい歌が待っています。" },
+              { msg: "とてもよくできました！", sub: "間違えた曲があっても大丈夫です。口ずさんで思い出した瞬間、脳はもう運動していました。" },
+              { msg: "いいスタートです！", sub: "古い歌ほど、最初は題名がぼんやりするものです。毎日5分ずつ続けると、だんだん思い出しやすくなります。" },
+              { msg: "今日やれただけで十分です！", sub: "点数より、毎日続けることが大切です。明日、新しい歌でまた会いましょう。" }
+            ],
+            howtoTitle: "遊び方",
+            steps: [
+              { h: "歌詞の最初の一節を読みます", p: "「歌の問題を見る」を押すと、懐かしい歌の最初の一節が大きく出てきます。音源は著作権のため入れていません。その代わり、歌詞を見ながらメロディーを思い出してみてください。" },
+              { h: "口ずさみながら思い出します", p: "歌詞を声に出して読んだり口ずさんだりすると、題名が浮かんできます。どうしても思い出せないときは「歌手のヒントを見る」を押しても大丈夫です。ヒントを見ても減点はありません。" },
+              { h: "題名を選びます", p: "4つの選択肢の中から、この歌詞の歌の題名を選んで押します。すぐに正解と、その歌のお話もお知らせします。間違えても大丈夫です。" }
+            ],
+            exampleLyric: "「上を向いて歩こう」",
+            exampleTitle: "上を向いて歩こう",
+            exampleNote: "例です。坂本九さんが歌った「上を向いて歩こう」の最初の一節です。",
+            levelTitle: "今日の5曲",
+            thGame: "曲",
+            thLevel: "難しさ",
+            thKind: "どんな歌ですか",
+            gameWord: "曲",
+            tierDesc: ["誰もが知っている国民的な歌", "聞けばすぐわかるヒット曲", "思い出の名曲", "昭和歌謡の名曲", "戦前の古い名曲"],
+            whyTitle: "なぜ良いゲームなのですか？",
+            why: [
+              "若い頃に聞いた歌は、メロディーと歌詞、その頃の風景と一緒に<strong>長期記憶</strong>の中にしまわれています。最初の一節を見て題名を思い出すことは、その記憶を取り出す<strong>回想の活動</strong>です。",
+              "歌を思い出しながら自然に口ずさむようになるのも良いことです。点数よりも<strong>毎日続けること</strong>がずっと大切です。1日5曲、たった5分で十分です。"
+            ],
+            tipTitle: "もっとよく思い出すコツ",
+            tips: [
+              "歌詞を読んだら目を閉じて、メロディーを口ずさんでみてください。題名がついてきます。",
+              "思い出せないときは「歌手のヒントを見る」を押してみてください。歌手の顔が浮かぶと、題名も浮かんできます。",
+              "当たった歌は、その頃どこで、誰と聞いたか、少し話してみてください。回想が深まります。",
+              "家族と一緒だと、もっと楽しいです。お互いに問題を出し合ってみてください。"
+            ],
+            footer: "今日の脳トレ · 脳の健康のために毎日用意する記憶力ゲームです。<br />このゲームは遊びと脳の活動のためのもので、医療の診断や治療の代わりにはなりません。",
+            blogLink: "今日の脳トレ ブログ"
+          }
+        };
+
+        /* ================================================================
+           언어별 노래 모음
+           난이도 순서대로 다섯 묶음, 묶음마다 매일 한 곡씩 뽑아요.
+           hint는 가사 첫 소절 한 줄, note는 정답 뒤에 보여 줄 짧은 노래 이야기예요.
+           음원은 넣지 않아요.
+           ================================================================ */
+        var DATA = {
+          ko: [
+            {
+              name: "몸풀기",
+              songs: [
+                { title: "내 나이가 어때서", singer: "오승근", hint: "야야야, 내 나이가 어때서", note: "나이는 숫자에 불과하다는 가사로 많은 사랑을 받은 노래예요." },
+                { title: "어머나", singer: "장윤정", hint: "어머나, 어머나, 이러지 마세요", note: "2004년에 나와 전국을 트로트 열풍으로 물들인 장윤정 님의 대표곡이에요." },
+                { title: "무조건", singer: "박상철", hint: "무조건, 무조건이야", note: "행사장과 노래방에서 빠지지 않는 박상철 님의 신나는 대표곡이에요." },
+                { title: "사랑의 배터리", singer: "홍진영", hint: "사랑의 배터리가 다 됐나 봐요", note: "2009년에 나온 홍진영 님의 데뷔곡이에요. 사랑을 배터리에 빗댄 가사가 재미있지요." }
+              ]
+            },
+            {
+              name: "쉬움",
+              songs: [
+                { title: "돌아와요 부산항에", singer: "조용필", hint: "꽃피는 동백섬에 봄이 왔건만", note: "1976년에 나온 조용필 님의 대표곡으로, 부산항의 이별과 그리움을 노래했어요." },
+                { title: "고향역", singer: "나훈아", hint: "달려라 고향 열차 설레는 가슴 안고", note: "나훈아 님의 대표곡으로, 고향으로 향하는 기차의 설렘이 담겨 있어요." },
+                { title: "아파트", singer: "윤수일", hint: "별빛이 흐르는 다리를 건너", note: "1982년에 나온 윤수일 님의 대표곡으로, 지금도 응원가처럼 널리 불려요." },
+                { title: "노란 샤쓰의 사나이", singer: "한명숙", hint: "노란 샤쓰 입은 말없는 그 사람이", note: "1961년에 나온 한명숙 님의 노래로, 손을 흔드는 율동과 함께 큰 인기를 얻었어요." },
+                { title: "님과 함께", singer: "남진", hint: "저 푸른 초원 위에 그림 같은 집을 짓고", note: "1972년에 나온 남진 님의 대표곡으로, 사랑하는 사람과의 소박한 꿈을 노래했어요." }
+              ]
+            },
+            {
+              name: "보통",
+              songs: [
+                { title: "동백아가씨", singer: "이미자", hint: "헤일 수 없이 수많은 밤을", note: "1964년 영화의 주제곡으로, 이미자 님의 애절한 목소리가 돋보이는 명곡이에요." },
+                { title: "찔레꽃", singer: "백난아", hint: "찔레꽃 붉게 피는 남쪽 나라 내 고향", note: "백난아 님의 대표곡으로, 남쪽 고향을 그리는 애틋한 마음이 담겨 있어요." },
+                { title: "아침이슬", singer: "양희은", hint: "긴 밤 지새우고 풀잎마다 맺힌", note: "1970년에 나온 양희은 님의 노래로, 세대를 넘어 사랑받는 곡이에요." },
+                { title: "굳세어라 금순아", singer: "현인", hint: "눈보라가 휘날리는 바람 찬 흥남부두에", note: "1953년에 나온 현인 님의 노래로, 6·25 전쟁 때 흥남부두 이별의 아픔을 담았어요." },
+                { title: "J에게", singer: "이선희", hint: "J, 스치는 바람에 J, 그대 모습 보이면", note: "1984년 강변가요제에서 대상을 받은 이선희 님의 데뷔곡이에요." }
+              ]
+            },
+            {
+              name: "어려움",
+              songs: [
+                { title: "목포의 눈물", singer: "이난영", hint: "삼학도의 파도 깊은 속에는", note: "1935년에 나온 이난영 님의 노래로, 일제강점기 우리 민족의 애환이 담겨 있어요." },
+                { title: "울고 넘는 박달재", singer: "박재홍", hint: "천등산 박달재를 울고 넘는 우리 님아", note: "충북 제천의 박달재 고개에 얽힌 금봉이와 박달 도령의 전설을 노래한 곡이에요." },
+                { title: "섬마을 선생님", singer: "이미자", hint: "해당화 피고 지는 섬마을에", note: "섬마을 학교로 부임해 온 젊은 선생님 이야기를 그린 이미자 님의 노래예요." },
+                { title: "미인", singer: "신중현과 엽전들", hint: "한 번 보면 두 번 다시 보고 싶고", note: "1974년에 나온 신중현과 엽전들 님의 노래로, 한국 록의 명곡으로 꼽혀요." }
+              ]
+            },
+            {
+              name: "최종 도전",
+              songs: [
+                { title: "황성옛터", singer: "이애리수", hint: "황성옛터에 밤이 되니 월색만 고요해", note: "1928년에 나온, 우리나라 대중가요 초기의 명곡이에요. 황성 옛터의 쓸쓸함을 노래했어요." },
+                { title: "타향살이", singer: "고복수", hint: "타향살이 몇 해던가 손꼽아 헤어보니", note: "1930년대에 나온 고복수 님의 노래로, 고향을 떠나 사는 그리움이 담겨 있어요." },
+                { title: "번지없는 주막", singer: "백년설", hint: "문패도 번지없는 주막에 궂은 비는 쏟아지네", note: "1941년에 나온 백년설 님의 노래로, 떠돌이 나그네의 심정을 노래했어요." },
+                { title: "나그네 설움", singer: "백년설", hint: "오늘도 걷는다마는 정처 없는 이 발길", note: "1940년에 나온 백년설 님의 대표곡으로, 정처 없이 떠도는 나그네를 노래했어요." }
+              ]
+            }
+          ],
+          en: [
+            {
+              name: "Warm-up",
+              songs: [
+                { title: "Yesterday", singer: "The Beatles", hint: "Yesterday, all my troubles seemed so far away", note: "A 1965 Beatles classic, sung by Paul McCartney with a string quartet." },
+                { title: "Let It Be", singer: "The Beatles", hint: "When I find myself in times of trouble", note: "Released in 1970, inspired by a dream Paul McCartney had of his mother, Mary." },
+                { title: "Top of the World", singer: "Carpenters", hint: "Such a feelin's comin' over me", note: "A bright 1973 hit by Karen and Richard Carpenter." },
+                { title: "Love Me Tender", singer: "Elvis Presley", hint: "Love me tender, love me sweet", note: "Elvis Presley's gentle 1956 ballad, from his first film of the same name." }
+              ]
+            },
+            {
+              name: "Easy",
+              songs: [
+                { title: "Imagine", singer: "John Lennon", hint: "Imagine there's no heaven", note: "John Lennon's 1971 song imagining a peaceful world without borders." },
+                { title: "Hey Jude", singer: "The Beatles", hint: "Hey Jude, don't make it bad", note: "A 1968 Beatles song written to comfort John Lennon's young son, Julian." },
+                { title: "Stand by Me", singer: "Ben E. King", hint: "When the night has come", note: "Ben E. King's soulful 1961 song about standing by the one you love." },
+                { title: "What a Wonderful World", singer: "Louis Armstrong", hint: "I see trees of green, red roses too", note: "Louis Armstrong's warm 1967 recording, famous for his gravelly, smiling voice." }
+              ]
+            },
+            {
+              name: "Medium",
+              songs: [
+                { title: "Moon River", singer: "Audrey Hepburn", hint: "Moon River, wider than a mile", note: "Audrey Hepburn sang this in the 1961 film Breakfast at Tiffany's; it won an Oscar." },
+                { title: "My Way", singer: "Frank Sinatra", hint: "And now, the end is near", note: "Frank Sinatra's signature song from 1969, about living life on your own terms." },
+                { title: "Can't Help Falling in Love", singer: "Elvis Presley", hint: "Wise men say only fools rush in", note: "A tender Elvis ballad from the 1961 film Blue Hawaii." },
+                { title: "Unchained Melody", singer: "The Righteous Brothers", hint: "Oh, my love, my darling", note: "The Righteous Brothers' soaring 1965 version made this song immortal." }
+              ]
+            },
+            {
+              name: "Hard",
+              songs: [
+                { title: "Bridge Over Troubled Water", singer: "Simon & Garfunkel", hint: "When you're weary, feeling small", note: "A comforting 1970 ballad by Simon & Garfunkel, sung by Art Garfunkel." },
+                { title: "Hallelujah", singer: "Leonard Cohen", hint: "I heard there was a secret chord", note: "Leonard Cohen's 1984 song, later loved worldwide through many cover versions." },
+                { title: "Fly Me to the Moon", singer: "Frank Sinatra", hint: "Fly me to the moon", note: "Frank Sinatra's swinging 1964 recording turned this into a timeless standard." },
+                { title: "Over the Rainbow", singer: "Judy Garland", hint: "Somewhere over the rainbow, way up high", note: "Judy Garland sang this in the 1939 film The Wizard of Oz." }
+              ]
+            },
+            {
+              name: "Final Challenge",
+              songs: [
+                { title: "As Time Goes By", singer: "Dooley Wilson", hint: "You must remember this", note: "Dooley Wilson sang this as Sam in the 1942 film Casablanca." },
+                { title: "White Christmas", singer: "Bing Crosby", hint: "I'm dreaming of a white Christmas", note: "Bing Crosby's 1942 recording is one of the best-selling singles of all time." },
+                { title: "Que Sera, Sera", singer: "Doris Day", hint: "When I was just a little girl", note: "Doris Day introduced this song in the 1956 film The Man Who Knew Too Much." },
+                { title: "Smile", singer: "Nat King Cole", hint: "Smile, though your heart is aching", note: "Nat King Cole's 1954 recording, with a melody by Charlie Chaplin." }
+              ]
+            }
+          ],
+          ja: [
+            {
+              name: "準備運動",
+              songs: [
+                { title: "上を向いて歩こう", singer: "坂本九", hint: "上を向いて歩こう", note: "1961年の坂本九さんの大ヒット曲。海外では「SUKIYAKI」の題名でも知られています。" },
+                { title: "世界に一つだけの花", singer: "SMAP", hint: "世界に一つだけの花", note: "2003年に大ヒットしたSMAPの曲。一人ひとりの大切さを歌っています。" },
+                { title: "さくら", singer: "森山直太朗", hint: "さくら さくら 今、咲き誇る", note: "森山直太朗さんの卒業の歌として親しまれる、桜の名曲です。" },
+                { title: "翼をください", singer: "赤い鳥", hint: "いま私の願いごとが", note: "1971年の赤い鳥の曲。今では合唱曲として学校でも歌われています。" }
+              ]
+            },
+            {
+              name: "やさしい",
+              songs: [
+                { title: "糸", singer: "中島みゆき", hint: "なぜ めぐり逢うのかを", note: "中島みゆきさんの曲。人と人との出会いを糸にたとえた名曲です。" },
+                { title: "川の流れのように", singer: "美空ひばり", hint: "知らず知らず歩いてきた", note: "美空ひばりさんの最後のシングルとして知られる、人生を歌った名曲です。" },
+                { title: "いい日旅立ち", singer: "山口百恵", hint: "雪解け間近の北の空に向かい", note: "1978年の山口百恵さんの曲。旅立ちの切なさと希望を歌っています。" },
+                { title: "乾杯", singer: "長渕剛", hint: "かたい絆に思いを寄せて", note: "長渕剛さんの曲。結婚式や門出の場面でよく歌われる応援歌です。" }
+              ]
+            },
+            {
+              name: "ふつう",
+              songs: [
+                { title: "涙そうそう", singer: "夏川りみ", hint: "古いアルバムの中に", note: "夏川りみさんの歌で広く知られる、亡き人を思う温かい歌です。" },
+                { title: "贈る言葉", singer: "海援隊", hint: "暮れなずむ町の光と影の中", note: "卒業式の定番として長く歌い継がれてきた、海援隊の名曲です。" },
+                { title: "千の風になって", singer: "秋川雅史", hint: "私のお墓の前で泣かないでください", note: "秋川雅史さんの歌唱で大ヒットした、千の風を歌う曲です。" },
+                { title: "ハナミズキ", singer: "一青窈", hint: "空を押し上げて手を伸ばす君", note: "一青窈さんの代表曲。大切な人の幸せを願う歌です。" }
+              ]
+            },
+            {
+              name: "むずかしい",
+              songs: [
+                { title: "時代", singer: "中島みゆき", hint: "今はこんなに悲しくて", note: "中島みゆきさんの初期の名曲。時代はめぐるという歌詞が心に残ります。" },
+                { title: "津軽海峡・冬景色", singer: "石川さゆり", hint: "上野発の夜行列車降りた時から", note: "石川さゆりさんの代表的な演歌。冬の津軽海峡の情景が浮かびます。" },
+                { title: "天城越え", singer: "石川さゆり", hint: "隠しきれない移り香が", note: "石川さゆりさんの情熱的な歌唱で知られる演歌の名曲です。" },
+                { title: "北の宿から", singer: "都はるみ", hint: "あなた変わりはないですか", note: "都はるみさんの大ヒット曲。遠くの人を思う気持ちを歌っています。" }
+              ]
+            },
+            {
+              name: "最後の挑戦",
+              songs: [
+                { title: "青い山脈", singer: "藤山一郎", hint: "若く明るい歌声に", note: "1949年の映画主題歌。戦後の日本を明るく照らした歌です。" },
+                { title: "東京ブギウギ", singer: "笠置シヅ子", hint: "東京ブギウギ リズムうきうき", note: "笠置シヅ子さんの明るい歌声で、戦後の日本中を元気にしました。" },
+                { title: "リンゴの唄", singer: "並木路子", hint: "赤いリンゴに唇寄せて", note: "戦後最初のヒット曲として知られる、並木路子さんの歌です。" },
+                { title: "蘇州夜曲", singer: "李香蘭", hint: "君がみ胸に抱かれて聞くは", note: "1940年の映画の挿入歌。李香蘭さんの澄んだ歌声が印象的です。" }
+              ]
+            }
+          ]
+        };
+
+        /* ================================================================
+           날짜 기반 랜덤
+           오늘 날짜를 씨앗(seed)으로 삼아 노래를 뽑아요.
+           같은 날에는 같은 노래가, 다음 날에는 새로운 노래가 나와요.
+           「새로운 노래로 다시 하기」를 누르면 시도 횟수가 씨앗에 더해져 또 다른 노래가 돼요.
+           언어와 상관없이 날짜 씨앗은 같아요.
+           ================================================================ */
+        function mulberry32(seed) {
+          var a = seed >>> 0;
+          return function () {
+            a |= 0; a = (a + 0x6d2b79f5) | 0;
+            var t = Math.imul(a ^ (a >>> 15), 1 | a);
+            t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+          };
+        }
+
+        var now = new Date();
+        var dateSeed = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
+
+        function formatToday(lang) {
+          if (lang === "en") {
+            var enDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+            var enMonths = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            return enDays[now.getDay()] + ", " + enMonths[now.getMonth()] + " " + now.getDate() + ", " + now.getFullYear();
+          }
+          if (lang === "ja") {
+            var jaDays = ["日", "月", "火", "水", "木", "金", "土"];
+            return now.getFullYear() + "年" + (now.getMonth() + 1) + "月" + now.getDate() + "日（" + jaDays[now.getDay()] + "）";
+          }
+          var weekNames = ["일", "월", "화", "수", "목", "금", "토"];
+          return now.getFullYear() + "년 " + (now.getMonth() + 1) + "월 " + now.getDate() + "일 (" + weekNames[now.getDay()] + ")";
+        }
+
+        function shuffle(rand, arr) {
+          var a = arr.slice();
+          for (var i = a.length - 1; i > 0; i--) {
+            var j = Math.floor(rand() * (i + 1));
+            var t = a[i]; a[i] = a[j]; a[j] = t;
+          }
+          return a;
+        }
+
+        function allSongs(lang) {
+          var out = [];
+          DATA[lang].forEach(function (tier) {
+            tier.songs.forEach(function (s) { out.push(s); });
+          });
+          return out;
+        }
+
+        function buildRounds(lang, attempt) {
+          var rand = mulberry32(dateSeed * 1000 + attempt * 131 + 61);
+          var pool = allSongs(lang);
+          return DATA[lang].map(function (tier) {
+            var song = tier.songs[Math.floor(rand() * tier.songs.length)];
+            var others = pool.filter(function (s) { return s.title !== song.title; });
+            var distractors = shuffle(rand, others).slice(0, 3);
+            var options = shuffle(rand, distractors.concat([song]));
+            return { name: tier.name, song: song, options: options };
+          });
+        }
+
+        /* ---------- 상태 ---------- */
+        var lang = "ko";
+        var attempt = 0;
+        var rounds = buildRounds(lang, attempt);
+        var roundIdx = 0;
+        var score = 0;
+        var phase = "ready"; /* ready | quiz | feedback | done */
+        var hintShown = false;
+
+        function S() { return STR[lang]; }
+
+        var stageBox = document.getElementById("stageBox");
+        var roundNowEl = document.getElementById("roundNow");
+        var scoreNowEl = document.getElementById("scoreNow");
+        var levelLineEl = document.getElementById("levelLine");
+        var dotsEl = document.getElementById("progressDots");
+
+        function esc(s) {
+          return s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+        }
+
+        /* ---------- 고정 문구 번역 ---------- */
+        function applyStatic() {
+          var s = S();
+          document.documentElement.lang = s.docLang;
+          document.title = s.title;
+          document.getElementById("chipText").textContent = s.chip;
+          document.getElementById("h1Text").textContent = s.h1;
+          document.getElementById("ledeText").textContent = s.lede;
+          document.getElementById("todayLine").innerHTML =
+            esc(s.todayA) + "<strong>" + esc(formatToday(lang)) + "</strong>" +
+            esc(s.todayB) + "<strong>" + esc(s.todayC) + "</strong>" + esc(s.todayD);
+          document.getElementById("roundWord").textContent = s.roundWord;
+          document.getElementById("scoreWord").textContent = s.scoreWord;
+          document.getElementById("scoreUnit").textContent = s.scoreUnit;
+          document.getElementById("howtoTitle").textContent = s.howtoTitle;
+
+          var stepsHtml = "";
+          s.steps.forEach(function (step, i) {
+            stepsHtml += '<li><div class="step-num">' + (i + 1) + "</div><div><h3>" +
+              esc(step.h) + "</h3><p>" + esc(step.p) + "</p></div></li>";
+          });
+          document.getElementById("stepsList").innerHTML = stepsHtml;
+
+          document.getElementById("exampleBox").innerHTML =
+            esc(s.exampleLyric) + '<span class="arrow">→</span>' + esc(s.exampleTitle) +
+            "<small>" + esc(s.exampleNote) + "</small>";
+
+          document.getElementById("levelTitle").textContent = s.levelTitle;
+          document.getElementById("thGame").textContent = s.thGame;
+          document.getElementById("thLevel").textContent = s.thLevel;
+          document.getElementById("thKind").textContent = s.thKind;
+          var rows = "";
+          DATA[lang].forEach(function (tier, i) {
+            rows += "<tr><td>" + esc(s.gameWord) + " " + (i + 1) + "</td><td>" +
+              esc(tier.name) + "</td><td>" + esc(s.tierDesc[i]) + "</td></tr>";
+          });
+          document.getElementById("levelBody").innerHTML = rows;
+
+          document.getElementById("whyTitle").textContent = s.whyTitle;
+          document.getElementById("whyBody").innerHTML =
+            s.why.map(function (p) { return "<p>" + p + "</p>"; }).join("");
+
+          document.getElementById("tipTitle").textContent = s.tipTitle;
+          document.getElementById("tipsList").innerHTML =
+            s.tips.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("");
+
+          document.getElementById("footerText").innerHTML = s.footer;
+          document.getElementById("blogLink").textContent = s.blogLink;
+
+          var btns = document.querySelectorAll(".lang-btn");
+          for (var i = 0; i < btns.length; i++) {
+            var on = btns[i].getAttribute("data-lang") === lang;
+            btns[i].className = "lang-btn" + (on ? " active" : "");
+            btns[i].setAttribute("aria-pressed", on ? "true" : "false");
+          }
+        }
+
+        function renderTop() {
+          roundNowEl.textContent = String(Math.min(roundIdx + 1, 5));
+          scoreNowEl.textContent = String(score);
+          var dots = dotsEl.children;
+          for (var i = 0; i < dots.length; i++) {
+            dots[i].className = i < roundIdx || phase === "done" ? "done" : i === roundIdx ? "now" : "";
+          }
+          if (phase === "done") {
+            levelLineEl.textContent = S().levelDone;
+          } else {
+            var r = rounds[roundIdx];
+            levelLineEl.innerHTML =
+              esc(S().levelPrefix) + "<strong>" + esc(r.name) + "</strong>" + esc(S().levelSuffix);
+          }
+        }
+
+        /* ---------- 단계별 화면 ---------- */
+        function showReady() {
+          phase = "ready"; hintShown = false; renderTop();
+          var s = S();
+          stageBox.innerHTML =
+            '<p class="stage-msg">' + esc(roundIdx === 0 ? s.readyFirst : s.readyNext) + "</p>" +
+            '<p class="stage-sub">' + s.readySub + "</p>" +
+            '<div class="lyric-board"><p class="lyric-label">' + esc(s.lyricLabel) + '</p><p class="lyric">' + esc(s.lyricMystery) + "</p></div>" +
+            '<div class="btn-row"><button type="button" class="btn btn-primary" id="btnShow">' + esc(s.showBtn) + "</button></div>";
+          document.getElementById("btnShow").addEventListener("click", showQuiz);
+        }
+
+        function showQuiz() {
+          phase = "quiz"; renderTop();
+          var s = S();
+          var r = rounds[roundIdx];
+          var html =
+            '<p class="stage-msg">' + esc(s.quizMsg) + "</p>" +
+            '<p class="stage-sub">' + esc(s.quizSub) + "</p>" +
+            '<div class="lyric-board"><p class="lyric-label">' + esc(s.lyricLabel) + '</p><p class="lyric">' + esc(r.song.hint) + "</p></div>" +
+            '<div id="hintZone">' +
+            (hintShown
+              ? '<p class="singer-hint">' + esc(s.hintText(r.song.singer)) + "</p>"
+              : '<div class="hint-btn-row"><button type="button" class="btn btn-ghost" id="btnHint">' + esc(s.hintBtn) + "</button></div>") +
+            "</div>" +
+            '<div class="options" role="group" aria-label="' + esc(s.optionsLabel) + '">';
+          r.options.forEach(function (opt, i) {
+            html += '<button type="button" class="opt-btn" data-idx="' + i + '">' + esc(opt.title) + "</button>";
+          });
+          html += "</div>";
+          stageBox.innerHTML = html;
+
+          var hintBtn = document.getElementById("btnHint");
+          if (hintBtn) {
+            hintBtn.addEventListener("click", function () {
+              hintShown = true;
+              document.getElementById("hintZone").innerHTML =
+                '<p class="singer-hint">' + esc(S().hintText(rounds[roundIdx].song.singer)) + "</p>";
+            });
+          }
+          var btns = stageBox.querySelectorAll(".opt-btn");
+          for (var i = 0; i < btns.length; i++) {
+            btns[i].addEventListener("click", function () {
+              pickAnswer(parseInt(this.getAttribute("data-idx"), 10), this);
+            });
+          }
+        }
+
+        function pickAnswer(idx, btnEl) {
+          if (phase !== "quiz") return;
+          phase = "feedback";
+          var s = S();
+          var r = rounds[roundIdx];
+          var picked = r.options[idx];
+          var ok = picked.title === r.song.title;
+          if (ok) score++;
+
+          /* 고른 버튼과 정답 버튼에 색을 입혀 보여 줘요 */
+          var btns = stageBox.querySelectorAll(".opt-btn");
+          for (var i = 0; i < btns.length; i++) {
+            btns[i].disabled = true;
+            if (btns[i] === btnEl) btns[i].className = "opt-btn " + (ok ? "picked-good" : "picked-bad");
+            else if (r.options[i].title === r.song.title) btns[i].className = "opt-btn reveal-good";
+          }
+          renderTop();
+
+          var last = roundIdx === rounds.length - 1;
+          var fb = document.createElement("div");
+          fb.innerHTML =
+            '<div class="feedback ' + (ok ? "good" : "bad") + '">' +
+            '<p class="fb-title">' + esc(ok ? s.praise[roundIdx % s.praise.length] : s.cheer[roundIdx % s.cheer.length]) + "</p>" +
+            "<p>" + esc(ok ? s.answerIs : s.answerWas) + '<span class="fb-answer">「' + esc(r.song.title) + "」</span>" + esc(ok ? s.answerEndGood : s.answerEndBad) + "</p>" +
+            "<p>" + esc(s.sungBy(r.song.singer)) + "</p>" +
+            '<p class="fb-note">' + esc(r.song.note) + "</p>" +
+            "</div>" +
+            '<div class="btn-row"><button type="button" class="btn btn-primary" id="btnNext">' +
+            esc(last ? s.resultBtn : s.nextBtn) + "</button></div>";
+          stageBox.appendChild(fb);
+          document.getElementById("btnNext").addEventListener("click", function () {
+            if (last) showResult();
+            else { roundIdx++; showReady(); }
+          });
+          fb.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+
+        function showResult() {
+          phase = "done"; renderTop();
+          var s = S();
+          var res = score === 5 ? s.results[0] : score >= 3 ? s.results[1] : score >= 1 ? s.results[2] : s.results[3];
+          stageBox.innerHTML =
+            '<div class="result-box">' +
+            '<p class="stage-sub" style="margin-bottom:0">' + esc(s.resultLabel) + "</p>" +
+            '<p class="result-score">' + score + " / 5</p>" +
+            '<p class="result-msg">' + esc(res.msg) + "</p>" +
+            '<p class="result-sub">' + esc(res.sub) + "</p>" +
+            '<div class="btn-row">' +
+            '<button type="button" class="btn btn-primary" id="btnAgain">' + esc(s.againBtn) + "</button>" +
+            "</div>" +
+            '<p class="stage-sub" style="margin-top:16px">' + esc(s.tomorrowNote) + "</p>" +
+            "</div>";
+          document.getElementById("btnAgain").addEventListener("click", function () {
+            attempt++;
+            rounds = buildRounds(lang, attempt);
+            roundIdx = 0; score = 0;
+            showReady();
+            document.getElementById("gameCard").scrollIntoView({ behavior: "smooth", block: "start" });
+          });
+        }
+
+        /* ---------- 언어 바꾸기 ---------- */
+        function setLang(next) {
+          if (!STR[next] || !DATA[next]) return;
+          lang = next;
+          attempt = 0;
+          rounds = buildRounds(lang, attempt);
+          roundIdx = 0; score = 0; hintShown = false;
+          applyStatic();
+          showReady();
+        }
+        var langBtns = document.querySelectorAll(".lang-btn");
+        for (var i = 0; i < langBtns.length; i++) {
+          langBtns[i].addEventListener("click", function () {
+            setLang(this.getAttribute("data-lang"));
+          });
+        }
+
+        applyStatic();
+        showReady();
+      })();
+    </script>
+  </body>
+</html>

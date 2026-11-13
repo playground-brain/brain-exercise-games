@@ -1,0 +1,1246 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Day 7 일주일 복습 게임</title>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
+    />
+    <style>
+      :root {
+        --bg: #fdf6ec;
+        --bg-soft: #fbeed9;
+        --card: #fffdf8;
+        --ink: #3a2a1c;
+        --ink-soft: #6f5a44;
+        --line: #ecd9bd;
+        --accent: #d95d0f;
+        --accent-strong: #b84a08;
+        --accent-soft: #fdeeda;
+        --good: #2e7d46;
+        --good-soft: #e4f4e8;
+        --bad: #b3402a;
+        --bad-soft: #fbe9e3;
+        --key: #fff7ea;
+        --key-line: #e6cfa8;
+        --shadow: 0 10px 30px rgba(146, 90, 32, 0.14);
+        color-scheme: light;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #221812;
+          --bg-soft: #2c1f16;
+          --card: #2f2118;
+          --ink: #f7ead9;
+          --ink-soft: #cdb59c;
+          --line: #4d3826;
+          --accent: #f08a3c;
+          --accent-strong: #ffb066;
+          --accent-soft: #453022;
+          --good: #7fd79b;
+          --good-soft: #22392a;
+          --bad: #ff9d87;
+          --bad-soft: #40261f;
+          --key: #3a2a1e;
+          --key-line: #57402a;
+          --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+          color-scheme: dark;
+        }
+      }
+      * { box-sizing: border-box; }
+      html { -webkit-text-size-adjust: 100%; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "Pretendard Variable", Pretendard, -apple-system, "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+        font-size: 20px;
+        line-height: 1.6;
+      }
+      .wrap { max-width: 760px; margin: 0 auto; padding: 28px 18px 64px; }
+
+      .lang-switcher { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+      .lang-switcher button {
+        min-height: 52px; padding: 10px 22px;
+        font-family: inherit; font-size: 19px; font-weight: 800;
+        color: var(--ink); background: var(--card);
+        border: 2px solid var(--line); border-radius: 999px; cursor: pointer;
+      }
+      .lang-switcher button[aria-pressed="true"] {
+        background: var(--accent); border-color: var(--accent); color: #fff;
+      }
+
+      .day-chip {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: var(--accent-soft); color: var(--accent-strong);
+        font-weight: 800; font-size: 17px;
+        padding: 8px 16px; border-radius: 999px;
+      }
+      .day-chip .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
+      h1 {
+        font-size: clamp(34px, 7.5vw, 46px);
+        line-height: 1.25; font-weight: 900; letter-spacing: -0.02em;
+        margin: 16px 0 10px;
+      }
+      .lede { font-size: 21px; color: var(--ink-soft); margin: 0 0 6px; }
+      .today-line { font-size: 18px; color: var(--ink-soft); margin: 10px 0 0; }
+      .today-line strong { color: var(--accent-strong); }
+
+      .game-card {
+        margin-top: 26px;
+        background: var(--card);
+        border: 2px solid var(--line);
+        border-radius: 24px;
+        box-shadow: var(--shadow);
+        padding: 26px 22px 30px;
+      }
+      .game-top {
+        display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+        gap: 10px 16px; margin-bottom: 6px;
+      }
+      .round-label { font-size: 22px; font-weight: 800; }
+      .round-label .of { color: var(--ink-soft); font-weight: 600; font-size: 19px; }
+      .score-label { font-size: 19px; font-weight: 700; color: var(--ink-soft); }
+      .score-label strong { color: var(--accent-strong); font-size: 22px; }
+      .progress-dots { display: flex; gap: 8px; margin: 10px 0 4px; }
+      .progress-dots span {
+        flex: 1; height: 12px; border-radius: 999px; background: var(--bg-soft);
+        border: 1px solid var(--line);
+      }
+      .progress-dots span.done { background: var(--good); border-color: var(--good); }
+      .progress-dots span.now { background: var(--accent); border-color: var(--accent); }
+      .level-line { font-size: 19px; color: var(--ink-soft); margin: 8px 0 0; }
+      .level-line strong { color: var(--ink); }
+      .origin-chip {
+        display: inline-block; background: var(--accent-soft); color: var(--accent-strong);
+        font-size: 16px; font-weight: 800; padding: 4px 12px; border-radius: 999px; margin-bottom: 8px;
+      }
+
+      .stage { margin-top: 18px; text-align: center; }
+      .stage-msg { font-size: 22px; font-weight: 700; margin: 0 0 6px; }
+      .stage-sub { font-size: 19px; color: var(--ink-soft); margin: 0 0 18px; }
+
+      .board {
+        min-height: 128px;
+        display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 12px;
+        background: var(--bg-soft);
+        border: 2px dashed var(--line);
+        border-radius: 18px;
+        padding: 18px 12px;
+      }
+      .big-number {
+        font-size: clamp(44px, 12vw, 68px);
+        font-weight: 900; letter-spacing: 0.14em; line-height: 1.1;
+        font-variant-numeric: tabular-nums;
+      }
+      .hidden-num { color: var(--ink-soft); letter-spacing: 0.1em; }
+      .word-chip {
+        background: var(--card); border: 2px solid var(--key-line); border-radius: 14px;
+        font-size: clamp(26px, 6.5vw, 34px); font-weight: 900; padding: 10px 18px;
+      }
+      .pic-item { font-size: clamp(52px, 13vw, 72px); line-height: 1.15; padding: 4px 6px; }
+      .pic-item small { display: block; font-size: 17px; font-weight: 700; color: var(--ink-soft); }
+      .order-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; width: 100%; max-width: 420px; }
+      .order-list li {
+        background: var(--card); border: 2px solid var(--key-line); border-radius: 14px;
+        font-size: 22px; font-weight: 800; padding: 12px 16px; text-align: left;
+        display: flex; align-items: center; gap: 12px;
+      }
+      .order-list .n {
+        flex: 0 0 auto; width: 34px; height: 34px; border-radius: 50%;
+        background: var(--accent); color: #fff; font-size: 18px;
+        display: flex; align-items: center; justify-content: center;
+      }
+      .shop-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; width: 100%; max-width: 420px; }
+      .shop-list li {
+        background: var(--card); border: 2px solid var(--key-line); border-radius: 14px;
+        font-size: 22px; font-weight: 800; padding: 12px 16px;
+        display: flex; justify-content: space-between; gap: 12px;
+      }
+      .shop-list .price { color: var(--accent-strong); font-variant-numeric: tabular-nums; white-space: nowrap; }
+      .lyric-box {
+        width: 100%; font-size: clamp(23px, 6vw, 30px); font-weight: 900; line-height: 1.5;
+        padding: 8px 6px;
+      }
+      .lyric-box small { display: block; font-size: 17px; font-weight: 600; color: var(--ink-soft); margin-top: 8px; }
+      .memorize-note { font-size: 18px; color: var(--ink-soft); margin-top: 14px; }
+
+      .answer-slots { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin: 4px 0 18px; }
+      .slot {
+        width: clamp(40px, 10.5vw, 56px); height: 64px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 36px; font-weight: 900; font-variant-numeric: tabular-nums;
+        background: var(--key); border: 2px solid var(--key-line); border-radius: 12px;
+      }
+      .slot.filled { border-color: var(--accent); color: var(--accent-strong); }
+      .slot.empty { color: var(--ink-soft); font-size: 26px; }
+      .seq-slots { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin: 4px 0 18px; }
+      .seq-slot {
+        min-width: 118px; min-height: 56px; padding: 8px 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 20px; font-weight: 800; text-align: center;
+        background: var(--key); border: 2px solid var(--key-line); border-radius: 12px;
+      }
+      .seq-slot.filled { border-color: var(--accent); color: var(--accent-strong); }
+      .seq-slot.empty { color: var(--ink-soft); font-size: 18px; font-weight: 600; }
+
+      .keypad {
+        display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+        max-width: 340px; margin: 0 auto;
+      }
+      .keypad button {
+        min-height: 62px; font-size: 28px; font-weight: 800;
+        font-family: inherit; color: var(--ink);
+        background: var(--key); border: 2px solid var(--key-line); border-radius: 14px;
+        cursor: pointer;
+      }
+      .keypad button:active { background: var(--accent-soft); }
+      .keypad button.util { font-size: 20px; color: var(--accent-strong); }
+
+      .option-grid { display: grid; gap: 10px; max-width: 460px; margin: 0 auto; text-align: left; }
+      .option-grid.two { grid-template-columns: 1fr 1fr; }
+      @media (max-width: 430px) { .option-grid.two { grid-template-columns: 1fr; } }
+      .opt-btn {
+        min-height: 60px; padding: 12px 16px;
+        font-family: inherit; font-size: 21px; font-weight: 800; color: var(--ink);
+        background: var(--key); border: 2px solid var(--key-line); border-radius: 14px;
+        cursor: pointer; text-align: center;
+      }
+      .opt-btn .sub { display: block; font-size: 16px; font-weight: 600; color: var(--ink-soft); margin-top: 2px; }
+      .opt-btn[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-strong); }
+      .opt-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+      .opt-btn.pic { font-size: 44px; line-height: 1.2; }
+      .opt-btn.pic .sub { font-size: 17px; font-weight: 700; }
+
+      .btn {
+        display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        min-height: 60px; padding: 14px 30px;
+        font-family: inherit; font-size: 22px; font-weight: 800;
+        border-radius: 16px; border: 2px solid transparent; cursor: pointer;
+      }
+      .btn-primary { background: var(--accent); color: #fff; }
+      .btn-primary:active { background: var(--accent-strong); }
+      .btn-ghost { background: transparent; color: var(--accent-strong); border-color: var(--accent); }
+      .btn-row { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 20px; }
+      button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+      button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+      .feedback { margin-top: 20px; border-radius: 16px; padding: 20px 18px; text-align: center; }
+      .feedback.good { background: var(--good-soft); }
+      .feedback.bad { background: var(--bad-soft); }
+      .feedback .fb-title { font-size: 26px; font-weight: 900; margin: 0 0 6px; }
+      .feedback.good .fb-title { color: var(--good); }
+      .feedback.bad .fb-title { color: var(--bad); }
+      .feedback p { margin: 4px 0; font-size: 20px; }
+      .feedback .fb-answer { font-size: 22px; font-weight: 800; }
+
+      .result-box { text-align: center; padding: 10px 0 2px; }
+      .result-score { font-size: clamp(52px, 14vw, 76px); font-weight: 900; color: var(--accent-strong); line-height: 1.1; margin: 6px 0; }
+      .result-msg { font-size: 22px; font-weight: 700; margin: 0 0 8px; }
+      .result-sub { font-size: 19px; color: var(--ink-soft); margin: 0; }
+
+      section.howto { margin-top: 48px; }
+      h2 {
+        font-size: 28px; font-weight: 900; letter-spacing: -0.01em;
+        margin: 0 0 16px; padding-bottom: 10px; border-bottom: 3px solid var(--accent-soft);
+      }
+      .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+      .steps li {
+        display: flex; gap: 16px; align-items: flex-start;
+        background: var(--card); border: 2px solid var(--line); border-radius: 18px; padding: 18px;
+      }
+      .step-num {
+        flex: 0 0 auto; width: 46px; height: 46px; border-radius: 50%;
+        background: var(--accent); color: #fff;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 23px; font-weight: 900;
+      }
+      .steps h3 { margin: 2px 0 4px; font-size: 22px; font-weight: 800; }
+      .steps p { margin: 0; font-size: 19px; color: var(--ink-soft); }
+
+      .level-table { width: 100%; border-collapse: collapse; font-size: 19px; }
+      .level-table th, .level-table td { padding: 12px 10px; text-align: left; border-bottom: 1px solid var(--line); }
+      .level-table th { font-weight: 800; background: var(--bg-soft); }
+
+      .tips { margin: 0; padding-left: 24px; display: grid; gap: 8px; font-size: 19px; }
+      .why p { font-size: 19px; color: var(--ink-soft); margin: 0 0 10px; }
+      .why strong { color: var(--ink); }
+
+      footer {
+        margin-top: 52px; padding-top: 20px; border-top: 2px solid var(--line);
+        font-size: 17px; color: var(--ink-soft); text-align: center;
+      }
+      footer a { color: var(--accent-strong); font-weight: 700; display: inline-block; padding: 10px 6px; }
+      [hidden] { display: none !important; }
+      @media (prefers-reduced-motion: reduce) {
+        * { transition: none !important; animation: none !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <noscript>
+      <div style="max-width:760px;margin:0 auto;padding:36px 18px;font-size:21px;line-height:1.6">
+        <p><strong>이 게임을 하려면 자바스크립트를 켜 주세요.</strong> 브라우저 설정에서 자바스크립트를 허용한 뒤 다시 열어 주세요.</p>
+        <p><a href="https://blog.naver.com/sin4buja">오늘의 두뇌운동 블로그</a></p>
+      </div>
+    </noscript>
+    <main class="wrap" id="mainContent">
+      <div class="lang-switcher" role="group" aria-label="Language / 언어 / 言語">
+        <button type="button" data-lang-btn="ko" aria-pressed="true">한국어</button>
+        <button type="button" data-lang-btn="en" aria-pressed="false">English</button>
+        <button type="button" data-lang-btn="ja" aria-pressed="false">日本語</button>
+      </div>
+      <header>
+        <span class="day-chip"><span class="dot"></span>오늘의 두뇌운동 · Day 7</span>
+        <h1>일주일 복습 게임</h1>
+        <p class="lede">한 주 동안 했던 게임들을 섞어서 다시 풀어 보는 복습 날이에요. 숫자, 단어, 순서, 그림, 장보기, 노래까지 골고루 나옵니다. 시간 제한이 없으니 서두르지 않아도 돼요.</p>
+        <p class="today-line">오늘은 <strong id="todayText"></strong> · 오늘의 문제는 날짜에 맞춰 정해져요. <strong>내일 오면 새로운 문제</strong>로 바뀌어 있어요. 어디서든 바로 들어와서 할 수 있어요.</p>
+      </header>
+
+      <div class="game-card" id="gameCard">
+        <div class="game-top">
+          <div class="round-label">게임 <span id="roundNow">1</span> <span class="of">/ 5</span></div>
+          <div class="score-label">맞힌 개수 <strong><span id="scoreNow">0</span>개</strong></div>
+        </div>
+        <div class="progress-dots" id="progressDots" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <p class="level-line" id="levelLine"></p>
+
+        <div class="stage" id="stageBox" aria-live="polite"></div>
+      </div>
+
+      <section class="howto" aria-labelledby="howtoTitle">
+        <h2 id="howtoTitle">게임 방법</h2>
+        <ol class="steps">
+          <li>
+            <div class="step-num">1</div>
+            <div>
+              <h3>먼저 보고 외워요</h3>
+              <p>게임마다 처음에 외울 것이 나타나요. 시간 제한이 없으니 천천히, 소리 내어 읽으면서 외우면 더 잘 기억돼요. 노래 게임은 외울 것 없이 바로 문제를 풀어요.</p>
+            </div>
+          </li>
+          <li>
+            <div class="step-num">2</div>
+            <div>
+              <h3>가려지면 떠올려요</h3>
+              <p>「다 외웠어요」를 누르면 외울 것이 가려져요. 머릿속으로 천천히 떠올려 보세요. 떠올리려고 애쓰는 순간이 가장 좋은 운동이에요.</p>
+            </div>
+          </li>
+          <li>
+            <div class="step-num">3</div>
+            <div>
+              <h3>답하고 바로 확인해요</h3>
+              <p>숫자는 키패드로, 나머지는 큰 버튼을 눌러 답해요. 맞혔는지 바로 알려 드리고, 틀려도 정답을 보고 한 번 읽어 보면 복습이 돼요.</p>
+            </div>
+          </li>
+        </ol>
+      </section>
+
+      <section class="howto" aria-labelledby="levelTitle">
+        <h2 id="levelTitle">복습하는 여섯 가지 게임</h2>
+        <table class="level-table">
+          <thead>
+            <tr><th scope="col">어느 날 게임</th><th scope="col">복습 내용</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Day 1 · 숫자 거꾸로</td><td>숫자를 외워서 거꾸로 입력하기</td></tr>
+            <tr><td>Day 2 · 단어 기억</td><td>본 단어를 골라내기</td></tr>
+            <tr><td>Day 3 · 일과 순서</td><td>하루 일과를 순서대로 맞히기</td></tr>
+            <tr><td>Day 4 · 그림 기억</td><td>본 그림을 골라내기</td></tr>
+            <tr><td>Day 5 · 장보기 계산</td><td>장보기 합계를 계산하기</td></tr>
+            <tr><td>Day 6 · 노래 제목</td><td>가사 힌트로 노래 제목 맞히기</td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:19px;color:var(--ink-soft);margin:14px 0 0">오늘의 다섯 게임은 이 여섯 가지 중에서 날짜마다 골고루 섞여 나와요. 어떤 게임이 나올지는 게임 위쪽 표시에서 확인할 수 있어요.</p>
+      </section>
+
+      <section class="howto why" aria-labelledby="whyTitle">
+        <h2 id="whyTitle">왜 복습이 중요한가요?</h2>
+        <p>한 번 외운 것도 시간이 지나면 흐려져요. 며칠 뒤에 <strong>다시 떠올려 보는 것</strong>이 기억을 오래 붙잡아 두는 가장 좋은 방법이에요. 심리학에서는 이를 두고, 떠올리는 연습 자체가 기억을 단단하게 만든다고 해요.</p>
+        <p>그래서 일주일의 마지막 날은 새로운 것을 배우기보다, 배운 것을 <strong>골고루 다시 꺼내 보는 날</strong>로 정했어요. 점수보다 꾸준히 이어 가는 것이 훨씬 중요해요.</p>
+      </section>
+
+      <section class="howto" aria-labelledby="tipTitle">
+        <h2 id="tipTitle">더 잘 떠올리는 팁</h2>
+        <ul class="tips">
+          <li>외울 때는 소리 내어 읽어 보세요. 눈과 귀를 같이 쓰면 오래 남아요.</li>
+          <li>숫자와 단어는 두세 개씩 끊어 묶으면 떠올리기 쉬워요.</li>
+          <li>순서 게임은 이야기를 만들 듯 앞뒤를 이어 보세요.</li>
+          <li>계산은 천 원 단위부터 먼저 더하고 나머지를 더하면 실수가 줄어요.</li>
+          <li>틀린 게임은 정답을 보고 한 번 더 읽어 보세요. 그것도 훌륭한 복습이에요.</li>
+        </ul>
+      </section>
+
+      <footer>
+        <p>오늘의 두뇌운동 · 뇌건강 놀이터지기가 매일 준비하는 치매예방 기억력 게임이에요.<br />
+        이 게임은 놀이와 두뇌 활동 돕기가 목적이며, 의료 진단이나 치료를 대신하지 않아요.</p>
+        <a href="https://blog.naver.com/sin4buja" target="_blank" rel="noopener">오늘의 두뇌운동 블로그</a>
+      </footer>
+    </main>
+
+    <script>
+      (function () {
+        "use strict";
+
+        function mulberry32(seed) {
+          var a = seed >>> 0;
+          return function () {
+            a |= 0; a = (a + 0x6d2b79f5) | 0;
+            var t = Math.imul(a ^ (a >>> 15), 1 | a);
+            t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+          };
+        }
+        function shuffle(rand, arr) {
+          var a = arr.slice();
+          for (var i = a.length - 1; i > 0; i--) {
+            var j = Math.floor(rand() * (i + 1));
+            var t = a[i]; a[i] = a[j]; a[j] = t;
+          }
+          return a;
+        }
+        function pickN(rand, arr, n) { return shuffle(rand, arr).slice(0, n); }
+        function esc(s) {
+          return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+        }
+        function spaced(s) { return s.split("").join(" "); }
+        function won(n) { return n.toLocaleString("ko-KR") + "원"; }
+
+        var now = new Date();
+        var dateSeed = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
+        var weekNames = ["일", "월", "화", "수", "목", "금", "토"];
+        document.getElementById("todayText").textContent =
+          now.getFullYear() + "년 " + (now.getMonth() + 1) + "월 " + now.getDate() + "일 (" + weekNames[now.getDay()] + ")";
+
+        /* ---------- 문제 재료 ---------- */
+        var WORD_POOL = ["사과","바나나","우유","달걀","연필","안경","우산","시계","열쇠","모자","가방","당근","감자","딸기","포도","복숭아","창문","의자","전화","버스","꽃","나무","빵","치즈"];
+        var PIC_POOL = [
+          { e: "🍎", n: "사과" }, { e: "🍌", n: "바나나" }, { e: "🍇", n: "포도" }, { e: "🍓", n: "딸기" },
+          { e: "🍊", n: "귤" }, { e: "🥕", n: "당근" }, { e: "🍞", n: "빵" }, { e: "🥛", n: "우유" },
+          { e: "☂️", n: "우산" }, { e: "🔑", n: "열쇠" }, { e: "👓", n: "안경" }, { e: "🧢", n: "모자" },
+          { e: "📚", n: "책" }, { e: "✏️", n: "연필" }, { e: "🌷", n: "튤립" }, { e: "🌻", n: "해바라기" },
+          { e: "🐶", n: "강아지" }, { e: "🐱", n: "고양이" }, { e: "🚗", n: "자동차" }, { e: "🚲", n: "자전거" }
+        ];
+        var ROUTINES = [
+          { title: "아침 일과", steps: ["일어나기", "세수하기", "아침 먹기", "산책하기"] },
+          { title: "병원 가는 길", steps: ["옷 갈아입기", "버스 타기", "병원 도착하기", "진료 받기"] },
+          { title: "시장 다녀오기", steps: ["목록 적기", "시장 가기", "물건 사기", "집에 오기"] },
+          { title: "저녁 시간", steps: ["저녁 준비하기", "식사하기", "설거지하기", "텔레비전 보기"] },
+          { title: "텃밭 돌보기", steps: ["물 조리개 채우기", "텃밭에 물 주기", "잡초 뽑기", "수확물 담기"] }
+        ];
+        var SHOP_POOL = [
+          { n: "두부 한 모", p: 2000 }, { n: "달걀 한 판", p: 5900 }, { n: "우유 한 팩", p: 2800 },
+          { n: "사과 두 개", p: 3000 }, { n: "식빵 한 봉지", p: 3500 }, { n: "치즈 한 팩", p: 4500 },
+          { n: "당근 한 봉지", p: 2500 }, { n: "감자 한 봉지", p: 4000 }, { n: "양파 한 망", p: 3200 },
+          { n: "딸기 한 팩", p: 6000 }, { n: "된장 한 통", p: 5500 }, { n: "국수 한 봉지", p: 1800 }
+        ];
+        var SONGS = [
+          { t: "내 나이가 어때서", s: "오승근", hint: "“야야야, 내 나이가 어때서”" },
+          { t: "무조건", s: "박상철", hint: "“무조건 무조건이야”" },
+          { t: "안동역에서", s: "진성", hint: "“바람에 날리는 머리결처럼”" },
+          { t: "동백 아가씨", s: "이미자", hint: "“헤일 수 없이 수많은 밤을”" },
+          { t: "님과 함께", s: "남진", hint: "“저 푸른 초원 위에 그림 같은 집을 짓고”" },
+          { t: "찔레꽃", s: "백난아", hint: "“찔레꽃 붉게 피는 남쪽 나라 내 고향”" },
+          { t: "사랑은 아무나 하나", s: "태진아", hint: "“사랑은 아무나 하나”" },
+          { t: "고향역", s: "나훈아", hint: "“달려라 고향 열차 설레는 가슴안고”" }
+        ];
+
+        function makeNumberStr(rand, digits) {
+          var s, tries = 0;
+          do {
+            s = String(1 + Math.floor(rand() * 9));
+            for (var i = 1; i < digits; i++) s += String(Math.floor(rand() * 10));
+            tries++;
+          } while (tries < 30 && (s === s.split("").reverse().join("") || /^(\d)\1+$/.test(s)));
+          return s;
+        }
+
+        var TYPE_ORDER = ["number", "word", "routine", "picture", "shop", "song"];
+        var TYPE_INFO = {
+          number:  { origin: "Day 1 복습", name: "숫자 거꾸로", ready: "숫자가 나타나요. 외운 뒤 거꾸로 입력하는 게임이에요." },
+          word:    { origin: "Day 2 복습", name: "단어 기억", ready: "단어 네 개가 나타나요. 외운 뒤, 본 단어를 모두 골라 주세요." },
+          routine: { origin: "Day 3 복습", name: "일과 순서", ready: "하루 일과가 순서대로 나타나요. 외운 뒤 같은 순서로 눌러 주세요." },
+          picture: { origin: "Day 4 복습", name: "그림 기억", ready: "그림 네 개가 나타나요. 외운 뒤, 본 그림을 모두 골라 주세요." },
+          shop:    { origin: "Day 5 복습", name: "장보기 계산", ready: "장보기 목록과 가격이 나타나요. 외운 뒤 합계를 골라 주세요." },
+          song:    { origin: "Day 6 복습", name: "노래 제목", ready: "가사 한 소절을 보고, 어떤 노래인지 제목을 골라 주세요. 외울 것 없이 바로 풀어요." }
+        };
+
+        function buildRounds(attempt) {
+          var rand = mulberry32(dateSeed * 1000 + attempt * 131 + 707);
+          var offset = (dateSeed + attempt) % TYPE_ORDER.length;
+          var types = [];
+          for (var i = 0; i < 5; i++) types.push(TYPE_ORDER[(offset + i) % TYPE_ORDER.length]);
+
+          return types.map(function (type) {
+            var r = { type: type };
+            if (type === "number") {
+              r.digits = 5;
+              r.value = makeNumberStr(rand, r.digits);
+            } else if (type === "word") {
+              r.shown = pickN(rand, WORD_POOL, 4);
+              var rest = WORD_POOL.filter(function (w) { return r.shown.indexOf(w) < 0; });
+              r.options = shuffle(rand, r.shown.concat(pickN(rand, rest, 3)));
+            } else if (type === "routine") {
+              var rt = ROUTINES[Math.floor(rand() * ROUTINES.length)];
+              r.title = rt.title; r.steps = rt.steps.slice();
+              r.shuffled = shuffle(rand, rt.steps);
+            } else if (type === "picture") {
+              r.shown = pickN(rand, PIC_POOL, 4);
+              var shownNames = r.shown.map(function (p) { return p.n; });
+              var restP = PIC_POOL.filter(function (p) { return shownNames.indexOf(p.n) < 0; });
+              r.options = shuffle(rand, r.shown.concat(pickN(rand, restP, 3)));
+            } else if (type === "shop") {
+              r.items = pickN(rand, SHOP_POOL, 3);
+              r.total = r.items.reduce(function (a, b) { return a + b.p; }, 0);
+              var opts = [r.total, r.total + 1000, r.total - 1000, r.total + 2000];
+              r.options = shuffle(rand, opts);
+            } else if (type === "song") {
+              var song = SONGS[Math.floor(rand() * SONGS.length)];
+              r.song = song;
+              var others = SONGS.filter(function (s) { return s.t !== song.t; });
+              r.options = shuffle(rand, [song].concat(pickN(rand, others, 3)));
+            }
+            return r;
+          });
+        }
+
+        /* ---------- 상태 ---------- */
+        var attempt = 0;
+        var rounds = buildRounds(attempt);
+        var roundIdx = 0;
+        var score = 0;
+        var phase = "ready"; /* ready | show | answer | feedback | done */
+        var typed = "";
+        var selected = [];
+        var seqChosen = [];
+        var chosenOption = null;
+
+        var stageBox = document.getElementById("stageBox");
+        var roundNowEl = document.getElementById("roundNow");
+        var scoreNowEl = document.getElementById("scoreNow");
+        var levelLineEl = document.getElementById("levelLine");
+        var dotsEl = document.getElementById("progressDots");
+
+        function renderTop() {
+          roundNowEl.textContent = String(Math.min(roundIdx + 1, 5));
+          scoreNowEl.textContent = String(score);
+          var dots = dotsEl.children;
+          for (var i = 0; i < dots.length; i++) {
+            dots[i].className = i < roundIdx || phase === "done" ? "done" : i === roundIdx ? "now" : "";
+          }
+          if (phase === "done") {
+            levelLineEl.innerHTML = "오늘의 복습 다섯 게임을 모두 마쳤어요. 수고하셨어요!";
+          } else {
+            var info = TYPE_INFO[rounds[roundIdx].type];
+            levelLineEl.innerHTML = "<strong>" + esc(info.origin) + "</strong> · " + esc(info.name) + " · 외우는 시간 <strong>제한 없음</strong>";
+          }
+        }
+
+        function originChip() {
+          var info = TYPE_INFO[rounds[roundIdx].type];
+          return '<span class="origin-chip">' + esc(info.origin) + " · " + esc(info.name) + "</span>";
+        }
+
+        /* ---------- 준비 화면 ---------- */
+        function showReady() {
+          phase = "ready"; typed = ""; selected = []; seqChosen = []; chosenOption = null;
+          renderTop();
+          var r = rounds[roundIdx];
+          var info = TYPE_INFO[r.type];
+          stageBox.innerHTML =
+            originChip() +
+            '<p class="stage-msg">' + (roundIdx === 0 ? "복습을 시작해 볼까요?" : "다음 복습 게임이에요") + "</p>" +
+            '<p class="stage-sub">' + esc(info.ready) + "<br />시간 제한이 없으니 천천히 하세요.</p>" +
+            '<div class="board"><span class="big-number hidden-num">? ? ?</span></div>' +
+            '<div class="btn-row"><button type="button" class="btn btn-primary" id="btnStart">' +
+            (r.type === "song" ? "문제 보기" : "보고 외우기") + "</button></div>";
+          document.getElementById("btnStart").addEventListener("click", function () {
+            if (r.type === "song") showAnswer();
+            else showMemorize();
+          });
+        }
+
+        /* ---------- 외우기 화면 ---------- */
+        function memorizeBoard(r) {
+          if (r.type === "number") {
+            return '<div class="board"><span class="big-number">' + esc(spaced(r.value)) + "</span></div>";
+          }
+          if (r.type === "word") {
+            return '<div class="board">' + r.shown.map(function (w) {
+              return '<span class="word-chip">' + esc(w) + "</span>";
+            }).join("") + "</div>";
+          }
+          if (r.type === "routine") {
+            return '<div class="board"><ol class="order-list">' + r.steps.map(function (s, i) {
+              return '<li><span class="n">' + (i + 1) + "</span>" + esc(s) + "</li>";
+            }).join("") + "</ol></div>" +
+            '<p class="memorize-note">주제: ' + esc(r.title) + " — 순서를 그대로 외워 주세요.</p>";
+          }
+          if (r.type === "picture") {
+            return '<div class="board">' + r.shown.map(function (p) {
+              return '<span class="pic-item">' + p.e + "<small>" + esc(p.n) + "</small></span>";
+            }).join("") + "</div>";
+          }
+          if (r.type === "shop") {
+            return '<div class="board"><ul class="shop-list">' + r.items.map(function (it) {
+              return "<li><span>" + esc(it.n) + '</span><span class="price">' + esc(won(it.p)) + "</span></li>";
+            }).join("") + "</ul></div>" +
+            '<p class="memorize-note">세 가지 가격을 외워 두세요. 이따 합계를 여쭤볼게요.</p>';
+          }
+          return '<div class="board"><span class="big-number hidden-num">? ? ?</span></div>';
+        }
+
+        function showMemorize() {
+          phase = "show"; renderTop();
+          var r = rounds[roundIdx];
+          stageBox.innerHTML =
+            originChip() +
+            '<p class="stage-msg">지금 외우세요!</p>' +
+            '<p class="stage-sub">소리 내어 읽으면서 외우면 더 잘 기억돼요.</p>' +
+            memorizeBoard(r) +
+            '<p class="memorize-note">시간 제한이 없어요. 사라지지 않으니 천천히 외우세요.</p>' +
+            '<div class="btn-row"><button type="button" class="btn btn-primary" id="btnHide">다 외웠어요</button></div>';
+          document.getElementById("btnHide").addEventListener("click", showAnswer);
+        }
+
+        /* ---------- 답하기 화면 ---------- */
+        function showAnswer() {
+          phase = "answer"; typed = ""; selected = []; seqChosen = []; chosenOption = null;
+          renderTop();
+          var r = rounds[roundIdx];
+          var body = "";
+          if (r.type === "number") {
+            body =
+              '<p class="stage-msg">숫자가 가려졌어요</p>' +
+              '<p class="stage-sub">맨 뒤 숫자부터, 거꾸로 눌러서 입력해 주세요.</p>' +
+              '<div id="slotsWrap">' + slotHtml() + "</div>" +
+              '<div class="keypad" role="group" aria-label="숫자 키패드">' +
+              ["1","2","3","4","5","6","7","8","9"].map(function (d) {
+                return '<button type="button" data-key="' + d + '">' + d + "</button>";
+              }).join("") +
+              '<button type="button" class="util" data-key="del">지우기</button>' +
+              '<button type="button" data-key="0">0</button>' +
+              '<button type="button" class="util" data-key="clear">처음부터</button>' +
+              "</div>";
+          } else if (r.type === "word") {
+            body =
+              '<p class="stage-msg">어떤 단어를 봤나요?</p>' +
+              '<p class="stage-sub">아까 본 단어 네 개를 모두 눌러 주세요. 다시 누르면 선택이 풀려요.</p>' +
+              '<div class="option-grid two" id="optGrid">' + r.options.map(function (w) {
+                return '<button type="button" class="opt-btn" data-val="' + esc(w) + '" aria-pressed="false">' + esc(w) + "</button>";
+              }).join("") + "</div>" +
+              '<p class="memorize-note" id="pickCount">고른 단어 0개 / 4개</p>';
+          } else if (r.type === "routine") {
+            body =
+              '<p class="stage-msg">순서대로 눌러 주세요</p>' +
+              '<p class="stage-sub">「' + esc(r.title) + '」의 순서를 떠올리며, 첫 번째 일부터 차례로 눌러 주세요.</p>' +
+              '<div id="seqWrap">' + seqSlotHtml() + "</div>" +
+              '<div class="option-grid" id="optGrid">' + r.shuffled.map(function (s) {
+                return '<button type="button" class="opt-btn" data-val="' + esc(s) + '">' + esc(s) + "</button>";
+              }).join("") + "</div>" +
+              '<div class="btn-row"><button type="button" class="btn btn-ghost" id="btnUndo">하나 지우기</button></div>';
+          } else if (r.type === "picture") {
+            body =
+              '<p class="stage-msg">어떤 그림을 봤나요?</p>' +
+              '<p class="stage-sub">아까 본 그림 네 개를 모두 눌러 주세요. 다시 누르면 선택이 풀려요.</p>' +
+              '<div class="option-grid two" id="optGrid">' + r.options.map(function (p) {
+                return '<button type="button" class="opt-btn pic" data-val="' + esc(p.n) + '" aria-pressed="false">' + p.e +
+                  '<span class="sub">' + esc(p.n) + "</span></button>";
+              }).join("") + "</div>" +
+              '<p class="memorize-note" id="pickCount">고른 그림 0개 / 4개</p>';
+          } else if (r.type === "shop") {
+            body =
+              '<p class="stage-msg">모두 얼마일까요?</p>' +
+              '<p class="stage-sub">아까 본 세 가지 물건값의 합계를 골라 주세요.</p>' +
+              '<div class="option-grid two" id="optGrid">' + r.options.map(function (o) {
+                return '<button type="button" class="opt-btn" data-val="' + o + '" aria-pressed="false">' + esc(won(o)) + "</button>";
+              }).join("") + "</div>";
+          } else if (r.type === "song") {
+            body =
+              '<p class="stage-msg">어떤 노래일까요?</p>' +
+              '<p class="stage-sub">아래 가사 한 소절을 보고, 노래 제목을 골라 주세요.</p>' +
+              '<div class="board"><div class="lyric-box">' + esc(r.song.hint) +
+              "<small>힌트예요. 흥얼거리며 떠올려 보세요.</small></div></div>" +
+              '<div class="option-grid" id="optGrid" style="margin-top:18px">' + r.options.map(function (o) {
+                return '<button type="button" class="opt-btn" data-val="' + esc(o.t) + '" aria-pressed="false">' + esc(o.t) +
+                  '<span class="sub">' + esc(o.s) + "</span></button>";
+              }).join("") + "</div>";
+          }
+          stageBox.innerHTML =
+            originChip() + body +
+            '<div class="btn-row"><button type="button" class="btn btn-primary" id="btnCheck" disabled>정답 확인</button></div>';
+
+          if (r.type === "number") {
+            var keys = stageBox.querySelectorAll("[data-key]");
+            for (var i = 0; i < keys.length; i++) {
+              keys[i].addEventListener("click", function () { pressKey(this.getAttribute("data-key")); });
+            }
+          } else {
+            bindOptions(r);
+          }
+          if (r.type === "routine") {
+            document.getElementById("btnUndo").addEventListener("click", function () {
+              seqChosen.pop(); refreshSeq(r);
+            });
+          }
+          document.getElementById("btnCheck").addEventListener("click", checkAnswer);
+        }
+
+        function slotHtml() {
+          var r = rounds[roundIdx];
+          var html = '<div class="answer-slots" aria-label="입력한 답">';
+          for (var i = 0; i < r.digits; i++) {
+            if (i < typed.length) html += '<span class="slot filled">' + esc(typed[i]) + "</span>";
+            else html += '<span class="slot empty">·</span>';
+          }
+          return html + "</div>";
+        }
+        function seqSlotHtml() {
+          var r = rounds[roundIdx];
+          var html = '<div class="seq-slots" aria-label="고른 순서">';
+          for (var i = 0; i < r.steps.length; i++) {
+            if (i < seqChosen.length) html += '<span class="seq-slot filled">' + (i + 1) + ". " + esc(seqChosen[i]) + "</span>";
+            else html += '<span class="seq-slot empty">' + (i + 1) + "번째 ?</span>";
+          }
+          return html + "</div>";
+        }
+
+        function pressKey(k) {
+          if (phase !== "answer") return;
+          var r = rounds[roundIdx];
+          if (k === "del") typed = typed.slice(0, -1);
+          else if (k === "clear") typed = "";
+          else if (/^\d$/.test(k) && typed.length < r.digits) typed += k;
+          var wrap = document.getElementById("slotsWrap");
+          if (wrap) wrap.innerHTML = slotHtml();
+          var btn = document.getElementById("btnCheck");
+          if (btn) btn.disabled = typed.length !== r.digits;
+        }
+
+        function bindOptions(r) {
+          var btns = stageBox.querySelectorAll("#optGrid .opt-btn");
+          for (var i = 0; i < btns.length; i++) {
+            btns[i].addEventListener("click", function () {
+              var val = this.getAttribute("data-val");
+              if (r.type === "word" || r.type === "picture") {
+                var idx = selected.indexOf(val);
+                if (idx >= 0) { selected.splice(idx, 1); this.setAttribute("aria-pressed", "false"); }
+                else if (selected.length < 4) { selected.push(val); this.setAttribute("aria-pressed", "true"); }
+                var cnt = document.getElementById("pickCount");
+                if (cnt) cnt.textContent = (r.type === "word" ? "고른 단어 " : "고른 그림 ") + selected.length + "개 / 4개";
+                document.getElementById("btnCheck").disabled = selected.length !== 4;
+              } else if (r.type === "routine") {
+                if (seqChosen.indexOf(val) >= 0 || seqChosen.length >= r.steps.length) return;
+                seqChosen.push(val);
+                this.disabled = true;
+                refreshSeq(r);
+              } else {
+                chosenOption = r.type === "shop" ? Number(val) : val;
+                var all = stageBox.querySelectorAll("#optGrid .opt-btn");
+                for (var j = 0; j < all.length; j++) all[j].setAttribute("aria-pressed", "false");
+                this.setAttribute("aria-pressed", "true");
+                document.getElementById("btnCheck").disabled = false;
+              }
+            });
+          }
+        }
+        function refreshSeq(r) {
+          var wrap = document.getElementById("seqWrap");
+          if (wrap) wrap.innerHTML = seqSlotHtml();
+          var btns = stageBox.querySelectorAll("#optGrid .opt-btn");
+          for (var i = 0; i < btns.length; i++) {
+            btns[i].disabled = seqChosen.indexOf(btns[i].getAttribute("data-val")) >= 0;
+          }
+          document.getElementById("btnCheck").disabled = seqChosen.length !== r.steps.length;
+        }
+
+        /* ---------- 채점 ---------- */
+        var PRAISE = ["완벽해요!", "대단하세요!", "정확해요!", "기억력이 반짝이네요!", "최고예요!"];
+        var CHEER = ["아쉬워요, 그래도 잘 떠올리셨어요.", "괜찮아요. 떠올리려 애쓴 것 자체가 운동이에요.", "조금만 더! 정답을 보고 한 번 읽어 보세요."];
+
+        function judge(r) {
+          if (r.type === "number") {
+            var ans = r.value.split("").reverse().join("");
+            return {
+              ok: typed === ans,
+              explain: "원래 숫자는 <span class='fb-answer'>" + esc(spaced(r.value)) + "</span>, 거꾸로 하면 <span class='fb-answer'>" + esc(spaced(ans)) + "</span> 예요."
+            };
+          }
+          if (r.type === "word") {
+            var okW = selected.length === 4 && selected.every(function (w) { return r.shown.indexOf(w) >= 0; });
+            return { ok: okW, explain: "본 단어는 <span class='fb-answer'>" + r.shown.map(esc).join(", ") + "</span> 였어요." };
+          }
+          if (r.type === "routine") {
+            var okR = seqChosen.join("|") === r.steps.join("|");
+            return { ok: okR, explain: "「" + esc(r.title) + "」의 순서는 <span class='fb-answer'>" + r.steps.map(esc).join(" → ") + "</span> 예요." };
+          }
+          if (r.type === "picture") {
+            var names = r.shown.map(function (p) { return p.n; });
+            var okP = selected.length === 4 && selected.every(function (n) { return names.indexOf(n) >= 0; });
+            return { ok: okP, explain: "본 그림은 <span class='fb-answer'>" + r.shown.map(function (p) { return p.e + " " + esc(p.n); }).join(", ") + "</span> 였어요." };
+          }
+          if (r.type === "shop") {
+            var detail = r.items.map(function (it) { return esc(it.n) + " " + esc(won(it.p)); }).join(" + ");
+            return { ok: chosenOption === r.total, explain: detail + " = <span class='fb-answer'>" + esc(won(r.total)) + "</span> 예요." };
+          }
+          return {
+            ok: chosenOption === r.song.t,
+            explain: "정답은 <span class='fb-answer'>" + esc(r.song.t) + "</span> (" + esc(r.song.s) + ") 예요."
+          };
+        }
+
+        function checkAnswer() {
+          if (phase !== "answer") return;
+          phase = "feedback";
+          var r = rounds[roundIdx];
+          var res = judge(r);
+          if (res.ok) score++;
+          renderTop();
+          var last = roundIdx === rounds.length - 1;
+          stageBox.innerHTML =
+            originChip() +
+            '<div class="feedback ' + (res.ok ? "good" : "bad") + '">' +
+            '<p class="fb-title">' + (res.ok ? PRAISE[roundIdx % PRAISE.length] : CHEER[roundIdx % CHEER.length]) + "</p>" +
+            "<p>" + res.explain + "</p>" +
+            "</div>" +
+            '<div class="btn-row"><button type="button" class="btn btn-primary" id="btnNext">' +
+            (last ? "오늘의 결과 보기" : "다음 게임으로") + "</button></div>";
+          document.getElementById("btnNext").addEventListener("click", function () {
+            if (last) showResult();
+            else { roundIdx++; showReady(); }
+          });
+        }
+
+        function showResult() {
+          phase = "done"; renderTop();
+          var msg, sub;
+          if (score === 5) { msg = "다섯 게임 모두 맞혔어요!"; sub = "한 주 동안 배운 것을 완벽하게 복습했어요. 다음 주에도 새로운 게임이 기다리고 있어요."; }
+          else if (score >= 3) { msg = "아주 잘하셨어요!"; sub = "틀린 게임이 있어도 괜찮아요. 다시 떠올려 본 것 자체가 복습이에요."; }
+          else if (score >= 1) { msg = "좋은 복습이었어요!"; sub = "오랜만에 꺼내 보면 처음엔 누구나 헷갈려요. 정답을 보고 한 번씩 읽어 보세요."; }
+          else { msg = "오늘도 해낸 것만으로 충분해요!"; sub = "점수보다 매일 꾸준히 하는 것이 중요해요. 내일 새로운 문제로 다시 만나요."; }
+          stageBox.innerHTML =
+            '<div class="result-box">' +
+            '<p class="stage-sub" style="margin-bottom:0">오늘의 복습 결과</p>' +
+            '<p class="result-score">' + score + " / 5</p>" +
+            '<p class="result-msg">' + msg + "</p>" +
+            '<p class="result-sub">' + sub + "</p>" +
+            '<div class="btn-row">' +
+            '<button type="button" class="btn btn-primary" id="btnAgain">새로운 문제로 다시 하기</button>' +
+            "</div>" +
+            '<p class="stage-sub" style="margin-top:16px">내일 다시 오시면, 날짜가 바뀌어 또 다른 문제가 준비돼 있어요.</p>' +
+            "</div>";
+          document.getElementById("btnAgain").addEventListener("click", function () {
+            attempt++;
+            rounds = buildRounds(attempt);
+            roundIdx = 0; score = 0;
+            showReady();
+            document.getElementById("gameCard").scrollIntoView({ behavior: "smooth", block: "start" });
+          });
+        }
+
+        document.addEventListener("keydown", function (e) {
+          if (phase !== "answer" || rounds[roundIdx].type !== "number") return;
+          if (/^\d$/.test(e.key)) pressKey(e.key);
+          else if (e.key === "Backspace") { e.preventDefault(); pressKey("del"); }
+          else if (e.key === "Enter") {
+            var btn = document.getElementById("btnCheck");
+            if (btn && !btn.disabled) checkAnswer();
+          }
+        });
+
+        showReady();
+      })();
+    </script>
+    <script>
+      (function () {
+        "use strict";
+        /* Language layer: the game above always renders Korean.
+           This layer only rewrites visible text nodes when English or
+           Japanese is selected, so the Korean default view is untouched. */
+        var TRIPLES = [
+          ["오늘의 두뇌운동 · Day 7", "Today's Brain Exercise · Day 7", "今日の脳トレ · Day 7"],
+          ["일주일 복습 게임", "Weekly Review Game", "一週間の復習ゲーム"],
+          ["한 주 동안 했던 게임들을 섞어서 다시 풀어 보는 복습 날이에요. 숫자, 단어, 순서, 그림, 장보기, 노래까지 골고루 나옵니다. 시간 제한이 없으니 서두르지 않아도 돼요.", "Today is review day — a mix of the games you played all week. Numbers, words, order, pictures, shopping, and songs all appear. There is no time limit, so there is no need to hurry.", "一週間やってきたゲームを混ぜてもう一度解く復習の日です。数字、単語、順番、絵、買い物、歌までまんべんなく出ます。時間制限はないので、焦らなくて大丈夫です。"],
+          ["오늘은 ", "Today is ", "今日は"],
+          [" · 오늘의 문제는 날짜에 맞춰 정해져요. ", " · Today's questions are set by the date. ", " · 今日の問題は日付に合わせて決まります。"],
+          ["내일 오면 새로운 문제", "Come back tomorrow and you will find new questions", "明日来ると新しい問題"],
+          ["로 바뀌어 있어요. 어디서든 바로 들어와서 할 수 있어요.", ". You can jump in right away, from anywhere.", "に変わっています。どこからでもすぐ始められます。"],
+          ["게임 ", "Game ", "ゲーム "],
+          ["맞힌 개수 ", "Correct: ", "正解："],
+          ["게임 방법", "How to Play", "ゲームの方法"],
+          ["먼저 보고 외워요", "First, look and memorize", "まず見て覚えます"],
+          ["게임마다 처음에 외울 것이 나타나요. 시간 제한이 없으니 천천히, 소리 내어 읽으면서 외우면 더 잘 기억돼요. 노래 게임은 외울 것 없이 바로 문제를 풀어요.", "Each game starts by showing you something to memorize. There is no time limit, so go slowly — reading aloud helps you remember better. The song game has nothing to memorize; you answer right away.", "ゲームごとに、最初に覚えるものが表示されます。時間制限はないので、ゆっくり、声に出して読むとよく覚えられます。歌のゲームは覚えるものがなく、すぐ問題を解きます。"],
+          ["가려지면 떠올려요", "When it is hidden, recall it", "隠れたら思い出します"],
+          ["「다 외웠어요」를 누르면 외울 것이 가려져요. 머릿속으로 천천히 떠올려 보세요. 떠올리려고 애쓰는 순간이 가장 좋은 운동이에요.", "When you tap “I've Memorized It,” what you memorized is hidden. Recall it slowly in your mind. The moment you try hard to recall is the best exercise of all.", "「覚えました」を押すと、覚えたものが隠れます。頭の中でゆっくり思い出してください。思い出そうと努力する瞬間が一番良い運動です。"],
+          ["답하고 바로 확인해요", "Answer and check right away", "答えてすぐ確認します"],
+          ["숫자는 키패드로, 나머지는 큰 버튼을 눌러 답해요. 맞혔는지 바로 알려 드리고, 틀려도 정답을 보고 한 번 읽어 보면 복습이 돼요.", "Use the keypad for numbers, and the big buttons for everything else. You will see right away whether you got it right — and even if you did not, reading the answer once is good review.", "数字はキーパッドで、その他は大きなボタンを押して答えます。合っていたかすぐ分かります。間違えても答えを見て一度読めば復習になります。"],
+          ["복습하는 여섯 가지 게임", "The Six Games You Are Reviewing", "復習する6つのゲーム"],
+          ["어느 날 게임", "Day's Game", "何日目のゲーム"],
+          ["복습 내용", "What You Review", "復習内容"],
+          ["숫자를 외워서 거꾸로 입력하기", "Memorize a number and enter it backwards", "数字を覚えて逆に入力する"],
+          ["본 단어를 골라내기", "Pick out the words you saw", "見た単語を選び出す"],
+          ["하루 일과를 순서대로 맞히기", "Put a daily routine in the right order", "一日の流れを順番に当てる"],
+          ["본 그림을 골라내기", "Pick out the pictures you saw", "見た絵を選び出す"],
+          ["장보기 합계를 계산하기", "Calculate a shopping total", "買い物の合計を計算する"],
+          ["가사 힌트로 노래 제목 맞히기", "Guess song titles from lyric hints", "歌詞のヒントで歌のタイトルを当てる"],
+          ["오늘의 다섯 게임은 이 여섯 가지 중에서 날짜마다 골고루 섞여 나와요. 어떤 게임이 나올지는 게임 위쪽 표시에서 확인할 수 있어요.", "Today's five games are mixed evenly from these six, changing with the date. You can see which game it is in the label above the game.", "今日の5つのゲームは、この6つの中から日付ごとにまんべんなく混ざって出ます。どのゲームかはゲーム上部の表示で確認できます。"],
+          ["왜 복습이 중요한가요?", "Why Is Review Important?", "なぜ復習が大切なのですか？"],
+          ["한 번 외운 것도 시간이 지나면 흐려져요. 며칠 뒤에 ", "Even things you have memorized fade with time. A few days later, ", "一度覚えたことも、時間がたつと薄れてしまいます。数日後に"],
+          ["다시 떠올려 보는 것", "trying to recall it again", "もう一度思い出してみること"],
+          ["이 기억을 오래 붙잡아 두는 가장 좋은 방법이에요. 심리학에서는 이를 두고, 떠올리는 연습 자체가 기억을 단단하게 만든다고 해요.", " is the best way to hold on to a memory for a long time. Psychologists say that the practice of recalling itself makes memories stronger.", "が記憶を長く保つ一番良い方法です。心理学では、思い出す練習そのものが記憶を強くすると言われています。"],
+          ["그래서 일주일의 마지막 날은 새로운 것을 배우기보다, 배운 것을 ", "That is why the last day of the week is set aside not for learning new things, but for ", "だから一週間の最後の日は、新しいことを学ぶより、学んだことを"],
+          ["골고루 다시 꺼내 보는 날", "bringing back everything you learned, evenly", "まんべんなくもう一度取り出す日"],
+          ["로 정했어요. 점수보다 꾸준히 이어 가는 것이 훨씬 중요해요.", ". Keeping going steadily matters far more than the score.", "と決めました。点数よりコツコツ続けることがずっと大切です。"],
+          ["더 잘 떠올리는 팁", "Tips for Remembering Better", "もっと思い出しやすくするコツ"],
+          ["외울 때는 소리 내어 읽어 보세요. 눈과 귀를 같이 쓰면 오래 남아요.", "When memorizing, read aloud. Using your eyes and ears together makes it stick longer.", "覚えるときは声に出して読んでください。目と耳を一緒に使うと長く残ります。"],
+          ["숫자와 단어는 두세 개씩 끊어 묶으면 떠올리기 쉬워요.", "Group numbers and words into chunks of two or three — they are easier to recall that way.", "数字と単語は2〜3個ずつ区切ってまとめると思い出しやすいです。"],
+          ["순서 게임은 이야기를 만들 듯 앞뒤를 이어 보세요.", "For order games, connect the steps like a story, one leading to the next.", "順番ゲームは物語を作るように前後をつないでみてください。"],
+          ["계산은 천 원 단위부터 먼저 더하고 나머지를 더하면 실수가 줄어요.", "For calculations, add the thousands first, then the rest — you will make fewer mistakes.", "計算は千ウォン単位から先に足して、残りを足すと間違いが減ります。"],
+          ["틀린 게임은 정답을 보고 한 번 더 읽어 보세요. 그것도 훌륭한 복습이에요.", "For games you got wrong, look at the answer and read it once more. That is great review too.", "間違えたゲームは答えを見てもう一度読んでください。それも立派な復習です。"],
+          ["오늘의 두뇌운동 · 뇌건강 놀이터지기가 매일 준비하는 치매예방 기억력 게임이에요.", "Today's Brain Exercise · A memory game for brain health, prepared every day by the Brain Health Playground Keeper.", "今日の脳トレ · 脳の健康あそび場の管理人が毎日用意する、認知症予防の記憶力ゲームです。"],
+          ["이 게임은 놀이와 두뇌 활동 돕기가 목적이며, 의료 진단이나 치료를 대신하지 않아요.", "This game is for play and brain activity; it does not replace medical diagnosis or treatment.", "このゲームは遊びと脳の活動のためのもので、医療の診断や治療の代わりにはなりません。"],
+          ["오늘의 두뇌운동 블로그", "Today's Brain Exercise Blog", "今日の脳トレブログ"],
+          ["Day 1 복습", "Day 1 Review", "Day 1 復習"],
+          ["Day 2 복습", "Day 2 Review", "Day 2 復習"],
+          ["Day 3 복습", "Day 3 Review", "Day 3 復習"],
+          ["Day 4 복습", "Day 4 Review", "Day 4 復習"],
+          ["Day 5 복습", "Day 5 Review", "Day 5 復習"],
+          ["Day 6 복습", "Day 6 Review", "Day 6 復習"],
+          ["숫자 거꾸로", "Numbers Backwards", "数字を逆に"],
+          ["단어 기억", "Word Memory", "単語記憶"],
+          ["일과 순서", "Routine Order", "一日の順番"],
+          ["그림 기억", "Picture Memory", "絵の記憶"],
+          ["장보기 계산", "Shopping Math", "買い物計算"],
+          ["노래 제목", "Song Titles", "歌のタイトル"],
+          ["숫자가 나타나요. 외운 뒤 거꾸로 입력하는 게임이에요.", "A number will appear. Memorize it, then enter it backwards.", "数字が表示されます。覚えてから、逆の順番で入力するゲームです。"],
+          ["단어 네 개가 나타나요. 외운 뒤, 본 단어를 모두 골라 주세요.", "Four words will appear. Memorize them, then select all the words you saw.", "単語が4つ表示されます。覚えてから、見た単語をすべて選んでください。"],
+          ["하루 일과가 순서대로 나타나요. 외운 뒤 같은 순서로 눌러 주세요.", "A daily routine will appear in order. Memorize it, then tap the steps in the same order.", "一日の流れが順番に表示されます。覚えてから、同じ順番で押してください。"],
+          ["그림 네 개가 나타나요. 외운 뒤, 본 그림을 모두 골라 주세요.", "Four pictures will appear. Memorize them, then select all the pictures you saw.", "絵が4つ表示されます。覚えてから、見た絵をすべて選んでください。"],
+          ["장보기 목록과 가격이 나타나요. 외운 뒤 합계를 골라 주세요.", "A shopping list with prices will appear. Memorize it, then choose the total.", "買い物リストと値段が表示されます。覚えてから合計を選んでください。"],
+          ["가사 한 소절을 보고, 어떤 노래인지 제목을 골라 주세요. 외울 것 없이 바로 풀어요.", "Look at one line of lyrics and choose the song title. There is nothing to memorize — answer right away.", "歌詞の一節を見て、どの歌かタイトルを選んでください。覚えるものはなく、すぐ解けます。"],
+          ["시간 제한이 없으니 천천히 하세요.", "There is no time limit, so take your time.", "時間制限はないので、ゆっくりどうぞ。"],
+          ["복습을 시작해 볼까요?", "Shall we start the review?", "復習を始めましょうか？"],
+          ["다음 복습 게임이에요", "Here is the next review game", "次の復習ゲームです"],
+          ["보고 외우기", "See & Memorize", "見て覚える"],
+          ["문제 보기", "See the Question", "問題を見る"],
+          ["지금 외우세요!", "Memorize now!", "今、覚えましょう！"],
+          ["소리 내어 읽으면서 외우면 더 잘 기억돼요.", "Reading aloud helps you remember better.", "声に出して読むと、よく覚えられます。"],
+          ["시간 제한이 없어요. 사라지지 않으니 천천히 외우세요.", "There is no time limit. It will not disappear, so memorize slowly.", "時間制限はありません。消えないので、ゆっくり覚えてください。"],
+          ["다 외웠어요", "I've Memorized It", "覚えました"],
+          ["주제: ", "Topic: ", "テーマ："],
+          [" — 순서를 그대로 외워 주세요.", " — memorize the order exactly as shown.", " — 順番をそのまま覚えてください。"],
+          ["세 가지 가격을 외워 두세요. 이따 합계를 여쭤볼게요.", "Memorize the three prices. We will ask you for the total soon.", "3つの値段を覚えてください。あとで合計を聞きます。"],
+          ["숫자가 가려졌어요", "The number is hidden", "数字が隠れました"],
+          ["맨 뒤 숫자부터, 거꾸로 눌러서 입력해 주세요.", "Starting from the last digit, enter the number backwards.", "最後の数字から、逆の順番で押して入力してください。"],
+          ["지우기", "Delete", "消す"],
+          ["처음부터", "Clear All", "最初から"],
+          ["어떤 단어를 봤나요?", "Which words did you see?", "どの単語を見ましたか？"],
+          ["아까 본 단어 네 개를 모두 눌러 주세요. 다시 누르면 선택이 풀려요.", "Tap all four words you saw. Tap again to deselect.", "さっき見た単語4つをすべて押してください。もう一度押すと選択が外れます。"],
+          ["순서대로 눌러 주세요", "Tap in order", "順番に押してください"],
+          ["「", "“", "「"],
+          ["」의 순서를 떠올리며, 첫 번째 일부터 차례로 눌러 주세요.", "” — recall the order, and tap from the first step, one by one.", "」の順番を思い出しながら、最初から順番に押してください。"],
+          ["」의 순서는 ", "” is in this order: ", "」の順番は"],
+          ["하나 지우기", "Undo One", "1つ戻す"],
+          ["어떤 그림을 봤나요?", "Which pictures did you see?", "どの絵を見ましたか？"],
+          ["아까 본 그림 네 개를 모두 눌러 주세요. 다시 누르면 선택이 풀려요.", "Tap all four pictures you saw. Tap again to deselect.", "さっき見た絵4つをすべて押してください。もう一度押すと選択が外れます。"],
+          ["모두 얼마일까요?", "How much is it in total?", "全部でいくらでしょう？"],
+          ["아까 본 세 가지 물건값의 합계를 골라 주세요.", "Choose the total price of the three items you saw.", "さっき見た3つの品物の合計を選んでください。"],
+          ["어떤 노래일까요?", "Which song is it?", "どの歌でしょう？"],
+          ["아래 가사 한 소절을 보고, 노래 제목을 골라 주세요.", "Look at the lyric line below and choose the song title.", "下の歌詞の一節を見て、歌のタイトルを選んでください。"],
+          ["힌트예요. 흥얼거리며 떠올려 보세요.", "This is a hint. Hum along and try to recall.", "ヒントです。口ずさみながら思い出してください。"],
+          ["정답 확인", "Check Answer", "答え合わせ"],
+          ["1번째 ?", "1st ?", "1番目 ?"],
+          ["2번째 ?", "2nd ?", "2番目 ?"],
+          ["3번째 ?", "3rd ?", "3番目 ?"],
+          ["4번째 ?", "4th ?", "4番目 ?"],
+          ["고른 단어 0개 / 4개", "Words selected: 0 / 4", "選んだ単語 0個 / 4個"],
+          ["고른 단어 1개 / 4개", "Words selected: 1 / 4", "選んだ単語 1個 / 4個"],
+          ["고른 단어 2개 / 4개", "Words selected: 2 / 4", "選んだ単語 2個 / 4個"],
+          ["고른 단어 3개 / 4개", "Words selected: 3 / 4", "選んだ単語 3個 / 4個"],
+          ["고른 단어 4개 / 4개", "Words selected: 4 / 4", "選んだ単語 4個 / 4個"],
+          ["고른 그림 0개 / 4개", "Pictures selected: 0 / 4", "選んだ絵 0個 / 4個"],
+          ["고른 그림 1개 / 4개", "Pictures selected: 1 / 4", "選んだ絵 1個 / 4個"],
+          ["고른 그림 2개 / 4개", "Pictures selected: 2 / 4", "選んだ絵 2個 / 4個"],
+          ["고른 그림 3개 / 4개", "Pictures selected: 3 / 4", "選んだ絵 3個 / 4個"],
+          ["고른 그림 4개 / 4개", "Pictures selected: 4 / 4", "選んだ絵 4個 / 4個"],
+          [" · 외우는 시간 ", " · Time to memorize: ", " · 覚える時間："],
+          ["제한 없음", "No limit", "制限なし"],
+          ["오늘의 복습 다섯 게임을 모두 마쳤어요. 수고하셨어요!", "You have finished all five of today's review games. Great work!", "今日の復習ゲーム5つをすべて終えました。お疲れさまでした！"],
+          ["완벽해요!", "Perfect!", "完璧です！"],
+          ["대단하세요!", "Amazing!", "すごいです！"],
+          ["정확해요!", "Exactly right!", "正確です！"],
+          ["기억력이 반짝이네요!", "Your memory is sparkling!", "記憶力が輝いています！"],
+          ["최고예요!", "You are the best!", "最高です！"],
+          ["아쉬워요, 그래도 잘 떠올리셨어요.", "So close — you still recalled it well.", "惜しいです。でもよく思い出しました。"],
+          ["괜찮아요. 떠올리려 애쓴 것 자체가 운동이에요.", "It's okay. Trying to recall is exercise in itself.", "大丈夫です。思い出そうとすること自体が運動です。"],
+          ["조금만 더! 정답을 보고 한 번 읽어 보세요.", "Almost there! Look at the answer and read it once.", "あと少し！答えを見て一度読んでみてください。"],
+          ["원래 숫자는 ", "The original number was ", "元の数字は"],
+          [", 거꾸로 하면 ", ", and reversed it is ", "、逆にすると"],
+          ["본 단어는 ", "The words shown were ", "見た単語は"],
+          ["본 그림은 ", "The pictures shown were ", "見た絵は"],
+          ["정답은 ", "The answer is ", "答えは"],
+          [") 예요.", ").", "）です。"],
+          [" 예요.", ".", "です。"],
+          [" 였어요.", ".", "でした。"],
+          ["오늘의 결과 보기", "See Today's Results", "今日の結果を見る"],
+          ["다음 게임으로", "Next Game", "次のゲームへ"],
+          ["오늘의 복습 결과", "Today's Review Results", "今日の復習結果"],
+          ["다섯 게임 모두 맞혔어요!", "You got all five games right!", "5つのゲームすべて正解しました！"],
+          ["한 주 동안 배운 것을 완벽하게 복습했어요. 다음 주에도 새로운 게임이 기다리고 있어요.", "You perfectly reviewed everything you learned this week. New games await you next week too.", "一週間学んだことを完璧に復習しました。来週も新しいゲームが待っています。"],
+          ["아주 잘하셨어요!", "Very well done!", "とてもよくできました！"],
+          ["틀린 게임이 있어도 괜찮아요. 다시 떠올려 본 것 자체가 복습이에요.", "It's fine if some games were wrong. Trying to recall them again is review in itself.", "間違えたゲームがあっても大丈夫です。もう一度思い出してみること自体が復習です。"],
+          ["좋은 복습이었어요!", "That was a good review!", "良い復習でした！"],
+          ["오랜만에 꺼내 보면 처음엔 누구나 헷갈려요. 정답을 보고 한 번씩 읽어 보세요.", "Everyone gets confused at first when recalling something after a while. Look at the answers and read each one once.", "久しぶりに思い出すと、最初は誰でも迷います。答えを見て一度ずつ読んでみてください。"],
+          ["오늘도 해낸 것만으로 충분해요!", "Just finishing today is enough!", "今日もやり遂げただけで十分です！"],
+          ["점수보다 매일 꾸준히 하는 것이 중요해요. 내일 새로운 문제로 다시 만나요.", "What matters is keeping at it every day, not the score. See you tomorrow with new questions.", "点数より毎日続けることが大切です。明日、新しい問題でまた会いましょう。"],
+          ["새로운 문제로 다시 하기", "Play Again with New Questions", "新しい問題でもう一度"],
+          ["내일 다시 오시면, 날짜가 바뀌어 또 다른 문제가 준비돼 있어요.", "Come back tomorrow, and a new set of questions will be ready for the new date.", "明日また来ると、日付が変わって別の問題が用意されています。"],
+          ["사과", "Apple", "りんご"],
+          ["바나나", "Banana", "バナナ"],
+          ["우유", "Milk", "牛乳"],
+          ["달걀", "Egg", "卵"],
+          ["연필", "Pencil", "鉛筆"],
+          ["안경", "Glasses", "眼鏡"],
+          ["우산", "Umbrella", "傘"],
+          ["시계", "Clock", "時計"],
+          ["열쇠", "Key", "鍵"],
+          ["모자", "Hat", "帽子"],
+          ["가방", "Bag", "かばん"],
+          ["당근", "Carrot", "にんじん"],
+          ["감자", "Potato", "じゃがいも"],
+          ["딸기", "Strawberry", "いちご"],
+          ["포도", "Grapes", "ぶどう"],
+          ["복숭아", "Peach", "桃"],
+          ["창문", "Window", "窓"],
+          ["의자", "Chair", "椅子"],
+          ["전화", "Phone", "電話"],
+          ["버스", "Bus", "バス"],
+          ["꽃", "Flower", "花"],
+          ["나무", "Tree", "木"],
+          ["빵", "Bread", "パン"],
+          ["치즈", "Cheese", "チーズ"],
+          ["귤", "Tangerine", "みかん"],
+          ["책", "Book", "本"],
+          ["튤립", "Tulip", "チューリップ"],
+          ["해바라기", "Sunflower", "ひまわり"],
+          ["강아지", "Dog", "犬"],
+          ["고양이", "Cat", "猫"],
+          ["자동차", "Car", "車"],
+          ["자전거", "Bicycle", "自転車"],
+          ["아침 일과", "Morning Routine", "朝の支度"],
+          ["병원 가는 길", "Trip to the Clinic", "病院への道"],
+          ["시장 다녀오기", "Market Trip", "買い物への外出"],
+          ["저녁 시간", "Evening Time", "夕方の時間"],
+          ["텃밭 돌보기", "Garden Care", "畑の手入れ"],
+          ["일어나기", "Wake up", "起きる"],
+          ["세수하기", "Wash your face", "顔を洗う"],
+          ["아침 먹기", "Eat breakfast", "朝ごはんを食べる"],
+          ["산책하기", "Take a walk", "散歩する"],
+          ["옷 갈아입기", "Get dressed", "着替える"],
+          ["버스 타기", "Ride the bus", "バスに乗る"],
+          ["병원 도착하기", "Arrive at the clinic", "病院に着く"],
+          ["진료 받기", "See the doctor", "診察を受ける"],
+          ["목록 적기", "Write a list", "リストを書く"],
+          ["시장 가기", "Go to the market", "市場へ行く"],
+          ["물건 사기", "Buy things", "買い物をする"],
+          ["집에 오기", "Come home", "家に帰る"],
+          ["저녁 준비하기", "Prepare dinner", "夕食の準備をする"],
+          ["식사하기", "Eat the meal", "食事をする"],
+          ["설거지하기", "Wash the dishes", "皿洗いをする"],
+          ["텔레비전 보기", "Watch TV", "テレビを見る"],
+          ["물 조리개 채우기", "Fill the watering can", "じょうろに水を入れる"],
+          ["텃밭에 물 주기", "Water the garden", "畑に水をやる"],
+          ["잡초 뽑기", "Pull weeds", "草を抜く"],
+          ["수확물 담기", "Gather the harvest", "収穫物を集める"],
+          ["두부 한 모", "Tofu (1 block)", "豆腐1丁"],
+          ["달걀 한 판", "Eggs (1 tray)", "卵1パック"],
+          ["우유 한 팩", "Milk (1 carton)", "牛乳1本"],
+          ["사과 두 개", "Apples (2)", "りんご2個"],
+          ["식빵 한 봉지", "Bread (1 loaf)", "食パン1袋"],
+          ["치즈 한 팩", "Cheese (1 pack)", "チーズ1パック"],
+          ["당근 한 봉지", "Carrots (1 bag)", "にんじん1袋"],
+          ["감자 한 봉지", "Potatoes (1 bag)", "じゃがいも1袋"],
+          ["양파 한 망", "Onions (1 net)", "玉ねぎ1ネット"],
+          ["딸기 한 팩", "Strawberries (1 pack)", "いちご1パック"],
+          ["된장 한 통", "Soybean paste (1 tub)", "味噌1個"],
+          ["국수 한 봉지", "Noodles (1 pack)", "麺1袋"],
+          ["내 나이가 어때서", "What's Wrong With My Age", "私の年齢が何だというの"],
+          ["무조건", "Unconditionally", "無条件に"],
+          ["안동역에서", "At Andong Station", "安東駅で"],
+          ["동백 아가씨", "Camellia Lady", "椿のお嬢さん"],
+          ["님과 함께", "With My Love", "あなたと一緒に"],
+          ["찔레꽃", "Wild Rose", "野バラの花"],
+          ["사랑은 아무나 하나", "Can Anyone Love?", "愛は誰にでもできるもの"],
+          ["고향역", "Hometown Station", "故郷の駅"],
+          ["오승근", "Oh Seung-geun", "オ・スングン"],
+          ["박상철", "Park Sang-cheol", "パク・サンチョル"],
+          ["진성", "Jin Sung", "チン・ソン"],
+          ["이미자", "Lee Mi-ja", "イ・ミジャ"],
+          ["남진", "Nam Jin", "ナム・ジン"],
+          ["백난아", "Baek Nan-a", "ペク・ナナ"],
+          ["태진아", "Tae Jin-a", "テ・ジナ"],
+          ["나훈아", "Na Hoon-a", "ナ・フナ"],
+          ["“야야야, 내 나이가 어때서”", "“Hey, hey, hey — what's wrong with my age”", "「ややや、私の年齢が何だというの」"],
+          ["“무조건 무조건이야”", "“Unconditionally, unconditionally”", "「無条件、無条件だよ」"],
+          ["“바람에 날리는 머리결처럼”", "“Like hair blowing in the wind”", "「風になびく髪のように」"],
+          ["“헤일 수 없이 수많은 밤을”", "“Through countless, endless nights”", "「数えきれないほど多くの夜を」"],
+          ["“저 푸른 초원 위에 그림 같은 집을 짓고”", "“Build a picturesque house on that green meadow”", "「あの青い草原の上に絵のような家を建てて」"],
+          ["“찔레꽃 붉게 피는 남쪽 나라 내 고향”", "“My hometown in the south, where wild roses bloom red”", "「野バラが赤く咲く南の国、私の故郷」"],
+          ["“사랑은 아무나 하나”", "“Can just anyone fall in love?”", "「愛は誰にでもできるものなの」"],
+          ["“달려라 고향 열차 설레는 가슴안고”", "“Run, hometown train, with an excited heart”", "「走れ故郷の列車、ときめく胸を抱いて」"]
+        ];
+        var LANG_IDX = { ko: 0, en: 1, ja: 2 };
+        var currentLang = "ko";
+        var translating = false;
+        var cache = {};
+
+        function escRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+        function buildPair(from, to) {
+          var key = from + ">" + to;
+          if (cache[key]) return cache[key];
+          var fi = LANG_IDX[from], ti = LANG_IDX[to];
+          var map = {};
+          var keys = [];
+          for (var i = 0; i < TRIPLES.length; i++) {
+            var f = TRIPLES[i][fi], t = TRIPLES[i][ti];
+            if (f && f !== t && !(f in map)) { map[f] = t; keys.push(f); }
+          }
+          keys.sort(function (a, b) { return b.length - a.length; });
+          var re = new RegExp(keys.map(escRe).join("|"), "g");
+          var pair = { map: map, re: re };
+          cache[key] = pair;
+          return pair;
+        }
+        function currency(text, from, to) {
+          if (from === "ko" && to === "en") return text.replace(/([\d,]+)원/g, "₩$1");
+          if (from === "ko" && to === "ja") return text.replace(/([\d,]+)원/g, "$1ウォン");
+          if (from === "en" && to === "ko") return text.replace(/₩([\d,]+)/g, "$1원");
+          if (from === "en" && to === "ja") return text.replace(/₩([\d,]+)/g, "$1ウォン");
+          if (from === "ja" && to === "ko") return text.replace(/([\d,]+)ウォン/g, "$1원");
+          if (from === "ja" && to === "en") return text.replace(/([\d,]+)ウォン/g, "₩$1");
+          return text;
+        }
+        function translateText(text, from, to) {
+          if (from === to || !text) return text;
+          var out = currency(text, from, to);
+          var pair = buildPair(from, to);
+          return out.replace(pair.re, function (m) { return pair.map[m]; });
+        }
+        function collectTextNodes(root) {
+          var nodes = [];
+          var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+            acceptNode: function (node) {
+              if (!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+              if (node.parentElement) {
+                if (node.parentElement.closest(".lang-switcher")) return NodeFilter.FILTER_REJECT;
+                if (node.parentElement.closest("#todayText")) return NodeFilter.FILTER_REJECT;
+                if (node.parentElement.closest("script, style")) return NodeFilter.FILTER_REJECT;
+              }
+              return NodeFilter.FILTER_ACCEPT;
+            }
+          });
+          var n;
+          while ((n = walker.nextNode())) nodes.push(n);
+          return nodes;
+        }
+        function translateRoot(root, from, to) {
+          var nodes = collectTextNodes(root);
+          for (var i = 0; i < nodes.length; i++) {
+            var v = translateText(nodes[i].nodeValue, from, to);
+            if (v !== nodes[i].nodeValue) nodes[i].nodeValue = v;
+          }
+        }
+        function fixScoreSuffix(lang) {
+          var strong = document.querySelector(".score-label strong");
+          if (!strong) return;
+          var suffix = lang === "ko" ? "개" : lang === "ja" ? "個" : "";
+          for (var i = 0; i < strong.childNodes.length; i++) {
+            var c = strong.childNodes[i];
+            if (c.nodeType === 3 && c.nodeValue !== suffix) c.nodeValue = suffix;
+          }
+        }
+        var WEEK = {
+          ko: ["일", "월", "화", "수", "목", "금", "토"],
+          en: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+          ja: ["日", "月", "火", "水", "木", "金", "土"]
+        };
+        var MONTH_EN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        var TITLES = {
+          ko: "Day 7 일주일 복습 게임",
+          en: "Day 7 Weekly Review Game",
+          ja: "Day 7 一週間の復習ゲーム"
+        };
+        function setDate(lang) {
+          var el = document.getElementById("todayText");
+          if (!el) return;
+          var now = new Date();
+          var y = now.getFullYear(), m = now.getMonth() + 1, d = now.getDate(), w = now.getDay();
+          if (lang === "en") el.textContent = WEEK.en[w] + ", " + MONTH_EN[m - 1] + " " + d + ", " + y;
+          else if (lang === "ja") el.textContent = y + "年" + m + "月" + d + "日（" + WEEK.ja[w] + "）";
+          else el.textContent = y + "년 " + m + "월 " + d + "일 (" + WEEK.ko[w] + ")";
+        }
+        var obs = null;
+        var OBS_OPTS = { childList: true, subtree: true, characterData: true };
+        function setLanguage(next) {
+          if (next === currentLang) return;
+          var main = document.getElementById("mainContent");
+          translating = true;
+          /* Pause the game-card observer while rewriting text: our own
+             writes are DOM mutations, and letting the observer react to
+             them re-triggers translation endlessly (the tab-freeze bug). */
+          if (obs) obs.disconnect();
+          try {
+            translateRoot(main, currentLang, next);
+          } finally {
+            if (obs) {
+              obs.takeRecords();
+              obs.observe(document.getElementById("gameCard"), OBS_OPTS);
+            }
+          }
+          currentLang = next;
+          fixScoreSuffix(next);
+          setDate(next);
+          document.title = TITLES[next];
+          document.documentElement.lang = next === "ja" ? "ja" : next === "en" ? "en" : "ko";
+          var btns = document.querySelectorAll("[data-lang-btn]");
+          for (var i = 0; i < btns.length; i++) {
+            btns[i].setAttribute("aria-pressed", btns[i].getAttribute("data-lang-btn") === next ? "true" : "false");
+          }
+          translating = false;
+        }
+        var btns = document.querySelectorAll("[data-lang-btn]");
+        for (var i = 0; i < btns.length; i++) {
+          btns[i].addEventListener("click", function () { setLanguage(this.getAttribute("data-lang-btn")); });
+        }
+        var gameCard = document.getElementById("gameCard");
+        if (gameCard && window.MutationObserver) {
+          obs = new MutationObserver(function () {
+            if (translating || currentLang === "ko") return;
+            /* Disconnect before translating: the writes below are DOM
+               mutations too, so observing them would retrigger this
+               callback in an endless microtask loop and freeze the tab.
+               Records queued by our own writes are dropped before
+               observation resumes. */
+            obs.disconnect();
+            translating = true;
+            try {
+              translateRoot(gameCard, "ko", currentLang);
+              fixScoreSuffix(currentLang);
+            } finally {
+              translating = false;
+              obs.takeRecords();
+              obs.observe(gameCard, OBS_OPTS);
+            }
+          });
+          obs.observe(gameCard, OBS_OPTS);
+        }
+      })();
+    </script>
+  </body>
+</html>

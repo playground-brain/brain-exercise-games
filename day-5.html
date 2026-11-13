@@ -1,0 +1,963 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Day 5 장보기 목록 게임</title>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
+    />
+    <style>
+      :root {
+        --bg: #fdf6ec;
+        --bg-soft: #fbeed9;
+        --card: #fffdf8;
+        --ink: #3a2a1c;
+        --ink-soft: #6f5a44;
+        --line: #ecd9bd;
+        --accent: #d95d0f;
+        --accent-strong: #b84a08;
+        --accent-soft: #fdeeda;
+        --good: #2e7d46;
+        --good-soft: #e4f4e8;
+        --bad: #b3402a;
+        --bad-soft: #fbe9e3;
+        --key: #fff7ea;
+        --key-line: #e6cfa8;
+        --shadow: 0 10px 30px rgba(146, 90, 32, 0.14);
+        color-scheme: light;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #221812;
+          --bg-soft: #2c1f16;
+          --card: #2f2118;
+          --ink: #f7ead9;
+          --ink-soft: #cdb59c;
+          --line: #4d3826;
+          --accent: #f08a3c;
+          --accent-strong: #ffb066;
+          --accent-soft: #453022;
+          --good: #7fd79b;
+          --good-soft: #22392a;
+          --bad: #ff9d87;
+          --bad-soft: #40261f;
+          --key: #3a2a1e;
+          --key-line: #57402a;
+          --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+          color-scheme: dark;
+        }
+      }
+      * { box-sizing: border-box; }
+      html { -webkit-text-size-adjust: 100%; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "Pretendard Variable", Pretendard, -apple-system, "Malgun Gothic", "Apple SD Gothic Neo", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+        font-size: 20px;
+        line-height: 1.6;
+      }
+      .wrap { max-width: 760px; margin: 0 auto; padding: 28px 18px 64px; }
+
+      /* ---------- 언어 선택 ---------- */
+      .lang-bar {
+        display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 22px;
+      }
+      .lang-bar button {
+        flex: 1 1 0; min-width: 100px; min-height: 56px; padding: 10px 8px;
+        font-family: inherit; font-size: 20px; font-weight: 800; color: var(--ink);
+        background: var(--key); border: 2px solid var(--key-line); border-radius: 14px;
+        cursor: pointer;
+      }
+      .lang-bar button[aria-pressed="true"] {
+        background: var(--accent); border-color: var(--accent); color: #fff;
+      }
+
+      /* ---------- 머리말 ---------- */
+      .day-chip {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: var(--accent-soft); color: var(--accent-strong);
+        font-weight: 800; font-size: 17px;
+        padding: 8px 16px; border-radius: 999px;
+      }
+      .day-chip .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
+      h1 {
+        font-size: clamp(34px, 7.5vw, 46px);
+        line-height: 1.25; font-weight: 900; letter-spacing: -0.02em;
+        margin: 16px 0 10px;
+      }
+      .lede { font-size: 21px; color: var(--ink-soft); margin: 0 0 6px; }
+      .today-line { font-size: 18px; color: var(--ink-soft); margin: 10px 0 0; }
+      .today-line strong { color: var(--accent-strong); }
+
+      /* ---------- 게임 판 ---------- */
+      .game-card {
+        margin-top: 26px;
+        background: var(--card);
+        border: 2px solid var(--line);
+        border-radius: 24px;
+        box-shadow: var(--shadow);
+        padding: 26px 22px 30px;
+      }
+      .game-top {
+        display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+        gap: 10px 16px; margin-bottom: 6px;
+      }
+      .round-label { font-size: 22px; font-weight: 800; }
+      .round-label .of { color: var(--ink-soft); font-weight: 600; font-size: 19px; }
+      .score-label { font-size: 19px; font-weight: 700; color: var(--ink-soft); }
+      .score-label strong { color: var(--accent-strong); font-size: 22px; }
+      .progress-dots { display: flex; gap: 8px; margin: 10px 0 4px; }
+      .progress-dots span {
+        flex: 1; height: 12px; border-radius: 999px; background: var(--bg-soft);
+        border: 1px solid var(--line);
+      }
+      .progress-dots span.done { background: var(--good); border-color: var(--good); }
+      .progress-dots span.now { background: var(--accent); border-color: var(--accent); }
+      .level-line { font-size: 19px; color: var(--ink-soft); margin: 8px 0 0; }
+      .level-line strong { color: var(--ink); }
+
+      .stage { margin-top: 18px; text-align: center; }
+      .stage-msg { font-size: 22px; font-weight: 700; margin: 0 0 6px; }
+      .stage-sub { font-size: 19px; color: var(--ink-soft); margin: 0 0 18px; }
+
+      /* ---------- 장보기 목록 ---------- */
+      .list-board {
+        background: var(--bg-soft);
+        border: 2px dashed var(--line);
+        border-radius: 18px;
+        padding: 10px 18px;
+        text-align: left;
+      }
+      .list-board.hidden-board {
+        min-height: 128px; display: flex; align-items: center; justify-content: center;
+        text-align: center;
+      }
+      .hidden-mark { font-size: clamp(36px, 10vw, 52px); font-weight: 900; letter-spacing: 0.14em; color: var(--ink-soft); }
+      .shop-row {
+        display: flex; align-items: baseline; justify-content: space-between; gap: 14px;
+        padding: 13px 2px; border-bottom: 1px solid var(--line);
+      }
+      .shop-row:last-child { border-bottom: none; }
+      .shop-item { font-size: 23px; font-weight: 800; }
+      .shop-item small { display: block; font-size: 16px; font-weight: 600; color: var(--ink-soft); }
+      .shop-price { font-size: 22px; font-weight: 800; color: var(--accent-strong); font-variant-numeric: tabular-nums; white-space: nowrap; }
+      .memorize-note { font-size: 18px; color: var(--ink-soft); margin-top: 14px; }
+
+      /* ---------- 고르기 버튼 ---------- */
+      .pick-grid {
+        display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
+        max-width: 560px; margin: 0 auto; text-align: left;
+      }
+      @media (max-width: 420px) { .pick-grid { grid-template-columns: 1fr; } }
+      .pick-grid button {
+        min-height: 58px; padding: 12px 16px;
+        font-family: inherit; font-size: 21px; font-weight: 700; color: var(--ink);
+        background: var(--key); border: 2px solid var(--key-line); border-radius: 14px;
+        cursor: pointer; text-align: left;
+      }
+      .pick-grid button[aria-pressed="true"] {
+        background: var(--accent-soft); border-color: var(--accent); color: var(--accent-strong);
+      }
+      .pick-grid button[aria-pressed="true"]::before { content: "✓ "; font-weight: 900; }
+      .pick-count { font-size: 19px; color: var(--ink-soft); margin: 14px 0 0; }
+      .pick-count strong { color: var(--accent-strong); }
+
+      .choice-list { display: grid; gap: 10px; max-width: 480px; margin: 0 auto; }
+      .choice-list button {
+        min-height: 60px; padding: 12px 18px;
+        font-family: inherit; font-size: 23px; font-weight: 800; color: var(--ink);
+        font-variant-numeric: tabular-nums;
+        background: var(--key); border: 2px solid var(--key-line); border-radius: 14px;
+        cursor: pointer;
+      }
+      .choice-list button:active { background: var(--accent-soft); }
+
+      .btn {
+        display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        min-height: 60px; padding: 14px 30px;
+        font-family: inherit; font-size: 22px; font-weight: 800;
+        border-radius: 16px; border: 2px solid transparent; cursor: pointer;
+      }
+      .btn-primary { background: var(--accent); color: #fff; }
+      .btn-primary:active { background: var(--accent-strong); }
+      .btn-ghost { background: transparent; color: var(--accent-strong); border-color: var(--accent); }
+      .btn-row { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 20px; }
+      button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+      button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+      .feedback {
+        margin-top: 20px; border-radius: 16px; padding: 20px 18px; text-align: center;
+      }
+      .feedback.good { background: var(--good-soft); }
+      .feedback.bad { background: var(--bad-soft); }
+      .feedback .fb-title { font-size: 26px; font-weight: 900; margin: 0 0 6px; }
+      .feedback.good .fb-title { color: var(--good); }
+      .feedback.bad .fb-title { color: var(--bad); }
+      .feedback p { margin: 4px 0; font-size: 20px; }
+      .feedback .fb-answer { font-size: 22px; font-weight: 800; }
+      .mini-fb { font-size: 20px; font-weight: 800; margin: 0 0 14px; }
+      .mini-fb.good { color: var(--good); }
+      .mini-fb.bad { color: var(--bad); }
+
+      .result-box { text-align: center; padding: 10px 0 2px; }
+      .result-score { font-size: clamp(52px, 14vw, 76px); font-weight: 900; color: var(--accent-strong); line-height: 1.1; margin: 6px 0; }
+      .result-msg { font-size: 22px; font-weight: 700; margin: 0 0 8px; }
+      .result-sub { font-size: 19px; color: var(--ink-soft); margin: 0; }
+
+      /* ---------- 설명 ---------- */
+      section.howto { margin-top: 48px; }
+      h2 {
+        font-size: 28px; font-weight: 900; letter-spacing: -0.01em;
+        margin: 0 0 16px; padding-bottom: 10px; border-bottom: 3px solid var(--accent-soft);
+      }
+      .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+      .steps li {
+        display: flex; gap: 16px; align-items: flex-start;
+        background: var(--card); border: 2px solid var(--line); border-radius: 18px; padding: 18px;
+      }
+      .step-num {
+        flex: 0 0 auto; width: 46px; height: 46px; border-radius: 50%;
+        background: var(--accent); color: #fff;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 23px; font-weight: 900;
+      }
+      .steps h3 { margin: 2px 0 4px; font-size: 22px; font-weight: 800; }
+      .steps p { margin: 0; font-size: 19px; color: var(--ink-soft); }
+      .example {
+        margin-top: 16px; text-align: left;
+        background: var(--bg-soft); border-radius: 18px; padding: 20px 18px;
+        font-size: 20px;
+      }
+      .example small { display: block; font-size: 17px; font-weight: 600; color: var(--ink-soft); margin-top: 10px; }
+
+      .level-table { width: 100%; border-collapse: collapse; font-size: 19px; }
+      .level-table th, .level-table td { padding: 12px 10px; text-align: left; border-bottom: 1px solid var(--line); }
+      .level-table th { font-weight: 800; background: var(--bg-soft); }
+      .level-table td.num, .level-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+      .tips { margin: 0; padding-left: 24px; display: grid; gap: 8px; font-size: 19px; }
+      .why p { font-size: 19px; color: var(--ink-soft); margin: 0 0 10px; }
+      .why strong { color: var(--ink); }
+
+      footer {
+        margin-top: 52px; padding-top: 20px; border-top: 2px solid var(--line);
+        font-size: 17px; color: var(--ink-soft); text-align: center;
+      }
+      footer a { color: var(--accent-strong); font-weight: 700; display: inline-block; padding: 10px 6px; }
+      [hidden] { display: none !important; }
+
+      @media (prefers-reduced-motion: reduce) {
+        * { transition: none !important; animation: none !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <noscript>
+      <div style="max-width:760px;margin:0 auto;padding:36px 18px;font-size:21px;line-height:1.6">
+        <p><strong>이 게임을 하려면 자바스크립트를 켜 주세요.</strong> 브라우저 설정에서 자바스크립트를 허용한 뒤 다시 열어 주세요.</p>
+        <p>Please turn on JavaScript to play this game. / このゲームをするには JavaScript をオンにしてください。</p>
+        <p><a href="https://blog.naver.com/sin4buja">오늘의 두뇌운동 블로그</a></p>
+      </div>
+    </noscript>
+    <main class="wrap" id="mainContent">
+      <div class="lang-bar" role="group" aria-label="Language / 언어 / 言語">
+        <button type="button" id="langKo" aria-pressed="true">한국어</button>
+        <button type="button" id="langEn" aria-pressed="false">English</button>
+        <button type="button" id="langJa" aria-pressed="false">日本語</button>
+      </div>
+      <header>
+        <span class="day-chip"><span class="dot"></span><span id="sChip">오늘의 두뇌운동 · Day 5</span></span>
+        <h1 id="sTitle">장보기 목록 게임</h1>
+        <p class="lede" id="sLede">장보기 목록을 천천히 보고 외운 뒤, 어떤 물건이 있었는지 고르고 얼마가 나올지 계산해 보는 기억력 게임이에요. 시간 제한이 없으니 서두르지 않아도 돼요. 오늘은 다섯 번의 장보기, 5분이면 충분해요.</p>
+        <p class="today-line" id="todayLine"></p>
+      </header>
+
+      <!-- ============ 게임 ============ -->
+      <div class="game-card" id="gameCard">
+        <div class="game-top">
+          <div class="round-label"><span id="roundWord">게임</span> <span id="roundNow">1</span> <span class="of">/ 5</span></div>
+          <div class="score-label"><span id="scoreWord">점수</span> <strong><span id="scoreNow">0</span><span id="scoreUnit">점</span></strong></div>
+        </div>
+        <div class="progress-dots" id="progressDots" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <p class="level-line" id="levelLine"></p>
+
+        <div class="stage" id="stageBox" aria-live="polite"></div>
+      </div>
+
+      <!-- ============ 게임 방법 ============ -->
+      <section class="howto" aria-labelledby="howtoTitle">
+        <h2 id="howtoTitle">게임 방법</h2>
+        <ol class="steps">
+          <li>
+            <div class="step-num">1</div>
+            <div>
+              <h3 id="sStep1T">목록을 보고 외워요</h3>
+              <p id="sStep1P">「목록 보기」를 누르면 살 물건과 가격이 나타나요. 시간 제한이 없으니 물건 이름과 가격을 천천히, 소리 내어 읽으면서 외우면 더 잘 기억돼요.</p>
+            </div>
+          </li>
+          <li>
+            <div class="step-num">2</div>
+            <div>
+              <h3 id="sStep2T">목록이 가려져요</h3>
+              <p id="sStep2P">목록은 저절로 사라지지 않아요. 다 외웠을 때 「다 외웠어요」를 누르면 그때 목록이 가려져요.</p>
+            </div>
+          </li>
+          <li>
+            <div class="step-num">3</div>
+            <div>
+              <h3 id="sStep3T">물건을 고르고, 값을 계산해요</h3>
+              <p id="sStep3P">먼저 목록에 있던 물건을 모두 고르고, 다음으로 가격을 모두 더한 총액을 보기에서 골라요. 한 게임에 2점, 다섯 게임에 10점 만점이에요. 틀려도 괜찮아요. 뇌는 떠올리려고 애쓰는 순간 가장 활발해져요.</p>
+            </div>
+          </li>
+        </ol>
+        <div class="example" id="exampleBox"></div>
+      </section>
+
+      <section class="howto" aria-labelledby="levelTitle">
+        <h2 id="levelTitle">오늘의 다섯 게임</h2>
+        <table class="level-table">
+          <thead>
+            <tr><th scope="col" id="sThGame">게임</th><th scope="col" id="sThLevel">난이도</th><th scope="col" class="num" id="sThCount">물건 수</th><th scope="col" id="sThTime">외우는 시간</th></tr>
+          </thead>
+          <tbody id="levelTableBody"></tbody>
+        </table>
+      </section>
+
+      <section class="howto why" aria-labelledby="whyTitle">
+        <h2 id="whyTitle">왜 좋은 게임인가요?</h2>
+        <p id="sWhy1"></p>
+        <p id="sWhy2"></p>
+      </section>
+
+      <section class="howto" aria-labelledby="tipTitle">
+        <h2 id="tipTitle">더 잘 외우는 팁</h2>
+        <ul class="tips" id="tipsList"></ul>
+      </section>
+
+      <footer>
+        <p id="sFooter"></p>
+        <a href="https://blog.naver.com/sin4buja" target="_blank" rel="noopener" id="sBlogLink">오늘의 두뇌운동 블로그</a>
+      </footer>
+    </main>
+    <script>
+      (function () {
+        "use strict";
+
+        var LANG = "ko";
+
+        /* ---------- 고정 문구 번역 ---------- */
+        var STATIC = {
+          ko: {
+            docTitle: "Day 5 장보기 목록 게임",
+            chip: "오늘의 두뇌운동 · Day 5",
+            title: "장보기 목록 게임",
+            lede: "장보기 목록을 천천히 보고 외운 뒤, 어떤 물건이 있었는지 고르고 얼마가 나올지 계산해 보는 기억력 게임이에요. 시간 제한이 없으니 서두르지 않아도 돼요. 오늘은 다섯 번의 장보기, 5분이면 충분해요.",
+            roundWord: "게임", scoreWord: "점수", scoreUnit: "점",
+            howtoTitle: "게임 방법",
+            step1T: "목록을 보고 외워요",
+            step1P: "「목록 보기」를 누르면 살 물건과 가격이 나타나요. 시간 제한이 없으니 물건 이름과 가격을 천천히, 소리 내어 읽으면서 외우면 더 잘 기억돼요.",
+            step2T: "목록이 가려져요",
+            step2P: "목록은 저절로 사라지지 않아요. 다 외웠을 때 「다 외웠어요」를 누르면 그때 목록이 가려져요.",
+            step3T: "물건을 고르고, 값을 계산해요",
+            step3P: "먼저 목록에 있던 물건을 모두 고르고, 다음으로 가격을 모두 더한 총액을 보기에서 골라요. 한 게임에 2점, 다섯 게임에 10점 만점이에요. 틀려도 괜찮아요. 뇌는 떠올리려고 애쓰는 순간 가장 활발해져요.",
+            exampleNote: "예시예요. 이 세 가지를 외웠으면, 물건 고르기에서는 두부·우유·시금치를 고르고, 총액은 1,300 + 2,900 + 3,300 = 7,500원이 정답이에요.",
+            levelTitle: "오늘의 다섯 게임",
+            thGame: "게임", thLevel: "난이도", thCount: "물건 수", thTime: "외우는 시간",
+            countUnit: "가지", noLimit: "제한 없음",
+            whyTitle: "왜 좋은 게임인가요?",
+            why1: "메모 없이 장을 보려면 물건 목록을 머릿속에 붙잡아 두는 <strong>작업기억</strong>이 필요하고, 계산대에서 당황하지 않으려면 가격을 어림잡아 더하는 <strong>계산력</strong>이 필요해요. 이 게임은 그 두 가지를 한 번에 훈련해요.",
+            why2: "실제로 시장에서 써먹을 수 있는 힘이에요. 하루 다섯 번의 장보기, 딱 5분이면 충분합니다. 점수보다 <strong>매일 꾸준히 하는 것</strong>이 훨씬 중요해요.",
+            tipTitle: "더 잘 외우는 팁",
+            tips: [
+              "물건을 종류별로 묶어 외워 보세요. 채소끼리, 고기·생선끼리 묶으면 훨씬 쉬워요.",
+              "가격은 백 원 아래를 버리고 어림으로 외워도 좋아요. 두부 1,300원은 「천삼백」으로 소리 내어 읽어 보세요.",
+              "총액을 계산할 때는 비싼 물건부터 더해 보세요. 큰 수를 먼저 잡으면 실수가 줄어요.",
+              "우리 집 냉장고를 떠올리며 외워 보세요. 두부는 냉장고 맨 아래 칸, 우유는 문 쪽 칸처럼 자리를 정하면 오래 남아요."
+            ],
+            footer: "오늘의 두뇌운동 · 뇌건강 놀이터지기가 매일 준비하는 치매예방 기억력 게임이에요.<br />이 게임은 놀이와 두뇌 활동 돕기가 목적이며, 의료 진단이나 치료를 대신하지 않아요.",
+            blogLink: "오늘의 두뇌운동 블로그"
+          },
+          en: {
+            docTitle: "Day 5 Shopping List Game",
+            chip: "Daily Brain Exercise · Day 5",
+            title: "Shopping List Game",
+            lede: "Look at a shopping list, memorize it, then pick the items that were on it and work out the total price. There is no time limit, so take your time. Five rounds of shopping today — about 5 minutes is enough.",
+            roundWord: "Game", scoreWord: "Score", scoreUnit: " pts",
+            howtoTitle: "How to Play",
+            step1T: "Look at the list and memorize it",
+            step1P: "Tap “Show the list” and the items and prices appear. There is no time limit, so read each item name and price slowly out loud as you memorize them — saying them helps you remember.",
+            step2T: "The list gets hidden",
+            step2P: "The list never disappears on its own. When you have memorized everything, tap “I memorized it” and only then will the list be hidden.",
+            step3T: "Pick the items, then work out the total",
+            step3P: "First pick all the items that were on the list, then choose the total of all the prices. Each game is worth 2 points, so 10 points is a perfect score over five games. It is fine to get some wrong — your brain works hardest at the very moment you try to remember.",
+            exampleNote: "This is an example. If you memorized these three, you would pick tofu, milk, and spinach, and the total 1,300 + 2,900 + 3,300 = 7,500 won is the correct answer.",
+            levelTitle: "Today's Five Games",
+            thGame: "Game", thLevel: "Difficulty", thCount: "Items", thTime: "Memorizing time",
+            countUnit: " items", noLimit: "No limit",
+            whyTitle: "Why Is This Game Good for You?",
+            why1: "Shopping without a memo takes <strong>working memory</strong> to hold the list in your head, and staying calm at the checkout takes <strong>mental math</strong> to add prices up roughly. This game trains both at the same time.",
+            why2: "It is a skill you can really use at the market. Five rounds of shopping a day, just 5 minutes, is enough. <strong>Playing every day</strong> matters far more than your score.",
+            tipTitle: "Tips for Remembering Better",
+            tips: [
+              "Group items by kind: vegetables together, meat and fish together. Grouping makes the list much easier to hold.",
+              "Round prices down to the nearest hundred if that helps. Try reading tofu at 1,300 won aloud as “one thousand three hundred.”",
+              "When you add up the total, start with the most expensive item. Getting the big numbers first means fewer mistakes.",
+              "Picture your own fridge as you memorize. Give each item a place — tofu on the bottom shelf, milk in the door — and it will stay with you longer."
+            ],
+            footer: "Daily Brain Exercise · A memory game for brain health, prepared every day.<br />This game is for play and brain activity; it does not replace medical diagnosis or treatment.",
+            blogLink: "Daily Brain Exercise Blog (in Korean)"
+          },
+          ja: {
+            docTitle: "Day 5 お買い物リストゲーム",
+            chip: "今日の脳トレ · Day 5",
+            title: "お買い物リストゲーム",
+            lede: "お買い物リストをゆっくり見て覚えてから、どの品物があったかを選んで、合計いくらになるかを計算する記憶ゲームです。時間制限はないので、急がなくて大丈夫です。今日は5回のお買い物、5分で十分です。",
+            roundWord: "ゲーム", scoreWord: "スコア", scoreUnit: "点",
+            howtoTitle: "ゲームの方法",
+            step1T: "リストを見て覚えます",
+            step1P: "「リストを見る」を押すと、買う品物と値段が出てきます。時間制限はないので、品物の名前と値段をゆっくり声に出して読みながら覚えると、よく記憶できます。",
+            step2T: "リストが隠れます",
+            step2P: "リストは勝手に消えません。全部覚えたときに「覚えました」を押すと、そのときにリストが隠れます。",
+            step3T: "品物を選んで、値段を計算します",
+            step3P: "まずリストにあった品物を全部選んで、次に値段を全部足した合計を選びます。1ゲーム2点、5ゲームで10点満点です。間違えても大丈夫です。脳は思い出そうと頑張る瞬間にいちばん活発になります。",
+            exampleNote: "例です。この3つを覚えたら、品物選びでは豆腐・牛乳・ほうれん草を選んで、合計は 1,300 + 2,900 + 3,300 = 7,500ウォンが正解です。",
+            levelTitle: "今日の5つのゲーム",
+            thGame: "ゲーム", thLevel: "難しさ", thCount: "品物の数", thTime: "覚える時間",
+            countUnit: "品", noLimit: "制限なし",
+            whyTitle: "なぜ良いゲームなのですか？",
+            why1: "メモなしで買い物をするには、品物のリストを頭の中に留めておく<strong>ワーキングメモリ</strong>が必要で、レジで慌てないためには値段をだいたい足す<strong>計算力</strong>が必要です。このゲームはその2つを一度に鍛えます。",
+            why2: "実際に市場やお店で使える力です。1日5回のお買い物、たった5分で十分です。スコアより<strong>毎日続けること</strong>がずっと大切です。",
+            tipTitle: "もっとよく覚えるコツ",
+            tips: [
+              "品物を種類ごとにまとめて覚えてみましょう。野菜同士、肉・魚同士でまとめるとずっと楽になります。",
+              "値段は100ウォン以下を切り捨てて、おおまかに覚えても大丈夫です。豆腐1,300ウォンは「せんさんびゃく」と声に出して読んでみましょう。",
+              "合計を計算するときは、高い品物から足してみましょう。大きな数を先につかむと間違いが減ります。",
+              "ご自宅の冷蔵庫を思い浮かべながら覚えてみましょう。豆腐は冷蔵庫の一番下の段、牛乳はドア側の段のように場所を決めると長く残ります。"
+            ],
+            footer: "今日の脳トレ · 脳の健康のために毎日用意する記憶ゲームです。<br />このゲームは遊びと脳の活動のためのもので、医療の診断や治療の代わりにはなりません。",
+            blogLink: "今日の脳トレ ブログ（韓国語）"
+          }
+        };
+
+        /* ---------- 게임 중 문구 번역 ---------- */
+        var G = {
+          ko: {
+            todayLine: function (d) { return "오늘은 <strong>" + d + "</strong> · 오늘의 목록은 날짜에 맞춰 정해져요. <strong>내일 오면 새로운 목록</strong>으로 바뀌어 있어요. 어디서든 바로 들어와서 할 수 있어요."; },
+            levelDone: "오늘의 다섯 번 장보기를 모두 마쳤어요. 수고하셨어요!",
+            levelInfo: function (name, count) { return "난이도 <strong>" + name + "</strong> · 물건 <strong>" + count + "가지</strong> · 외우는 시간 <strong>제한 없음</strong>"; },
+            readyFirst: "준비되셨나요?", readyNext: "다음 장보기예요",
+            readySub: function (count) { return "아래 버튼을 누르면 살 물건 " + count + "가지와 가격이 나타나요.<br />시간 제한이 없으니 천천히 외워 두세요."; },
+            btnShow: "목록 보기",
+            showMsg: "지금 외우세요!",
+            showSub: "물건 이름과 가격을 소리 내어 읽으면서 외우면 더 잘 기억돼요.<br />가격을 대충이라도 더해 보면 다음 문제가 쉬워져요.",
+            memorizeNote: "시간 제한이 없어요. 목록은 사라지지 않으니 천천히 외우세요.",
+            btnHide: "다 외웠어요",
+            pickMsg: "목록이 가려졌어요",
+            pickSub: function (count) { return "목록에 있던 물건을 모두 골라 주세요. 모두 <strong>" + count + "가지</strong>예요.<br />고른 물건을 다시 누르면 취소돼요."; },
+            pickAria: "물건 고르기",
+            pickCount: function (n) { return "지금까지 <strong>" + n + "가지</strong> 골랐어요"; },
+            btnPickCheck: "다 골랐어요",
+            miniGood: "물건 고르기, 완벽해요! (1점)",
+            miniBad: "물건 고르기는 아쉬웠어요. 정답은 이따 보여 드릴게요.",
+            totalMsg: "다 사면 얼마일까요?",
+            totalSub: "외웠던 가격을 모두 더한 총액을 골라 주세요.",
+            totalAria: "총액 고르기",
+            praise: ["완벽해요!", "대단하세요!", "정확해요!", "기억력이 반짝이네요!", "최고예요!"],
+            cheer: ["아쉬워요, 그래도 잘 떠올리셨어요.", "괜찮아요. 떠올리려 애쓴 것 자체가 운동이에요.", "조금만 더! 정답을 보고 한 번 읽어 보세요."],
+            fbGot: function (got, pickOk, totalOk) { return "이 게임에서 <span class=\"fb-answer\">" + got + "점</span>을 얻었어요. (물건 고르기 " + (pickOk ? "성공" : "아쉬움") + " · 총액 " + (totalOk ? "성공" : "아쉬움") + ")"; },
+            fbAnswer: function (names, total) { return "목록에 있던 물건은 <span class=\"fb-answer\">" + names + "</span> 였고,<br />총액은 <span class=\"fb-answer\">" + total + "</span> 예요."; },
+            btnResult: "오늘의 결과 보기", btnNext: "다음 게임으로",
+            resultLabel: "오늘의 결과",
+            resultScore: function (s) { return s + " / 10점"; },
+            results: [
+              { min: 10, msg: "열 점 만점이에요! 메모 없이 장 봐도 되겠어요!", sub: "오늘 뇌가 아주 기분 좋게 운동했어요. 내일도 새로운 목록이 기다리고 있어요." },
+              { min: 7, msg: "아주 잘하셨어요!", sub: "틀린 부분이 있어도 괜찮아요. 떠올리려고 애쓴 순간 뇌는 이미 운동하고 있었어요." },
+              { min: 4, msg: "좋은 시작이에요!", sub: "처음에는 누구나 어려워요. 매일 5분씩 하다 보면 물건도, 계산도 조금씩 더 잘하게 될 거예요." },
+              { min: 0, msg: "오늘도 해낸 것만으로 충분해요!", sub: "점수보다 매일 하는 것이 중요해요. 내일 새로운 목록으로 다시 만나요." }
+            ],
+            btnAgain: "새로운 목록으로 다시 하기",
+            resultNote: "내일 다시 오시면, 날짜가 바뀌어 또 다른 목록이 준비돼 있어요.",
+            joiner: ", "
+          },
+          en: {
+            todayLine: function (d) { return "Today is <strong>" + d + "</strong> · Today's lists are set by the date. <strong>Come back tomorrow for new lists.</strong> You can start right away, wherever you are."; },
+            levelDone: "You finished all five shopping rounds today. Well done!",
+            levelInfo: function (name, count) { return "Difficulty <strong>" + name + "</strong> · <strong>" + count + " items</strong> · Memorizing time <strong>no limit</strong>"; },
+            readyFirst: "Are you ready?", readyNext: "Time for the next shopping trip",
+            readySub: function (count) { return "Tap the button below and " + count + " items with their prices will appear.<br />There is no time limit, so memorize them slowly."; },
+            btnShow: "Show the list",
+            showMsg: "Memorize them now!",
+            showSub: "Reading each item name and price out loud helps you remember.<br />Try adding the prices roughly as you go — it makes the next question easier.",
+            memorizeNote: "There is no time limit. The list will not disappear, so take your time.",
+            btnHide: "I memorized it",
+            pickMsg: "The list is hidden",
+            pickSub: function (count) { return "Pick all the items that were on the list. There are <strong>" + count + " items</strong> in total.<br />Tap a picked item again to cancel it."; },
+            pickAria: "Pick the items",
+            pickCount: function (n) { return "You have picked <strong>" + n + " item(s)</strong> so far"; },
+            btnPickCheck: "I picked them all",
+            miniGood: "Perfect picks! (1 point)",
+            miniBad: "The item picks were not quite right. We will show you the answers soon.",
+            totalMsg: "How much is everything together?",
+            totalSub: "Choose the total of all the prices you memorized.",
+            totalAria: "Pick the total price",
+            praise: ["Perfect!", "Wonderful!", "Exactly right!", "What a sparkling memory!", "You are the best!"],
+            cheer: ["So close — you remembered a lot.", "That's okay. Trying to remember is exercise in itself.", "Almost there! Read the answers once and they will stick."],
+            fbGot: function (got, pickOk, totalOk) { return "You earned <span class=\"fb-answer\">" + got + " point(s)</span> in this game. (Items: " + (pickOk ? "correct" : "missed") + " · Total: " + (totalOk ? "correct" : "missed") + ")"; },
+            fbAnswer: function (names, total) { return "The items on the list were <span class=\"fb-answer\">" + names + "</span>,<br />and the total was <span class=\"fb-answer\">" + total + "</span>."; },
+            btnResult: "See today's result", btnNext: "Next game",
+            resultLabel: "Today's result",
+            resultScore: function (s) { return s + " / 10 points"; },
+            results: [
+              { min: 10, msg: "A perfect 10 points! You could shop without a memo!", sub: "Your brain had a really good workout today. New lists will be waiting tomorrow." },
+              { min: 7, msg: "You did very well!", sub: "It is fine if some were wrong. At the moment you tried to remember, your brain was already exercising." },
+              { min: 4, msg: "A good start!", sub: "Everyone finds it hard at first. Five minutes a day, and the items and the math will slowly get easier." },
+              { min: 0, msg: "Finishing today is enough!", sub: "Playing every day matters more than the score. See you tomorrow with new lists." }
+            ],
+            btnAgain: "Play again with new lists",
+            resultNote: "Come back tomorrow and the date will have changed, with different lists ready for you.",
+            joiner: ", "
+          },
+          ja: {
+            todayLine: function (d) { return "今日は <strong>" + d + "</strong> です · 今日のリストは日付に合わせて決まっています。<strong>明日来ると新しいリスト</strong>に変わっています。どこからでもすぐ始められます。"; },
+            levelDone: "今日の5回のお買い物を全部終えました。お疲れさまでした！",
+            levelInfo: function (name, count) { return "難しさ <strong>" + name + "</strong> · 品物 <strong>" + count + "品</strong> · 覚える時間 <strong>制限なし</strong>"; },
+            readyFirst: "準備はできましたか？", readyNext: "次のお買い物です",
+            readySub: function (count) { return "下のボタンを押すと、買う品物 " + count + "品と値段が出てきます。<br />時間制限はないので、ゆっくり覚えてください。"; },
+            btnShow: "リストを見る",
+            showMsg: "今、覚えましょう！",
+            showSub: "品物の名前と値段を声に出して読みながら覚えると、よく記憶できます。<br />値段をだいたいでも足してみると、次の問題が楽になります。",
+            memorizeNote: "時間制限はありません。リストは消えないので、ゆっくり覚えてください。",
+            btnHide: "覚えました",
+            pickMsg: "リストが隠れました",
+            pickSub: function (count) { return "リストにあった品物を全部選んでください。全部で <strong>" + count + "品</strong>です。<br />選んだ品物をもう一度押すと取り消せます。"; },
+            pickAria: "品物選び",
+            pickCount: function (n) { return "今まで <strong>" + n + "品</strong> 選びました"; },
+            btnPickCheck: "全部選びました",
+            miniGood: "品物選び、完璧です！（1点）",
+            miniBad: "品物選びは惜しかったです。答えは後でお見せします。",
+            totalMsg: "全部買うといくらでしょう？",
+            totalSub: "覚えた値段を全部足した合計を選んでください。",
+            totalAria: "合計選び",
+            praise: ["完璧です！", "すごいです！", "正確です！", "記憶力がキラキラしています！", "最高です！"],
+            cheer: ["惜しかったです。でもよく思い出せました。", "大丈夫です。思い出そうと頑張ったこと自体が運動です。", "あと少し！答えを見て一度読んでみてください。"],
+            fbGot: function (got, pickOk, totalOk) { return "このゲームで <span class=\"fb-answer\">" + got + "点</span> を取りました。（品物選び " + (pickOk ? "成功" : "惜しい") + " · 合計 " + (totalOk ? "成功" : "惜しい") + "）"; },
+            fbAnswer: function (names, total) { return "リストにあった品物は <span class=\"fb-answer\">" + names + "</span> で、<br />合計は <span class=\"fb-answer\">" + total + "</span> でした。"; },
+            btnResult: "今日の結果を見る", btnNext: "次のゲームへ",
+            resultLabel: "今日の結果",
+            resultScore: function (s) { return s + " / 10点"; },
+            results: [
+              { min: 10, msg: "10点満点です！メモなしで買い物ができそうですね！", sub: "今日は脳がとても気持ちよく運動しました。明日も新しいリストが待っています。" },
+              { min: 7, msg: "とてもよくできました！", sub: "間違えた部分があっても大丈夫です。思い出そうと頑張った瞬間、脳はもう運動していました。" },
+              { min: 4, msg: "良いスタートです！", sub: "最初は誰でも難しいです。毎日5分ずつ続けると、品物も計算も少しずつ上手になります。" },
+              { min: 0, msg: "今日もやり遂げただけで十分です！", sub: "スコアより毎日続けることが大切です。明日、新しいリストでまた会いましょう。" }
+            ],
+            btnAgain: "新しいリストでもう一度する",
+            resultNote: "明日また来ると、日付が変わって別のリストが用意されています。",
+            joiner: "、"
+          }
+        };
+
+        /* ---------- 날짜 기반 랜덤 ---------- */
+        function mulberry32(seed) {
+          var a = seed >>> 0;
+          return function () {
+            a |= 0; a = (a + 0x6d2b79f5) | 0;
+            var t = Math.imul(a ^ (a >>> 15), 1 | a);
+            t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+          };
+        }
+
+        var now = new Date();
+        var dateSeed = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
+
+        function dateText() {
+          var y = now.getFullYear(), m = now.getMonth() + 1, d = now.getDate();
+          if (LANG === "en") {
+            var enD = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+            var enM = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+            return enD[now.getDay()] + ", " + enM[now.getMonth()] + " " + d + ", " + y;
+          }
+          if (LANG === "ja") {
+            var jaD = ["日","月","火","水","木","金","土"];
+            return y + "年 " + m + "月 " + d + "日（" + jaD[now.getDay()] + "）";
+          }
+          var koD = ["일", "월", "화", "수", "목", "금", "토"];
+          return y + "년 " + m + "월 " + d + "일 (" + koD[now.getDay()] + ")";
+        }
+
+        /* 장보기 물건 풀: id, 가격(원), 이름·단위 (한국어/영어/일본어) — 같은 물건, 같은 가격 */
+        var ITEMS = [
+          { id: 0, price: 1300, name: { ko: "두부", en: "Tofu", ja: "豆腐" }, unit: { ko: "한 모", en: "1 block", ja: "1丁" } },
+          { id: 1, price: 2900, name: { ko: "우유", en: "Milk", ja: "牛乳" }, unit: { ko: "1L", en: "1L", ja: "1L" } },
+          { id: 2, price: 5900, name: { ko: "달걀", en: "Eggs", ja: "卵" }, unit: { ko: "10개", en: "pack of 10", ja: "10個入り" } },
+          { id: 3, price: 7500, name: { ko: "사과", en: "Apples", ja: "りんご" }, unit: { ko: "3개", en: "pack of 3", ja: "3個入り" } },
+          { id: 4, price: 4800, name: { ko: "바나나", en: "Bananas", ja: "バナナ" }, unit: { ko: "한 송이", en: "1 bunch", ja: "1房" } },
+          { id: 5, price: 3900, name: { ko: "양파", en: "Onions", ja: "玉ねぎ" }, unit: { ko: "한 망", en: "1 net bag", ja: "1ネット" } },
+          { id: 6, price: 4500, name: { ko: "감자", en: "Potatoes", ja: "じゃがいも" }, unit: { ko: "1kg", en: "1kg", ja: "1kg" } },
+          { id: 7, price: 2700, name: { ko: "당근", en: "Carrots", ja: "にんじん" }, unit: { ko: "한 봉지", en: "1 bag", ja: "1袋" } },
+          { id: 8, price: 3300, name: { ko: "시금치", en: "Spinach", ja: "ほうれん草" }, unit: { ko: "한 단", en: "1 bunch", ja: "1束" } },
+          { id: 9, price: 5500, name: { ko: "고등어", en: "Mackerel", ja: "さば" }, unit: { ko: "한 마리", en: "1 whole fish", ja: "1尾" } },
+          { id: 10, price: 11900, name: { ko: "돼지고기", en: "Pork", ja: "豚肉" }, unit: { ko: "600g", en: "600g", ja: "600g" } },
+          { id: 11, price: 15900, name: { ko: "소고기", en: "Beef", ja: "牛肉" }, unit: { ko: "300g", en: "300g", ja: "300g" } },
+          { id: 12, price: 13900, name: { ko: "쌀", en: "Rice", ja: "お米" }, unit: { ko: "4kg", en: "4kg", ja: "4kg" } },
+          { id: 13, price: 3200, name: { ko: "식빵", en: "Bread", ja: "食パン" }, unit: { ko: "한 봉지", en: "1 loaf bag", ja: "1袋" } },
+          { id: 14, price: 4100, name: { ko: "치즈", en: "Cheese", ja: "チーズ" }, unit: { ko: "10장", en: "10 slices", ja: "10枚入り" } },
+          { id: 15, price: 3600, name: { ko: "요구르트", en: "Yogurt", ja: "ヨーグルト" }, unit: { ko: "4개 묶음", en: "pack of 4", ja: "4個入り" } },
+          { id: 16, price: 2500, name: { ko: "김", en: "Seaweed", ja: "のり" }, unit: { ko: "10장 묶음", en: "pack of 10 sheets", ja: "10枚入り" } },
+          { id: 17, price: 4300, name: { ko: "간장", en: "Soy sauce", ja: "しょうゆ" }, unit: { ko: "한 병", en: "1 bottle", ja: "1本" } },
+          { id: 18, price: 6800, name: { ko: "된장", en: "Soybean paste", ja: "みそ" }, unit: { ko: "한 통", en: "1 tub", ja: "1パック" } },
+          { id: 19, price: 7200, name: { ko: "고추장", en: "Red chili paste", ja: "コチュジャン" }, unit: { ko: "한 통", en: "1 tub", ja: "1パック" } },
+          { id: 20, price: 8900, name: { ko: "참기름", en: "Sesame oil", ja: "ごま油" }, unit: { ko: "한 병", en: "1 bottle", ja: "1本" } },
+          { id: 21, price: 4200, name: { ko: "라면", en: "Instant noodles", ja: "インスタントラーメン" }, unit: { ko: "5개 묶음", en: "pack of 5", ja: "5食入り" } },
+          { id: 22, price: 2100, name: { ko: "국수", en: "Noodles", ja: "麺" }, unit: { ko: "한 봉지", en: "1 bag", ja: "1袋" } },
+          { id: 23, price: 1800, name: { ko: "밀가루", en: "Flour", ja: "小麦粉" }, unit: { ko: "1kg", en: "1kg", ja: "1kg" } },
+          { id: 24, price: 2300, name: { ko: "설탕", en: "Sugar", ja: "砂糖" }, unit: { ko: "1kg", en: "1kg", ja: "1kg" } },
+          { id: 25, price: 5400, name: { ko: "커피믹스", en: "Coffee mix", ja: "インスタントコーヒー" }, unit: { ko: "20개", en: "pack of 20", ja: "20本入り" } },
+          { id: 26, price: 3000, name: { ko: "오이", en: "Cucumbers", ja: "きゅうり" }, unit: { ko: "3개", en: "pack of 3", ja: "3本入り" } },
+          { id: 27, price: 6900, name: { ko: "토마토", en: "Tomatoes", ja: "トマト" }, unit: { ko: "한 팩", en: "1 pack", ja: "1パック" } },
+          { id: 28, price: 2800, name: { ko: "상추", en: "Lettuce", ja: "レタス" }, unit: { ko: "한 봉지", en: "1 bag", ja: "1袋" } },
+          { id: 29, price: 9900, name: { ko: "마늘", en: "Garlic", ja: "にんにく" }, unit: { ko: "한 접", en: "1 string", ja: "1連" } },
+          { id: 30, price: 1500, name: { ko: "생강", en: "Ginger", ja: "しょうが" }, unit: { ko: "한 덩이", en: "1 piece", ja: "1かけ" } },
+          { id: 31, price: 2600, name: { ko: "대파", en: "Green onions", ja: "長ねぎ" }, unit: { ko: "한 단", en: "1 bunch", ja: "1束" } },
+          { id: 32, price: 3500, name: { ko: "버섯", en: "Mushrooms", ja: "きのこ" }, unit: { ko: "한 팩", en: "1 pack", ja: "1パック" } },
+          { id: 33, price: 1700, name: { ko: "콩나물", en: "Bean sprouts", ja: "もやし" }, unit: { ko: "한 봉지", en: "1 bag", ja: "1袋" } },
+          { id: 34, price: 2400, name: { ko: "무", en: "Radish", ja: "大根" }, unit: { ko: "한 개", en: "1 whole", ja: "1本" } },
+          { id: 35, price: 5800, name: { ko: "배추", en: "Napa cabbage", ja: "白菜" }, unit: { ko: "한 포기", en: "1 head", ja: "1玉" } },
+          { id: 36, price: 8900, name: { ko: "닭고기", en: "Chicken", ja: "鶏肉" }, unit: { ko: "한 마리", en: "1 whole chicken", ja: "1羽分" } },
+          { id: 37, price: 10900, name: { ko: "새우", en: "Shrimp", ja: "えび" }, unit: { ko: "한 팩", en: "1 pack", ja: "1パック" } },
+          { id: 38, price: 9800, name: { ko: "오징어", en: "Squid", ja: "いか" }, unit: { ko: "두 마리", en: "2 whole", ja: "2杯" } },
+          { id: 39, price: 3100, name: { ko: "꽁치 통조림", en: "Canned saury", ja: "さんまの缶詰" }, unit: { ko: "한 캔", en: "1 can", ja: "1缶" } },
+          { id: 40, price: 3400, name: { ko: "참치 통조림", en: "Canned tuna", ja: "ツナ缶" }, unit: { ko: "한 캔", en: "1 can", ja: "1缶" } },
+          { id: 41, price: 4700, name: { ko: "떡", en: "Rice cake", ja: "トック（お餅）" }, unit: { ko: "한 팩", en: "1 pack", ja: "1パック" } },
+          { id: 42, price: 2900, name: { ko: "어묵", en: "Fish cake", ja: "さつま揚げ" }, unit: { ko: "한 봉지", en: "1 bag", ja: "1袋" } },
+          { id: 43, price: 9900, name: { ko: "김치", en: "Kimchi", ja: "キムチ" }, unit: { ko: "1kg", en: "1kg", ja: "1kg" } },
+          { id: 44, price: 4500, name: { ko: "청국장", en: "Fermented soybean paste", ja: "チョングッチャン" }, unit: { ko: "한 통", en: "1 tub", ja: "1パック" } },
+          { id: 45, price: 5200, name: { ko: "고구마", en: "Sweet potatoes", ja: "さつまいも" }, unit: { ko: "1kg", en: "1kg", ja: "1kg" } },
+          { id: 46, price: 11900, name: { ko: "귤", en: "Tangerines", ja: "みかん" }, unit: { ko: "한 박스", en: "1 box", ja: "1箱" } },
+          { id: 47, price: 8500, name: { ko: "포도", en: "Grapes", ja: "ぶどう" }, unit: { ko: "한 송이", en: "1 bunch", ja: "1房" } },
+          { id: 48, price: 18900, name: { ko: "수박", en: "Watermelon", ja: "すいか" }, unit: { ko: "한 통", en: "1 whole", ja: "1玉" } },
+          { id: 49, price: 9800, name: { ko: "복숭아", en: "Peaches", ja: "もも" }, unit: { ko: "4개", en: "pack of 4", ja: "4個入り" } }
+        ];
+
+        var LEVELS = [
+          { count: 3, name: { ko: "몸풀기", en: "Warm-up", ja: "ウォーミングアップ" } },
+          { count: 4, name: { ko: "쉬움", en: "Easy", ja: "簡単" } },
+          { count: 5, name: { ko: "보통", en: "Normal", ja: "普通" } },
+          { count: 6, name: { ko: "어려움", en: "Hard", ja: "難しい" } },
+          { count: 7, name: { ko: "최종 도전", en: "Final challenge", ja: "最終チャレンジ" } }
+        ];
+
+        function shuffle(rand, arr) {
+          var a = arr.slice();
+          for (var i = a.length - 1; i > 0; i--) {
+            var j = Math.floor(rand() * (i + 1));
+            var t = a[i]; a[i] = a[j]; a[j] = t;
+          }
+          return a;
+        }
+
+        function won(n) {
+          if (LANG === "en") return n.toLocaleString("en-US") + " won";
+          if (LANG === "ja") return n.toLocaleString("ja-JP") + "ウォン";
+          return n.toLocaleString("ko-KR") + "원";
+        }
+        function itemName(it) { return it.name[LANG]; }
+        function itemUnit(it) { return it.unit[LANG]; }
+
+        function buildRounds(attempt) {
+          var rand = mulberry32(dateSeed * 1000 + attempt * 77 + 505);
+          return LEVELS.map(function (lv) {
+            var pool = shuffle(rand, ITEMS);
+            var list = pool.slice(0, lv.count);
+            var distractors = pool.slice(lv.count, lv.count + 3);
+            var total = list.reduce(function (s, it) { return s + it.price; }, 0);
+            var offsets = shuffle(rand, [500, -500, 1000, -1000, 1500, -1500, 2000, -2000, 300, -300]);
+            var choices = [total];
+            for (var k = 0; k < offsets.length && choices.length < 4; k++) {
+              var c = total + offsets[k];
+              if (c > 0 && choices.indexOf(c) === -1) choices.push(c);
+            }
+            choices = shuffle(rand, choices);
+            return {
+              count: lv.count,
+              name: lv.name,
+              list: list,
+              picks: shuffle(rand, list.concat(distractors)),
+              total: total,
+              choices: choices
+            };
+          });
+        }
+
+        /* ---------- 상태 ---------- */
+        var attempt = 0;
+        var rounds = buildRounds(attempt);
+        var roundIdx = 0;
+        var score = 0;
+        var phase = "ready";
+        var picked = {};
+        var pickOk = false;
+        var lastTotalOk = false;
+
+        var stageBox = document.getElementById("stageBox");
+        var roundNowEl = document.getElementById("roundNow");
+        var scoreNowEl = document.getElementById("scoreNow");
+        var levelLineEl = document.getElementById("levelLine");
+        var dotsEl = document.getElementById("progressDots");
+
+        function esc(s) {
+          return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+        }
+        function S() { return STATIC[LANG]; }
+        function T() { return G[LANG]; }
+
+        function renderTop() {
+          roundNowEl.textContent = String(Math.min(roundIdx + 1, 5));
+          scoreNowEl.textContent = String(score);
+          document.getElementById("roundWord").textContent = S().roundWord;
+          document.getElementById("scoreWord").textContent = S().scoreWord;
+          document.getElementById("scoreUnit").textContent = S().scoreUnit;
+          var dots = dotsEl.children;
+          for (var i = 0; i < dots.length; i++) {
+            dots[i].className = i < roundIdx || phase === "done" ? "done" : i === roundIdx ? "now" : "";
+          }
+          if (phase === "done") {
+            levelLineEl.textContent = T().levelDone;
+          } else {
+            var r = rounds[roundIdx];
+            levelLineEl.innerHTML = T().levelInfo(esc(r.name[LANG]), r.count);
+          }
+        }
+
+        function listHtml(list) {
+          var html = '<div class="list-board">';
+          list.forEach(function (it) {
+            html += '<div class="shop-row"><span class="shop-item">' + esc(itemName(it)) +
+              "<small>" + esc(itemUnit(it)) + '</small></span><span class="shop-price">' + won(it.price) + "</span></div>";
+          });
+          return html + "</div>";
+        }
+
+        /* ---------- 고정 문구 적용 ---------- */
+        function applyStatic() {
+          var s = S();
+          document.title = s.docTitle;
+          document.documentElement.lang = LANG === "ja" ? "ja" : LANG === "en" ? "en" : "ko";
+          document.getElementById("sChip").textContent = s.chip;
+          document.getElementById("sTitle").textContent = s.title;
+          document.getElementById("sLede").textContent = s.lede;
+          document.getElementById("todayLine").innerHTML = T().todayLine(esc(dateText()));
+          document.getElementById("howtoTitle").textContent = s.howtoTitle;
+          document.getElementById("sStep1T").textContent = s.step1T;
+          document.getElementById("sStep1P").textContent = s.step1P;
+          document.getElementById("sStep2T").textContent = s.step2T;
+          document.getElementById("sStep2P").textContent = s.step2P;
+          document.getElementById("sStep3T").textContent = s.step3T;
+          document.getElementById("sStep3P").textContent = s.step3P;
+          document.getElementById("levelTitle").textContent = s.levelTitle;
+          document.getElementById("sThGame").textContent = s.thGame;
+          document.getElementById("sThLevel").textContent = s.thLevel;
+          document.getElementById("sThCount").textContent = s.thCount;
+          document.getElementById("sThTime").textContent = s.thTime;
+          var rows = "";
+          LEVELS.forEach(function (lv, i) {
+            rows += "<tr><td>" + s.thGame + " " + (i + 1) + "</td><td>" + esc(lv.name[LANG]) + "</td><td class=\"num\">" + lv.count + esc(s.countUnit) + "</td><td>" + esc(s.noLimit) + "</td></tr>";
+          });
+          document.getElementById("levelTableBody").innerHTML = rows;
+          document.getElementById("whyTitle").textContent = s.whyTitle;
+          document.getElementById("sWhy1").innerHTML = s.why1;
+          document.getElementById("sWhy2").innerHTML = s.why2;
+          document.getElementById("tipTitle").textContent = s.tipTitle;
+          document.getElementById("tipsList").innerHTML = s.tips.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("");
+          document.getElementById("sFooter").innerHTML = s.footer;
+          document.getElementById("sBlogLink").textContent = s.blogLink;
+          /* 예시: 두부·우유·시금치 (언어별 이름, 가격은 동일) */
+          var ex = [ITEMS[0], ITEMS[1], ITEMS[8]];
+          document.getElementById("exampleBox").innerHTML =
+            ex.map(function (it) {
+              return '<div class="shop-row"><span class="shop-item">' + esc(itemName(it)) + "<small>" + esc(itemUnit(it)) + '</small></span><span class="shop-price">' + won(it.price) + "</span></div>";
+            }).join("") + "<small>" + esc(s.exampleNote) + "</small>";
+          document.getElementById("langKo").setAttribute("aria-pressed", LANG === "ko" ? "true" : "false");
+          document.getElementById("langEn").setAttribute("aria-pressed", LANG === "en" ? "true" : "false");
+          document.getElementById("langJa").setAttribute("aria-pressed", LANG === "ja" ? "true" : "false");
+        }
+
+        /* ---------- 단계별 화면 ---------- */
+        function showReady() {
+          phase = "ready"; picked = {}; renderTop();
+          var r = rounds[roundIdx];
+          stageBox.innerHTML =
+            '<p class="stage-msg">' + esc(roundIdx === 0 ? T().readyFirst : T().readyNext) + "</p>" +
+            '<p class="stage-sub">' + T().readySub(r.count) + "</p>" +
+            '<div class="list-board hidden-board"><span class="hidden-mark">? ? ?</span></div>' +
+            '<div class="btn-row"><button type="button" class="btn btn-primary" id="btnShow">' + esc(T().btnShow) + "</button></div>";
+          document.getElementById("btnShow").addEventListener("click", showList);
+        }
+
+        function showList() {
+          phase = "show"; renderTop();
+          var r = rounds[roundIdx];
+          stageBox.innerHTML =
+            '<p class="stage-msg">' + esc(T().showMsg) + "</p>" +
+            '<p class="stage-sub">' + T().showSub + "</p>" +
+            listHtml(r.list) +
+            '<p class="memorize-note">' + esc(T().memorizeNote) + "</p>" +
+            '<div class="btn-row"><button type="button" class="btn btn-primary" id="btnHide">' + esc(T().btnHide) + "</button></div>";
+          document.getElementById("btnHide").addEventListener("click", function () { showPick(true); });
+        }
+
+        function showPick(reset) {
+          if (reset) picked = {};
+          phase = "pick"; renderTop();
+          var r = rounds[roundIdx];
+          stageBox.innerHTML =
+            '<p class="stage-msg">' + esc(T().pickMsg) + "</p>" +
+            '<p class="stage-sub">' + T().pickSub(r.count) + "</p>" +
+            '<div class="pick-grid" id="pickGrid" role="group" aria-label="' + esc(T().pickAria) + '">' +
+            r.picks.map(function (it) {
+              var on = picked[it.id] ? "true" : "false";
+              return '<button type="button" aria-pressed="' + on + '" data-id="' + it.id + '">' + esc(itemName(it)) + "</button>";
+            }).join("") +
+            "</div>" +
+            '<p class="pick-count" id="pickCountLine"></p>' +
+            '<div class="btn-row"><button type="button" class="btn btn-primary" id="btnPickCheck">' + esc(T().btnPickCheck) + "</button></div>";
+          var btns = stageBox.querySelectorAll("#pickGrid button");
+          for (var i = 0; i < btns.length; i++) {
+            btns[i].addEventListener("click", function () {
+              var id = this.getAttribute("data-id");
+              if (picked[id]) { delete picked[id]; this.setAttribute("aria-pressed", "false"); }
+              else { picked[id] = true; this.setAttribute("aria-pressed", "true"); }
+              refreshPick();
+            });
+          }
+          document.getElementById("btnPickCheck").addEventListener("click", checkPick);
+          refreshPick();
+        }
+
+        function refreshPick() {
+          var n = Object.keys(picked).length;
+          var line = document.getElementById("pickCountLine");
+          if (line) line.innerHTML = T().pickCount(n);
+          var btn = document.getElementById("btnPickCheck");
+          if (btn) btn.disabled = n === 0;
+        }
+
+        function checkPick() {
+          if (phase !== "pick") return;
+          var r = rounds[roundIdx];
+          pickOk = Object.keys(picked).length === r.list.length &&
+            r.list.every(function (it) { return picked[it.id]; });
+          if (pickOk) score++;
+          showTotal();
+        }
+
+        function showTotal() {
+          phase = "total"; renderTop();
+          var r = rounds[roundIdx];
+          stageBox.innerHTML =
+            '<p class="mini-fb ' + (pickOk ? "good" : "bad") + '">' + esc(pickOk ? T().miniGood : T().miniBad) + "</p>" +
+            '<p class="stage-msg">' + esc(T().totalMsg) + "</p>" +
+            '<p class="stage-sub">' + esc(T().totalSub) + "</p>" +
+            '<div class="choice-list" role="group" aria-label="' + esc(T().totalAria) + '">' +
+            r.choices.map(function (c) {
+              return '<button type="button" data-total="' + c + '">' + won(c) + "</button>";
+            }).join("") +
+            "</div>";
+          var btns = stageBox.querySelectorAll("[data-total]");
+          for (var i = 0; i < btns.length; i++) {
+            btns[i].addEventListener("click", function () {
+              checkTotal(parseInt(this.getAttribute("data-total"), 10));
+            });
+          }
+        }
+
+        function showFeedback() {
+          phase = "feedback"; renderTop();
+          var r = rounds[roundIdx];
+          var totalOk = lastTotalOk;
+          var both = pickOk && totalOk;
+          var title = both ? T().praise[roundIdx % T().praise.length] : T().cheer[roundIdx % T().cheer.length];
+          var got = (pickOk ? 1 : 0) + (totalOk ? 1 : 0);
+          var names = r.list.map(function (it) { return esc(itemName(it)); }).join(T().joiner);
+          var last = roundIdx === rounds.length - 1;
+          stageBox.innerHTML =
+            '<div class="feedback ' + (both ? "good" : "bad") + '">' +
+            '<p class="fb-title">' + esc(title) + "</p>" +
+            "<p>" + T().fbGot(got, pickOk, totalOk) + "</p>" +
+            "<p>" + T().fbAnswer(names, won(r.total)) + "</p>" +
+            "</div>" +
+            '<div style="margin-top:16px;text-align:left">' + listHtml(r.list) + "</div>" +
+            '<div class="btn-row"><button type="button" class="btn btn-primary" id="btnNext">' + esc(last ? T().btnResult : T().btnNext) + "</button></div>";
+          document.getElementById("btnNext").addEventListener("click", function () {
+            if (last) showResult();
+            else { roundIdx++; showReady(); }
+          });
+        }
+
+        function checkTotal(chosen) {
+          if (phase !== "total") return;
+          var r = rounds[roundIdx];
+          lastTotalOk = chosen === r.total;
+          if (lastTotalOk) score++;
+          showFeedback();
+        }
+
+        function showResult() {
+          phase = "done"; renderTop();
+          var res = T().results[0];
+          for (var i = 0; i < T().results.length; i++) { if (score >= T().results[i].min) { res = T().results[i]; break; } }
+          stageBox.innerHTML =
+            '<div class="result-box">' +
+            '<p class="stage-sub" style="margin-bottom:0">' + esc(T().resultLabel) + "</p>" +
+            '<p class="result-score">' + esc(T().resultScore(score)) + "</p>" +
+            '<p class="result-msg">' + esc(res.msg) + "</p>" +
+            '<p class="result-sub">' + esc(res.sub) + "</p>" +
+            '<div class="btn-row">' +
+            '<button type="button" class="btn btn-primary" id="btnAgain">' + esc(T().btnAgain) + "</button>" +
+            "</div>" +
+            '<p class="stage-sub" style="margin-top:16px">' + esc(T().resultNote) + "</p>" +
+            "</div>";
+          document.getElementById("btnAgain").addEventListener("click", function () {
+            attempt++;
+            rounds = buildRounds(attempt);
+            roundIdx = 0; score = 0;
+            showReady();
+            document.getElementById("gameCard").scrollIntoView({ behavior: "smooth", block: "start" });
+          });
+        }
+
+        /* ---------- 언어 전환: 진행 중인 단계를 그 언어로 다시 그려요 ---------- */
+        function rerender() {
+          applyStatic();
+          if (phase === "ready") showReady();
+          else if (phase === "show") showList();
+          else if (phase === "pick") showPick(false);
+          else if (phase === "total") showTotal();
+          else if (phase === "feedback") showFeedback();
+          else if (phase === "done") showResult();
+          else showReady();
+        }
+        function setLang(l) {
+          if (l === LANG) { applyStatic(); return; }
+          LANG = l;
+          rerender();
+        }
+        document.getElementById("langKo").addEventListener("click", function () { setLang("ko"); });
+        document.getElementById("langEn").addEventListener("click", function () { setLang("en"); });
+        document.getElementById("langJa").addEventListener("click", function () { setLang("ja"); });
+
+        applyStatic();
+        showReady();
+      })();
+    </script>
+  </body>
+</html>

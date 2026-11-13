@@ -1,0 +1,887 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Day 1 숫자 거꾸로 게임</title>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
+    />
+    <style>
+      :root {
+        --bg: #fdf6ec;
+        --bg-soft: #fbeed9;
+        --card: #fffdf8;
+        --ink: #3a2a1c;
+        --ink-soft: #6f5a44;
+        --line: #ecd9bd;
+        --accent: #d95d0f;
+        --accent-strong: #b84a08;
+        --accent-soft: #fdeeda;
+        --good: #2e7d46;
+        --good-soft: #e4f4e8;
+        --bad: #b3402a;
+        --bad-soft: #fbe9e3;
+        --key: #fff7ea;
+        --key-line: #e6cfa8;
+        --shadow: 0 10px 30px rgba(146, 90, 32, 0.14);
+        color-scheme: light;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #221812;
+          --bg-soft: #2c1f16;
+          --card: #2f2118;
+          --ink: #f7ead9;
+          --ink-soft: #cdb59c;
+          --line: #4d3826;
+          --accent: #f08a3c;
+          --accent-strong: #ffb066;
+          --accent-soft: #453022;
+          --good: #7fd79b;
+          --good-soft: #22392a;
+          --bad: #ff9d87;
+          --bad-soft: #40261f;
+          --key: #3a2a1e;
+          --key-line: #57402a;
+          --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+          color-scheme: dark;
+        }
+      }
+      * { box-sizing: border-box; }
+      html { -webkit-text-size-adjust: 100%; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "Pretendard Variable", Pretendard, -apple-system, "Malgun Gothic", "Apple SD Gothic Neo", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", sans-serif;
+        font-size: 20px;
+        line-height: 1.6;
+      }
+      .wrap { max-width: 760px; margin: 0 auto; padding: 28px 18px 64px; }
+
+      /* ---------- 언어 선택 ---------- */
+      .lang-switch { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 22px; }
+      .lang-btn {
+        min-height: 56px; padding: 10px 24px;
+        font-family: inherit; font-size: 20px; font-weight: 800;
+        background: var(--card); color: var(--ink-soft);
+        border: 2px solid var(--line); border-radius: 999px; cursor: pointer;
+      }
+      .lang-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+      /* ---------- 머리말 ---------- */
+      .day-chip {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: var(--accent-soft); color: var(--accent-strong);
+        font-weight: 800; font-size: 17px;
+        padding: 8px 16px; border-radius: 999px;
+      }
+      .day-chip .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
+      h1 {
+        font-size: clamp(34px, 7.5vw, 46px);
+        line-height: 1.25; font-weight: 900; letter-spacing: -0.02em;
+        margin: 16px 0 10px;
+      }
+      .lede { font-size: 21px; color: var(--ink-soft); margin: 0 0 6px; }
+      .today-line { font-size: 18px; color: var(--ink-soft); margin: 10px 0 0; }
+      .today-line strong { color: var(--accent-strong); }
+
+      /* ---------- 게임 판 ---------- */
+      .game-card {
+        margin-top: 26px;
+        background: var(--card);
+        border: 2px solid var(--line);
+        border-radius: 24px;
+        box-shadow: var(--shadow);
+        padding: 26px 22px 30px;
+      }
+      .game-top {
+        display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+        gap: 10px 16px; margin-bottom: 6px;
+      }
+      .round-label { font-size: 22px; font-weight: 800; }
+      .round-label .of { color: var(--ink-soft); font-weight: 600; font-size: 19px; }
+      .score-label { font-size: 19px; font-weight: 700; color: var(--ink-soft); }
+      .score-label strong { color: var(--accent-strong); font-size: 22px; }
+      .progress-dots { display: flex; gap: 8px; margin: 10px 0 4px; }
+      .progress-dots span {
+        flex: 1; height: 12px; border-radius: 999px; background: var(--bg-soft);
+        border: 1px solid var(--line);
+      }
+      .progress-dots span.done { background: var(--good); border-color: var(--good); }
+      .progress-dots span.now { background: var(--accent); border-color: var(--accent); }
+      .level-line { font-size: 19px; color: var(--ink-soft); margin: 8px 0 0; }
+      .level-line strong { color: var(--ink); }
+
+      .stage { margin-top: 18px; text-align: center; }
+      .stage-msg { font-size: 22px; font-weight: 700; margin: 0 0 6px; }
+      .stage-sub { font-size: 19px; color: var(--ink-soft); margin: 0 0 18px; }
+
+      .number-board {
+        min-height: 128px;
+        display: flex; align-items: center; justify-content: center;
+        background: var(--bg-soft);
+        border: 2px dashed var(--line);
+        border-radius: 18px;
+        padding: 18px 10px;
+      }
+      .big-number {
+        font-size: clamp(44px, 12vw, 68px);
+        font-weight: 900; letter-spacing: 0.14em; line-height: 1.1;
+        font-variant-numeric: tabular-nums;
+      }
+      .big-number.hidden-num { color: var(--ink-soft); letter-spacing: 0.1em; }
+      .memorize-note { font-size: 18px; color: var(--ink-soft); margin-top: 14px; }
+
+      .answer-slots { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin: 4px 0 18px; }
+      .slot {
+        width: clamp(40px, 10.5vw, 56px); height: 64px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 36px; font-weight: 900; font-variant-numeric: tabular-nums;
+        background: var(--key); border: 2px solid var(--key-line); border-radius: 12px;
+      }
+      .slot.filled { border-color: var(--accent); color: var(--accent-strong); }
+      .slot.empty { color: var(--ink-soft); font-size: 26px; }
+
+      .keypad {
+        display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+        max-width: 340px; margin: 0 auto;
+      }
+      .keypad button {
+        min-height: 62px; font-size: 28px; font-weight: 800;
+        font-family: inherit; color: var(--ink);
+        background: var(--key); border: 2px solid var(--key-line); border-radius: 14px;
+        cursor: pointer;
+      }
+      .keypad button:active { background: var(--accent-soft); }
+      .keypad button.util { font-size: 20px; color: var(--accent-strong); }
+
+      .btn {
+        display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        min-height: 60px; padding: 14px 30px;
+        font-family: inherit; font-size: 22px; font-weight: 800;
+        border-radius: 16px; border: 2px solid transparent; cursor: pointer;
+      }
+      .btn-primary { background: var(--accent); color: #fff; }
+      .btn-primary:active { background: var(--accent-strong); }
+      .btn-ghost { background: transparent; color: var(--accent-strong); border-color: var(--accent); }
+      .btn-row { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 20px; }
+      button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+      button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+      .feedback {
+        margin-top: 20px; border-radius: 16px; padding: 20px 18px; text-align: center;
+      }
+      .feedback.good { background: var(--good-soft); }
+      .feedback.bad { background: var(--bad-soft); }
+      .feedback .fb-title { font-size: 26px; font-weight: 900; margin: 0 0 6px; }
+      .feedback.good .fb-title { color: var(--good); }
+      .feedback.bad .fb-title { color: var(--bad); }
+      .feedback p { margin: 4px 0; font-size: 20px; }
+      .feedback .fb-answer { font-size: 23px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: 0.06em; }
+
+      .result-box { text-align: center; padding: 10px 0 2px; }
+      .result-score { font-size: clamp(52px, 14vw, 76px); font-weight: 900; color: var(--accent-strong); line-height: 1.1; margin: 6px 0; }
+      .result-msg { font-size: 22px; font-weight: 700; margin: 0 0 8px; }
+      .result-sub { font-size: 19px; color: var(--ink-soft); margin: 0; }
+
+      /* ---------- 설명 ---------- */
+      section.howto { margin-top: 48px; }
+      h2 {
+        font-size: 28px; font-weight: 900; letter-spacing: -0.01em;
+        margin: 0 0 16px; padding-bottom: 10px; border-bottom: 3px solid var(--accent-soft);
+      }
+      .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+      .steps li {
+        display: flex; gap: 16px; align-items: flex-start;
+        background: var(--card); border: 2px solid var(--line); border-radius: 18px; padding: 18px;
+      }
+      .step-num {
+        flex: 0 0 auto; width: 46px; height: 46px; border-radius: 50%;
+        background: var(--accent); color: #fff;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 23px; font-weight: 900;
+      }
+      .steps h3 { margin: 2px 0 4px; font-size: 22px; font-weight: 800; }
+      .steps p { margin: 0; font-size: 19px; color: var(--ink-soft); }
+      .example {
+        margin-top: 16px; text-align: center;
+        background: var(--bg-soft); border-radius: 18px; padding: 20px 14px;
+        font-size: clamp(24px, 6.5vw, 32px); font-weight: 900; letter-spacing: 0.08em;
+        font-variant-numeric: tabular-nums;
+      }
+      .example .arrow { color: var(--accent); margin: 0 10px; }
+      .example small { display: block; font-size: 17px; font-weight: 600; color: var(--ink-soft); letter-spacing: 0; margin-top: 8px; }
+
+      .level-table { width: 100%; border-collapse: collapse; font-size: 19px; }
+      .level-table th, .level-table td { padding: 12px 10px; text-align: left; border-bottom: 1px solid var(--line); }
+      .level-table th { font-weight: 800; background: var(--bg-soft); }
+      .level-table td.num, .level-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+      .tips { margin: 0; padding-left: 24px; display: grid; gap: 8px; font-size: 19px; }
+      .why p { font-size: 19px; color: var(--ink-soft); margin: 0 0 10px; }
+      .why strong { color: var(--ink); }
+
+      footer {
+        margin-top: 52px; padding-top: 20px; border-top: 2px solid var(--line);
+        font-size: 17px; color: var(--ink-soft); text-align: center;
+      }
+      footer a { color: var(--accent-strong); font-weight: 700; display: inline-block; padding: 10px 6px; }
+      .sr-only {
+        position: absolute; width: 1px; height: 1px; overflow: hidden;
+        clip: rect(0 0 0 0); white-space: nowrap;
+      }
+      [hidden] { display: none !important; }
+
+      @media (prefers-reduced-motion: reduce) {
+        * { transition: none !important; animation: none !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <noscript>
+      <div style="max-width:760px;margin:0 auto;padding:36px 18px;font-size:21px;line-height:1.6">
+        <p><strong>이 게임을 하려면 자바스크립트를 켜 주세요.</strong> 브라우저 설정에서 자바스크립트를 허용한 뒤 다시 열어 주세요.</p>
+        <p lang="en"><strong>Please turn on JavaScript to play this game.</strong> Allow JavaScript in your browser settings, then open this page again.</p>
+        <p lang="ja"><strong>このゲームをするにはJavaScriptをオンにしてください。</strong>ブラウザの設定でJavaScriptを許可してから、もう一度開いてください。</p>
+        <p><a href="https://blog.naver.com/sin4buja/224472665585">Day 1 숫자 거꾸로 말하기</a></p>
+      </div>
+    </noscript>
+    <main class="wrap" id="mainContent">
+      <div class="lang-switch" role="group" aria-label="Language">
+        <button type="button" class="lang-btn active" data-lang="ko" aria-pressed="true">한국어</button>
+        <button type="button" class="lang-btn" data-lang="en" aria-pressed="false">English</button>
+        <button type="button" class="lang-btn" data-lang="ja" aria-pressed="false">日本語</button>
+      </div>
+
+      <header>
+        <span class="day-chip"><span class="dot"></span><span id="chipText">오늘의 두뇌운동 · Day 1</span></span>
+        <h1 id="mainTitle">숫자 거꾸로 말하기</h1>
+        <p class="lede" id="ledeText">숫자를 천천히 보고 외운 뒤, 순서를 거꾸로 뒤집어 맞히는 기억력 게임이에요. 시간 제한이 없으니 서두르지 않아도 돼요. 오늘은 다섯 게임, 5분이면 충분해요.</p>
+        <p class="today-line" id="todayLine"></p>
+      </header>
+
+      <!-- ============ 게임 ============ -->
+      <div class="game-card" id="gameCard">
+        <div class="game-top">
+          <div class="round-label"><span id="roundWord">게임</span> <span id="roundNow">1</span> <span class="of">/ 5</span></div>
+          <div class="score-label"><span id="scoreWord">맞힌 개수</span> <strong><span id="scoreNow">0</span><span id="scoreUnit">개</span></strong></div>
+        </div>
+        <div class="progress-dots" id="progressDots" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <p class="level-line" id="levelLine"></p>
+
+        <div class="stage" id="stageBox" aria-live="polite"></div>
+      </div>
+
+      <!-- ============ 게임 방법 ============ -->
+      <section class="howto" aria-labelledby="howtoTitle">
+        <h2 id="howtoTitle">게임 방법</h2>
+        <ol class="steps">
+          <li>
+            <div class="step-num">1</div>
+            <div>
+              <h3 id="step1Title">숫자를 보고 외워요</h3>
+              <p id="step1Text">「숫자 보기」를 누르면 숫자가 나타나요. 시간 제한이 없으니 천천히, 소리 내어 읽으면서 외우면 더 잘 기억돼요.</p>
+            </div>
+          </li>
+          <li>
+            <div class="step-num">2</div>
+            <div>
+              <h3 id="step2Title">숫자가 가려져요</h3>
+              <p id="step2Text">숫자는 저절로 사라지지 않아요. 다 외웠을 때 「다 외웠어요」를 누르면 그때 숫자가 가려져요.</p>
+            </div>
+          </li>
+          <li>
+            <div class="step-num">3</div>
+            <div>
+              <h3 id="step3Title">거꾸로 입력해요</h3>
+              <p id="step3Text">맨 뒤 숫자부터 거꾸로 눌러 입력하고 「정답 확인」을 눌러요. 틀려도 괜찮아요. 뇌는 떠올리려고 애쓰는 순간 가장 활발해져요.</p>
+            </div>
+          </li>
+        </ol>
+        <div class="example">
+          5 - 1 - 8 - 3<span class="arrow">→</span>3 - 8 - 1 - 5
+          <small id="exampleCaption">예시예요. 5·1·8·3을 외웠으면, 거꾸로 3·8·1·5가 정답이에요.</small>
+        </div>
+      </section>
+
+      <section class="howto" aria-labelledby="levelTitle">
+        <h2 id="levelTitle">오늘의 다섯 게임</h2>
+        <table class="level-table">
+          <thead>
+            <tr><th scope="col" id="thGame">게임</th><th scope="col" id="thLevel">난이도</th><th scope="col" class="num" id="thDigits">숫자 자리</th><th scope="col" id="thTime">외우는 시간</th></tr>
+          </thead>
+          <tbody id="levelBody">
+            <tr><td>게임 1</td><td>몸풀기</td><td class="num">3자리</td><td>제한 없음</td></tr>
+            <tr><td>게임 2</td><td>쉬움</td><td class="num">4자리</td><td>제한 없음</td></tr>
+            <tr><td>게임 3</td><td>보통</td><td class="num">5자리</td><td>제한 없음</td></tr>
+            <tr><td>게임 4</td><td>어려움</td><td class="num">6자리</td><td>제한 없음</td></tr>
+            <tr><td>게임 5</td><td>최종 도전</td><td class="num">7자리</td><td>제한 없음</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="howto why" aria-labelledby="whyTitle">
+        <h2 id="whyTitle">왜 좋은 게임인가요?</h2>
+        <p id="whyP1">숫자를 외운 뒤 순서를 뒤집으려면, 머릿속에 숫자를 붙잡아 둔 채로 이리저리 굴려야 해요. 이 역할을 하는 것이 <strong>작업기억</strong>이에요. 전화번호를 듣고 잠시 외우는 것, 계산할 때 앞자리 수를 기억하는 것이 모두 작업기억의 일이에요.</p>
+        <p id="whyP2">작업기억은 쓰면 쓸수록 단련돼요. 하루 다섯 게임, 딱 5분이면 충분합니다. 점수보다 <strong>매일 꾸준히 하는 것</strong>이 훨씬 중요해요.</p>
+      </section>
+
+      <section class="howto" aria-labelledby="tipTitle">
+        <h2 id="tipTitle">더 잘 외우는 팁</h2>
+        <ul class="tips" id="tipsList">
+          <li>숫자를 소리 내어 두 번 읽어 보세요. 눈과 귀를 같이 쓰면 오래 남아요.</li>
+          <li>두세 개씩 끊어 외워 보세요. 5183은 「51 - 83」처럼 묶으면 쉬워요.</li>
+          <li>거꾸로 말할 때는 맨 뒤 숫자부터 하나씩 떠올려 보세요.</li>
+          <li>틀린 게임은 점수에 연연하지 말고, 정답을 보고 한 번 더 소리 내어 읽어 보세요.</li>
+        </ul>
+      </section>
+
+      <footer>
+        <p><span id="footerLine1">오늘의 두뇌운동 · 뇌건강 놀이터지기가 매일 준비하는 치매예방 기억력 게임이에요.</span><br />
+        <span id="footerDisclaimer">이 게임은 놀이와 두뇌 활동 돕기가 목적이며, 의료 진단이나 치료를 대신하지 않아요.</span></p>
+        <a href="https://blog.naver.com/sin4buja/224472665585" target="_blank" rel="noopener" id="footerLink">Day 1 숫자 거꾸로 말하기</a>
+      </footer>
+    </main>
+
+    <script>
+      (function () {
+        "use strict";
+
+        /* ---------- 번역 사전 ----------
+           화면에 보이는 모든 문구는 여기서 언어별로 골라 써요.
+           숫자는 모든 언어에서 아라비아 숫자로 그대로 보여요. */
+        var STR = {
+          ko: {
+            locale: "ko-KR",
+            docTitle: "Day 1 숫자 거꾸로 게임",
+            chip: "오늘의 두뇌운동 · Day 1",
+            title: "숫자 거꾸로 말하기",
+            lede: "숫자를 천천히 보고 외운 뒤, 순서를 거꾸로 뒤집어 맞히는 기억력 게임이에요. 시간 제한이 없으니 서두르지 않아도 돼요. 오늘은 다섯 게임, 5분이면 충분해요.",
+            todayLine: "오늘은 <strong>{date}</strong> · 오늘의 숫자는 날짜에 맞춰 정해져요. <strong>내일 오면 새로운 숫자</strong>로 바뀌어 있어요. 어디서든 바로 들어와서 할 수 있어요.",
+            roundWord: "게임",
+            scoreWord: "맞힌 개수",
+            scoreUnit: "개",
+            gameWord: "게임",
+            levels: ["몸풀기", "쉬움", "보통", "어려움", "최종 도전"],
+            digitsUnit: "자리",
+            noLimit: "제한 없음",
+            levelLine: "난이도 <strong>{name}</strong> · 숫자 <strong>{digits}자리</strong> · 외우는 시간 <strong>제한 없음</strong>",
+            levelDone: "오늘의 다섯 게임을 모두 마쳤어요. 수고하셨어요!",
+            readyFirst: "준비되셨나요?",
+            readyNext: "다음 게임이에요",
+            readySub: "아래 버튼을 누르면 {digits}자리 숫자가 나타나요.<br />시간 제한이 없으니 천천히 외워 두세요.",
+            btnShow: "숫자 보기",
+            showMsg: "지금 외우세요!",
+            showSub: "소리 내어 읽으면서 외우면 더 잘 기억돼요.",
+            showNote: "시간 제한이 없어요. 숫자는 사라지지 않으니 천천히 외우세요.",
+            btnHide: "다 외웠어요",
+            inputMsg: "숫자가 가려졌어요",
+            inputSub: "맨 뒤 숫자부터, 거꾸로 눌러서 입력해 주세요.",
+            slotsLabel: "입력한 답",
+            keypadLabel: "숫자 키패드",
+            keyDel: "지우기",
+            keyClear: "처음부터",
+            btnCheck: "정답 확인",
+            praise: ["완벽해요!", "대단하세요!", "정확해요!", "기억력이 반짝이네요!", "최고예요!"],
+            cheer: ["아쉬워요, 그래도 잘 떠올리셨어요.", "괜찮아요. 떠올리려 애쓴 것 자체가 운동이에요.", "조금만 더! 정답을 보고 한 번 읽어 보세요."],
+            fbGood: "<span class=\"fb-answer\">{orig}</span> &nbsp;의 거꾸로는 &nbsp;<span class=\"fb-answer\">{ans}</span>, 정답이에요!",
+            fbBad: "원래 숫자는 &nbsp;<span class=\"fb-answer\">{orig}</span> &nbsp;였어요.<br />거꾸로 하면 정답은 &nbsp;<span class=\"fb-answer\">{ans}</span> &nbsp;예요.",
+            btnNext: "다음 게임으로",
+            btnResult: "오늘의 결과 보기",
+            resultLabel: "오늘의 결과",
+            resultMsgs: [
+              { msg: "오늘도 해낸 것만으로 충분해요!", sub: "점수보다 매일 하는 것이 중요해요. 내일 새로운 숫자로 다시 만나요." },
+              { msg: "좋은 시작이에요!", sub: "처음에는 누구나 어려워요. 매일 5분씩 하다 보면 조금씩 더 잘 외워질 거예요." },
+              { msg: "아주 잘하셨어요!", sub: "틀린 게임이 있어도 괜찮아요. 떠올리려고 애쓴 순간 뇌는 이미 운동하고 있었어요." },
+              { msg: "다섯 게임 모두 맞혔어요!", sub: "오늘 뇌가 아주 기분 좋게 운동했어요. 내일도 새로운 숫자가 기다리고 있어요." }
+            ],
+            btnAgain: "새로운 숫자로 다시 하기",
+            resultNote: "내일 다시 오시면, 날짜가 바뀌어 또 다른 숫자가 준비돼 있어요.",
+            howtoTitle: "게임 방법",
+            step1Title: "숫자를 보고 외워요",
+            step1Text: "「숫자 보기」를 누르면 숫자가 나타나요. 시간 제한이 없으니 천천히, 소리 내어 읽으면서 외우면 더 잘 기억돼요.",
+            step2Title: "숫자가 가려져요",
+            step2Text: "숫자는 저절로 사라지지 않아요. 다 외웠을 때 「다 외웠어요」를 누르면 그때 숫자가 가려져요.",
+            step3Title: "거꾸로 입력해요",
+            step3Text: "맨 뒤 숫자부터 거꾸로 눌러 입력하고 「정답 확인」을 눌러요. 틀려도 괜찮아요. 뇌는 떠올리려고 애쓰는 순간 가장 활발해져요.",
+            exampleCaption: "예시예요. 5·1·8·3을 외웠으면, 거꾸로 3·8·1·5가 정답이에요.",
+            levelTitle: "오늘의 다섯 게임",
+            thGame: "게임",
+            thLevel: "난이도",
+            thDigits: "숫자 자리",
+            thTime: "외우는 시간",
+            whyTitle: "왜 좋은 게임인가요?",
+            whyP1: "숫자를 외운 뒤 순서를 뒤집으려면, 머릿속에 숫자를 붙잡아 둔 채로 이리저리 굴려야 해요. 이 역할을 하는 것이 <strong>작업기억</strong>이에요. 전화번호를 듣고 잠시 외우는 것, 계산할 때 앞자리 수를 기억하는 것이 모두 작업기억의 일이에요.",
+            whyP2: "작업기억은 쓰면 쓸수록 단련돼요. 하루 다섯 게임, 딱 5분이면 충분합니다. 점수보다 <strong>매일 꾸준히 하는 것</strong>이 훨씬 중요해요.",
+            tipTitle: "더 잘 외우는 팁",
+            tips: [
+              "숫자를 소리 내어 두 번 읽어 보세요. 눈과 귀를 같이 쓰면 오래 남아요.",
+              "두세 개씩 끊어 외워 보세요. 5183은 「51 - 83」처럼 묶으면 쉬워요.",
+              "거꾸로 말할 때는 맨 뒤 숫자부터 하나씩 떠올려 보세요.",
+              "틀린 게임은 점수에 연연하지 말고, 정답을 보고 한 번 더 소리 내어 읽어 보세요."
+            ],
+            footerLine1: "오늘의 두뇌운동 · 뇌건강 놀이터지기가 매일 준비하는 치매예방 기억력 게임이에요.",
+            footerDisclaimer: "이 게임은 놀이와 두뇌 활동 돕기가 목적이며, 의료 진단이나 치료를 대신하지 않아요.",
+            footerLink: "Day 1 숫자 거꾸로 말하기"
+          },
+          en: {
+            locale: "en-US",
+            docTitle: "Day 1 Number Reversal Game",
+            chip: "Today's Brain Workout · Day 1",
+            title: "Say the Numbers Backwards",
+            lede: "Look at the numbers slowly, memorize them, then flip the order and get them right in reverse. There is no time limit, so no need to hurry. Five games today — five minutes is plenty.",
+            todayLine: "Today is <strong>{date}</strong> · Today's numbers are chosen by the date. <strong>Come back tomorrow for new numbers.</strong> You can start playing right away, from anywhere.",
+            roundWord: "Game",
+            scoreWord: "Correct",
+            scoreUnit: "",
+            gameWord: "Game",
+            levels: ["Warm-up", "Easy", "Normal", "Hard", "Final Challenge"],
+            digitsUnit: " digits",
+            noLimit: "No limit",
+            levelLine: "Level <strong>{name}</strong> · <strong>{digits} digits</strong> · Memorizing time <strong>no limit</strong>",
+            levelDone: "You've finished all five of today's games. Great job!",
+            readyFirst: "Are you ready?",
+            readyNext: "Here's the next game",
+            readySub: "Tap the button below and a {digits}-digit number will appear.<br />There's no time limit, so take your time memorizing it.",
+            btnShow: "Show the number",
+            showMsg: "Memorize it now!",
+            showSub: "Reading it out loud helps you remember it better.",
+            showNote: "No time limit. The number won't disappear, so take your time.",
+            btnHide: "I memorized it",
+            inputMsg: "The number is hidden now",
+            inputSub: "Enter the digits in reverse, starting from the last one.",
+            slotsLabel: "Your answer",
+            keypadLabel: "Number keypad",
+            keyDel: "Delete",
+            keyClear: "Clear",
+            btnCheck: "Check answer",
+            praise: ["Perfect!", "Amazing!", "Exactly right!", "What a sparkling memory!", "Superb!"],
+            cheer: ["So close — but you recalled a lot.", "That's okay. Just trying to remember is exercise in itself.", "Almost there! Look at the answer and read it out loud once."],
+            fbGood: "The reverse of &nbsp;<span class=\"fb-answer\">{orig}</span> &nbsp;is &nbsp;<span class=\"fb-answer\">{ans}</span> &nbsp;— that's right!",
+            fbBad: "The original number was &nbsp;<span class=\"fb-answer\">{orig}</span>.<br />Reversed, the answer is &nbsp;<span class=\"fb-answer\">{ans}</span>.",
+            btnNext: "Next game",
+            btnResult: "See today's results",
+            resultLabel: "Today's result",
+            resultMsgs: [
+              { msg: "Just finishing today is enough!", sub: "Doing it every day matters more than the score. See you tomorrow with new numbers." },
+              { msg: "A great start!", sub: "Everyone finds it hard at first. Five minutes a day, and you'll memorize a little more each time." },
+              { msg: "You did really well!", sub: "It's fine if you missed some games. The moment you tried to remember, your brain was already exercising." },
+              { msg: "You got all five games right!", sub: "Your brain got a really happy workout today. New numbers will be waiting for you tomorrow." }
+            ],
+            btnAgain: "Try again with new numbers",
+            resultNote: "Come back tomorrow and a different set of numbers will be ready for you, chosen by the new date.",
+            howtoTitle: "How to play",
+            step1Title: "Look at the number and memorize it",
+            step1Text: "Tap “Show the number” and the number appears. There's no time limit, so memorize it slowly — reading it out loud helps you remember it better.",
+            step2Title: "The number gets hidden",
+            step2Text: "The number never disappears on its own. When you've memorized it, tap “I memorized it” — only then is it hidden.",
+            step3Title: "Enter it backwards",
+            step3Text: "Tap the digits in reverse, starting from the last one, then tap “Check answer”. Getting it wrong is fine — your brain is most active in the moment you struggle to recall.",
+            exampleCaption: "An example. If you memorized 5·1·8·3, the answer backwards is 3·8·1·5.",
+            levelTitle: "Today's five games",
+            thGame: "Game",
+            thLevel: "Difficulty",
+            thDigits: "Digits",
+            thTime: "Memorizing time",
+            whyTitle: "Why is this a good game?",
+            whyP1: "To flip numbers in reverse order, you have to hold them in your head while shuffling them around. That job belongs to <strong>working memory</strong>. Hearing a phone number and holding onto it for a moment, or remembering the first digits during a calculation — that's all working memory at work.",
+            whyP2: "Working memory gets stronger the more you use it. Just five games a day — five minutes is enough. <strong>Doing it every day</strong> matters far more than your score.",
+            tipTitle: "Tips for memorizing better",
+            tips: [
+              "Read the numbers out loud twice. Using your eyes and ears together makes them stick longer.",
+              "Memorize in chunks of two or three. 5183 is easier grouped as “51 - 83”.",
+              "When saying it backwards, recall one digit at a time, starting from the very end.",
+              "For a game you missed, don't worry about the score — just look at the answer and read it out loud once more."
+            ],
+            footerLine1: "Today's Brain Workout · A dementia-prevention memory game prepared every day by the Brain Health Play Keeper.",
+            footerDisclaimer: "This game is for play and brain activity; it does not replace medical diagnosis or treatment.",
+            footerLink: "Day 1: Say the Numbers Backwards"
+          },
+          ja: {
+            locale: "ja-JP",
+            docTitle: "Day 1 数字を逆にするゲーム",
+            chip: "今日の脳トレ · Day 1",
+            title: "数字を逆に言うゲーム",
+            lede: "数字をゆっくり見て覚えたあと、順番を逆にして当てる記憶ゲームです。時間制限はないので、急がなくて大丈夫です。今日は5つのゲーム、5分で十分です。",
+            todayLine: "今日は<strong>{date}</strong>です · 今日の数字は日付に合わせて決まります。<strong>明日来ると新しい数字</strong>に変わっています。どこからでもすぐ始められます。",
+            roundWord: "ゲーム",
+            scoreWord: "正解した数",
+            scoreUnit: "個",
+            gameWord: "ゲーム",
+            levels: ["ウォーミングアップ", "かんたん", "ふつう", "むずかしい", "最終チャレンジ"],
+            digitsUnit: "桁",
+            noLimit: "制限なし",
+            levelLine: "難易度 <strong>{name}</strong> · 数字 <strong>{digits}桁</strong> · 覚える時間 <strong>制限なし</strong>",
+            levelDone: "今日の5つのゲームをすべて終えました。お疲れさまでした！",
+            readyFirst: "準備はいいですか？",
+            readyNext: "次のゲームです",
+            readySub: "下のボタンを押すと{digits}桁の数字が現れます。<br />時間制限はないので、ゆっくり覚えてください。",
+            btnShow: "数字を見る",
+            showMsg: "今、覚えてください！",
+            showSub: "声に出して読みながら覚えると、よく記憶できます。",
+            showNote: "時間制限はありません。数字は消えないので、ゆっくり覚えてください。",
+            btnHide: "覚えました",
+            inputMsg: "数字が隠れました",
+            inputSub: "最後の数字から逆の順番に押して入力してください。",
+            slotsLabel: "入力した答え",
+            keypadLabel: "数字キーパッド",
+            keyDel: "消す",
+            keyClear: "最初から",
+            btnCheck: "答え合わせ",
+            praise: ["完璧です！", "すごいですね！", "正確です！", "記憶力がキラキラしています！", "最高です！"],
+            cheer: ["惜しい！でもよく思い出せました。", "大丈夫です。思い出そうと頑張ること自体が運動です。", "あと少し！答えを見て、一度声に出して読んでみてください。"],
+            fbGood: "<span class=\"fb-answer\">{orig}</span> &nbsp;の逆は &nbsp;<span class=\"fb-answer\">{ans}</span>、正解です！",
+            fbBad: "元の数字は &nbsp;<span class=\"fb-answer\">{orig}</span> &nbsp;でした。<br />逆にすると答えは &nbsp;<span class=\"fb-answer\">{ans}</span> &nbsp;です。",
+            btnNext: "次のゲームへ",
+            btnResult: "今日の結果を見る",
+            resultLabel: "今日の結果",
+            resultMsgs: [
+              { msg: "今日やり遂げただけで十分です！", sub: "点数より毎日続けることが大切です。明日、新しい数字でまた会いましょう。" },
+              { msg: "いいスタートです！", sub: "最初は誰でも難しいものです。毎日5分ずつ続けると、少しずつ覚えられるようになります。" },
+              { msg: "とてもよくできました！", sub: "間違えたゲームがあっても大丈夫です。思い出そうと頑張った瞬間、脳はすでに運動していました。" },
+              { msg: "5つのゲーム全部正解です！", sub: "今日は脳がとても気持ちよく運動しました。明日も新しい数字が待っています。" }
+            ],
+            btnAgain: "新しい数字でもう一度",
+            resultNote: "明日また来ると、日付が変わって別の数字が用意されています。",
+            howtoTitle: "遊び方",
+            step1Title: "数字を見て覚えます",
+            step1Text: "「数字を見る」を押すと数字が現れます。時間制限はないので、ゆっくりと。声に出して読みながら覚えると、さらによく記憶できます。",
+            step2Title: "数字が隠れます",
+            step2Text: "数字はひとりでに消えません。覚え終わったら「覚えました」を押してください。そのとき数字が隠れます。",
+            step3Title: "逆に入力します",
+            step3Text: "最後の数字から逆の順番に押して入力し、「答え合わせ」を押してください。間違えても大丈夫です。脳は思い出そうと頑張る瞬間に一番活発になります。",
+            exampleCaption: "例です。5・1・8・3を覚えたら、逆にした3・8・1・5が答えです。",
+            levelTitle: "今日の5つのゲーム",
+            thGame: "ゲーム",
+            thLevel: "難易度",
+            thDigits: "数字の桁数",
+            thTime: "覚える時間",
+            whyTitle: "なぜ良いゲームなのですか？",
+            whyP1: "数字を覚えたあと順番を逆にするには、頭の中に数字を留めておきながら並べ替える必要があります。その役割を担うのが<strong>ワーキングメモリ（作業記憶）</strong>です。電話番号を聞いて少しの間覚えておくこと、計算のときに最初の桁を覚えていること、すべてワーキングメモリの仕事です。",
+            whyP2: "ワーキングメモリは使えば使うほど鍛えられます。1日5ゲーム、5分で十分です。点数より<strong>毎日続けること</strong>がずっと大切です。",
+            tipTitle: "もっとよく覚えるコツ",
+            tips: [
+              "数字を声に出して2回読んでみてください。目と耳を一緒に使うと長く残ります。",
+              "2〜3個ずつ区切って覚えてみてください。5183は「51 - 83」のようにまとめると簡単です。",
+              "逆に言うときは、最後の数字から1つずつ思い出してみてください。",
+              "間違えたゲームは点数を気にせず、答えを見てもう一度声に出して読んでみてください。"
+            ],
+            footerLine1: "今日の脳トレ · 脳の健康あそび場の管理人が毎日用意する、認知症予防の記憶ゲームです。",
+            footerDisclaimer: "このゲームは遊びと脳の活動のためのもので、医療の診断や治療の代わりにはなりません。",
+            footerLink: "Day 1 数字を逆に言うゲーム"
+          }
+        };
+
+        var lang = "ko";
+        function t() { return STR[lang]; }
+        function fill(tpl, map) {
+          var out = tpl;
+          for (var k in map) out = out.split("{" + k + "}").join(map[k]);
+          return out;
+        }
+
+        /* ---------- 날짜 기반 랜덤 ----------
+           오늘 날짜를 씨앗(seed)으로 삼아 숫자를 뽑아요.
+           같은 날에는 같은 숫자가, 다음 날에는 새로운 숫자가 나와요.
+           「새로운 숫자로 다시 하기」를 누르면 시도 횟수가 씨앗에 더해져 또 다른 숫자가 돼요. */
+        function mulberry32(seed) {
+          var a = seed >>> 0;
+          return function () {
+            a |= 0; a = (a + 0x6d2b79f5) | 0;
+            var t2 = Math.imul(a ^ (a >>> 15), 1 | a);
+            t2 = (t2 + Math.imul(t2 ^ (t2 >>> 7), 61 | t2)) ^ t2;
+            return ((t2 ^ (t2 >>> 14)) >>> 0) / 4294967296;
+          };
+        }
+
+        var now = new Date();
+        var dateSeed = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
+
+        var DIGITS = [3, 4, 5, 6, 7];
+
+        function makeNumber(rand, digits) {
+          var s, tries = 0;
+          do {
+            s = String(1 + Math.floor(rand() * 9));
+            for (var i = 1; i < digits; i++) s += String(Math.floor(rand() * 10));
+            tries++;
+          } while (tries < 30 && (s === s.split("").reverse().join("") || /^(\d)\1+$/.test(s)));
+          return s;
+        }
+
+        function buildRounds(attempt) {
+          var rand = mulberry32(dateSeed * 1000 + attempt * 77 + 13);
+          return DIGITS.map(function (d) { return { digits: d, value: makeNumber(rand, d) }; });
+        }
+
+        /* ---------- 상태 ---------- */
+        var attempt = 0;
+        var rounds = buildRounds(attempt);
+        var roundIdx = 0;
+        var score = 0;
+        var phase = "ready"; /* ready | show | input | feedback | done */
+        var typed = "";
+        var lastOk = false;
+
+        var stageBox = document.getElementById("stageBox");
+        var roundNowEl = document.getElementById("roundNow");
+        var scoreNowEl = document.getElementById("scoreNow");
+        var levelLineEl = document.getElementById("levelLine");
+        var dotsEl = document.getElementById("progressDots");
+
+        function esc(s) {
+          return s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+        }
+        function spaced(s) {
+          return s.split("").join(" ");
+        }
+        function reversed(s) {
+          return s.split("").reverse().join("");
+        }
+        function dateText() {
+          try {
+            return new Intl.DateTimeFormat(t().locale, { year: "numeric", month: "long", day: "numeric", weekday: "short" }).format(now);
+          } catch (e) {
+            return now.getFullYear() + "-" + (now.getMonth() + 1) + "-" + now.getDate();
+          }
+        }
+
+        function renderTop() {
+          var s = t();
+          document.getElementById("roundWord").textContent = s.roundWord;
+          document.getElementById("scoreWord").textContent = s.scoreWord;
+          document.getElementById("scoreUnit").textContent = s.scoreUnit;
+          roundNowEl.textContent = String(Math.min(roundIdx + 1, 5));
+          scoreNowEl.textContent = String(score);
+          var dots = dotsEl.children;
+          for (var i = 0; i < dots.length; i++) {
+            dots[i].className = i < roundIdx || phase === "done" ? "done" : i === roundIdx ? "now" : "";
+          }
+          if (phase === "done") {
+            levelLineEl.textContent = s.levelDone;
+          } else {
+            var r = rounds[roundIdx];
+            levelLineEl.innerHTML = fill(s.levelLine, { name: esc(s.levels[roundIdx]), digits: String(r.digits) });
+          }
+        }
+
+        /* ---------- 단계별 화면 ---------- */
+        function showReady() {
+          phase = "ready"; typed = ""; renderTop();
+          var s = t();
+          var r = rounds[roundIdx];
+          stageBox.innerHTML =
+            '<p class="stage-msg">' + esc(roundIdx === 0 ? s.readyFirst : s.readyNext) + "</p>" +
+            '<p class="stage-sub">' + fill(esc(s.readySub), { digits: String(r.digits) }).replace(/&lt;br \/>/g, "<br />") + "</p>" +
+            '<div class="number-board"><span class="big-number hidden-num">? ? ?</span></div>' +
+            '<div class="btn-row"><button type="button" class="btn btn-primary" id="btnShow">' + esc(s.btnShow) + "</button></div>";
+          document.getElementById("btnShow").addEventListener("click", showNumber);
+        }
+
+        function showNumber() {
+          phase = "show"; renderTop();
+          var s = t();
+          var r = rounds[roundIdx];
+          stageBox.innerHTML =
+            '<p class="stage-msg">' + esc(s.showMsg) + "</p>" +
+            '<p class="stage-sub">' + esc(s.showSub) + "</p>" +
+            '<div class="number-board"><span class="big-number">' + esc(spaced(r.value)) + "</span></div>" +
+            '<p class="memorize-note">' + esc(s.showNote) + "</p>" +
+            '<div class="btn-row"><button type="button" class="btn btn-primary" id="btnHide">' + esc(s.btnHide) + "</button></div>";
+          document.getElementById("btnHide").addEventListener("click", showInput);
+        }
+
+        function slotHtml() {
+          var s = t();
+          var r = rounds[roundIdx];
+          var html = '<div class="answer-slots" aria-label="' + esc(s.slotsLabel) + '">';
+          for (var i = 0; i < r.digits; i++) {
+            if (i < typed.length) html += '<span class="slot filled">' + esc(typed[i]) + "</span>";
+            else html += '<span class="slot empty">·</span>';
+          }
+          return html + "</div>";
+        }
+
+        function showInput() {
+          phase = "input"; renderTop();
+          var s = t();
+          stageBox.innerHTML =
+            '<p class="stage-msg">' + esc(s.inputMsg) + "</p>" +
+            '<p class="stage-sub">' + esc(s.inputSub) + "</p>" +
+            '<div id="slotsWrap">' + slotHtml() + "</div>" +
+            '<div class="keypad" role="group" aria-label="' + esc(s.keypadLabel) + '">' +
+            ["1","2","3","4","5","6","7","8","9"].map(function (d) {
+              return '<button type="button" data-key="' + d + '">' + d + "</button>";
+            }).join("") +
+            '<button type="button" class="util" data-key="del">' + esc(s.keyDel) + "</button>" +
+            '<button type="button" data-key="0">0</button>' +
+            '<button type="button" class="util" data-key="clear">' + esc(s.keyClear) + "</button>" +
+            "</div>" +
+            '<div class="btn-row"><button type="button" class="btn btn-primary" id="btnCheck" disabled>' + esc(s.btnCheck) + "</button></div>";
+          var keys = stageBox.querySelectorAll("[data-key]");
+          for (var i = 0; i < keys.length; i++) {
+            keys[i].addEventListener("click", function () { pressKey(this.getAttribute("data-key")); });
+          }
+          document.getElementById("btnCheck").addEventListener("click", checkAnswer);
+          refreshInput();
+        }
+
+        function pressKey(k) {
+          if (phase !== "input") return;
+          var r = rounds[roundIdx];
+          if (k === "del") typed = typed.slice(0, -1);
+          else if (k === "clear") typed = "";
+          else if (/^\d$/.test(k) && typed.length < r.digits) typed += k;
+          refreshInput();
+        }
+
+        function refreshInput() {
+          var wrap = document.getElementById("slotsWrap");
+          if (wrap) wrap.innerHTML = slotHtml();
+          var btn = document.getElementById("btnCheck");
+          if (btn) btn.disabled = typed.length !== rounds[roundIdx].digits;
+        }
+
+        function checkAnswer() {
+          if (phase !== "input") return;
+          var r = rounds[roundIdx];
+          lastOk = typed === reversed(r.value);
+          if (lastOk) score++;
+          renderFeedback();
+        }
+
+        function renderFeedback() {
+          phase = "feedback"; renderTop();
+          var s = t();
+          var r = rounds[roundIdx];
+          var answer = reversed(r.value);
+          var body = fill(lastOk ? s.fbGood : s.fbBad, { orig: esc(spaced(r.value)), ans: esc(spaced(answer)) });
+          var last = roundIdx === rounds.length - 1;
+          stageBox.innerHTML =
+            '<div class="feedback ' + (lastOk ? "good" : "bad") + '">' +
+            '<p class="fb-title">' + esc(lastOk ? s.praise[roundIdx % s.praise.length] : s.cheer[roundIdx % s.cheer.length]) + "</p>" +
+            "<p>" + body + "</p>" +
+            "</div>" +
+            '<div class="btn-row"><button type="button" class="btn btn-primary" id="btnNext">' +
+            esc(last ? s.btnResult : s.btnNext) + "</button></div>";
+          document.getElementById("btnNext").addEventListener("click", function () {
+            if (last) showResult();
+            else { roundIdx++; showReady(); }
+          });
+        }
+
+        function showResult() {
+          phase = "done"; renderTop();
+          var s = t();
+          var idx = score === 5 ? 3 : score >= 3 ? 2 : score >= 1 ? 1 : 0;
+          var m = s.resultMsgs[idx];
+          stageBox.innerHTML =
+            '<div class="result-box">' +
+            '<p class="stage-sub" style="margin-bottom:0">' + esc(s.resultLabel) + "</p>" +
+            '<p class="result-score">' + score + " / 5</p>" +
+            '<p class="result-msg">' + esc(m.msg) + "</p>" +
+            '<p class="result-sub">' + esc(m.sub) + "</p>" +
+            '<div class="btn-row">' +
+            '<button type="button" class="btn btn-primary" id="btnAgain">' + esc(s.btnAgain) + "</button>" +
+            "</div>" +
+            '<p class="stage-sub" style="margin-top:16px">' + esc(s.resultNote) + "</p>" +
+            "</div>";
+          document.getElementById("btnAgain").addEventListener("click", function () {
+            attempt++;
+            rounds = buildRounds(attempt);
+            roundIdx = 0; score = 0;
+            showReady();
+            document.getElementById("gameCard").scrollIntoView({ behavior: "smooth", block: "start" });
+          });
+        }
+
+        /* ---------- 정적 문구 번역 ---------- */
+        function setStaticText() {
+          var s = t();
+          document.title = s.docTitle;
+          document.documentElement.lang = lang;
+          document.getElementById("chipText").textContent = s.chip;
+          document.getElementById("mainTitle").textContent = s.title;
+          document.getElementById("ledeText").textContent = s.lede;
+          document.getElementById("todayLine").innerHTML = fill(s.todayLine, { date: esc(dateText()) });
+          document.getElementById("howtoTitle").textContent = s.howtoTitle;
+          document.getElementById("step1Title").textContent = s.step1Title;
+          document.getElementById("step1Text").textContent = s.step1Text;
+          document.getElementById("step2Title").textContent = s.step2Title;
+          document.getElementById("step2Text").textContent = s.step2Text;
+          document.getElementById("step3Title").textContent = s.step3Title;
+          document.getElementById("step3Text").textContent = s.step3Text;
+          document.getElementById("exampleCaption").textContent = s.exampleCaption;
+          document.getElementById("levelTitle").textContent = s.levelTitle;
+          document.getElementById("thGame").textContent = s.thGame;
+          document.getElementById("thLevel").textContent = s.thLevel;
+          document.getElementById("thDigits").textContent = s.thDigits;
+          document.getElementById("thTime").textContent = s.thTime;
+          var rows = "";
+          for (var i = 0; i < DIGITS.length; i++) {
+            rows += "<tr><td>" + esc(s.gameWord) + " " + (i + 1) + "</td><td>" + esc(s.levels[i]) +
+              '</td><td class="num">' + DIGITS[i] + esc(s.digitsUnit) + "</td><td>" + esc(s.noLimit) + "</td></tr>";
+          }
+          document.getElementById("levelBody").innerHTML = rows;
+          document.getElementById("whyTitle").textContent = s.whyTitle;
+          document.getElementById("whyP1").innerHTML = s.whyP1;
+          document.getElementById("whyP2").innerHTML = s.whyP2;
+          document.getElementById("tipTitle").textContent = s.tipTitle;
+          var tipsHtml = "";
+          for (var j = 0; j < s.tips.length; j++) tipsHtml += "<li>" + esc(s.tips[j]) + "</li>";
+          document.getElementById("tipsList").innerHTML = tipsHtml;
+          document.getElementById("footerLine1").textContent = s.footerLine1;
+          document.getElementById("footerDisclaimer").textContent = s.footerDisclaimer;
+          document.getElementById("footerLink").textContent = s.footerLink;
+        }
+
+        /* ---------- 언어 전환 ----------
+           게임 진행 상태(라운드·점수·입력 중 숫자)는 그대로 두고
+           지금 보고 있는 화면만 새 언어로 다시 그려요. */
+        function applyLang(newLang) {
+          if (!STR[newLang]) return;
+          lang = newLang;
+          var btns = document.querySelectorAll(".lang-btn");
+          for (var i = 0; i < btns.length; i++) {
+            var on = btns[i].getAttribute("data-lang") === lang;
+            btns[i].classList.toggle("active", on);
+            btns[i].setAttribute("aria-pressed", on ? "true" : "false");
+          }
+          setStaticText();
+          if (phase === "ready") showReady();
+          else if (phase === "show") showNumber();
+          else if (phase === "input") showInput();
+          else if (phase === "feedback") renderFeedback();
+          else if (phase === "done") showResult();
+        }
+
+        var langBtns = document.querySelectorAll(".lang-btn");
+        for (var b = 0; b < langBtns.length; b++) {
+          langBtns[b].addEventListener("click", function () { applyLang(this.getAttribute("data-lang")); });
+        }
+
+        /* 컴퓨터 키보드 입력도 지원해요 */
+        document.addEventListener("keydown", function (e) {
+          if (phase !== "input") return;
+          if (/^\d$/.test(e.key)) pressKey(e.key);
+          else if (e.key === "Backspace") { e.preventDefault(); pressKey("del"); }
+          else if (e.key === "Enter") {
+            var btn = document.getElementById("btnCheck");
+            if (btn && !btn.disabled) checkAnswer();
+          }
+        });
+
+        setStaticText();
+        showReady();
+      })();
+    </script>
+  </body>
+</html>

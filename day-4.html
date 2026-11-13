@@ -1,0 +1,986 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Day 4 그림 기억 게임</title>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
+    />
+    <style>
+      :root {
+        --bg: #fdf6ec;
+        --bg-soft: #fbeed9;
+        --card: #fffdf8;
+        --ink: #3a2a1c;
+        --ink-soft: #6f5a44;
+        --line: #ecd9bd;
+        --accent: #d95d0f;
+        --accent-strong: #b84a08;
+        --accent-soft: #fdeeda;
+        --good: #2e7d46;
+        --good-soft: #e4f4e8;
+        --bad: #b3402a;
+        --bad-soft: #fbe9e3;
+        --key: #fff7ea;
+        --key-line: #e6cfa8;
+        --shadow: 0 10px 30px rgba(146, 90, 32, 0.14);
+        color-scheme: light;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #221812;
+          --bg-soft: #2c1f16;
+          --card: #2f2118;
+          --ink: #f7ead9;
+          --ink-soft: #cdb59c;
+          --line: #4d3826;
+          --accent: #f08a3c;
+          --accent-strong: #ffb066;
+          --accent-soft: #453022;
+          --good: #7fd79b;
+          --good-soft: #22392a;
+          --bad: #ff9d87;
+          --bad-soft: #40261f;
+          --key: #3a2a1e;
+          --key-line: #57402a;
+          --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+          color-scheme: dark;
+        }
+      }
+      * { box-sizing: border-box; }
+      html { -webkit-text-size-adjust: 100%; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "Pretendard Variable", Pretendard, -apple-system, "Malgun Gothic", "Apple SD Gothic Neo", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+        font-size: 20px;
+        line-height: 1.6;
+      }
+      .wrap { max-width: 760px; margin: 0 auto; padding: 28px 18px 64px; }
+
+      /* ---------- 언어 선택 ---------- */
+      .lang-bar {
+        display: flex; flex-wrap: wrap; gap: 10px;
+        margin-bottom: 22px;
+      }
+      .lang-bar button {
+        flex: 1 1 0; min-width: 104px; min-height: 56px;
+        padding: 10px 12px;
+        font-family: inherit; font-size: 20px; font-weight: 800;
+        color: var(--accent-strong);
+        background: var(--card);
+        border: 3px solid var(--key-line); border-radius: 14px;
+        cursor: pointer;
+      }
+      .lang-bar button[aria-pressed="true"] {
+        background: var(--accent); border-color: var(--accent); color: #fff;
+      }
+      .lang-bar button:active { background: var(--accent-soft); }
+      .lang-bar button[aria-pressed="true"]:active { background: var(--accent-strong); }
+
+      /* ---------- 머리말 ---------- */
+      .day-chip {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: var(--accent-soft); color: var(--accent-strong);
+        font-weight: 800; font-size: 17px;
+        padding: 8px 16px; border-radius: 999px;
+      }
+      .day-chip .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
+      h1 {
+        font-size: clamp(34px, 7.5vw, 46px);
+        line-height: 1.25; font-weight: 900; letter-spacing: -0.02em;
+        margin: 16px 0 10px;
+      }
+      .lede { font-size: 21px; color: var(--ink-soft); margin: 0 0 6px; }
+      .today-line { font-size: 18px; color: var(--ink-soft); margin: 10px 0 0; }
+      .today-line strong { color: var(--accent-strong); }
+
+      /* ---------- 게임 판 ---------- */
+      .game-card {
+        margin-top: 26px;
+        background: var(--card);
+        border: 2px solid var(--line);
+        border-radius: 24px;
+        box-shadow: var(--shadow);
+        padding: 26px 22px 30px;
+      }
+      .game-top {
+        display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+        gap: 10px 16px; margin-bottom: 6px;
+      }
+      .round-label { font-size: 22px; font-weight: 800; }
+      .round-label .of { color: var(--ink-soft); font-weight: 600; font-size: 19px; }
+      .score-label { font-size: 19px; font-weight: 700; color: var(--ink-soft); }
+      .score-label strong { color: var(--accent-strong); font-size: 22px; }
+      .progress-dots { display: flex; gap: 8px; margin: 10px 0 4px; }
+      .progress-dots span {
+        flex: 1; height: 12px; border-radius: 999px; background: var(--bg-soft);
+        border: 1px solid var(--line);
+      }
+      .progress-dots span.done { background: var(--good); border-color: var(--good); }
+      .progress-dots span.now { background: var(--accent); border-color: var(--accent); }
+      .level-line { font-size: 19px; color: var(--ink-soft); margin: 8px 0 0; }
+      .level-line strong { color: var(--ink); }
+
+      .stage { margin-top: 18px; text-align: center; }
+      .stage-msg { font-size: 22px; font-weight: 700; margin: 0 0 6px; }
+      .stage-sub { font-size: 19px; color: var(--ink-soft); margin: 0 0 18px; }
+
+      /* ---------- 그림 타일 ---------- */
+      .pic-board {
+        background: var(--bg-soft);
+        border: 2px dashed var(--line);
+        border-radius: 18px;
+        padding: 20px 14px;
+      }
+      .pic-grid {
+        display: flex; flex-wrap: wrap; justify-content: center; gap: 12px;
+      }
+      .pic-tile {
+        width: 104px; min-height: 118px;
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+        background: var(--card);
+        border: 2px solid var(--key-line); border-radius: 16px;
+        padding: 12px 6px 10px;
+      }
+      .pic-tile .pic { font-size: 52px; line-height: 1.15; }
+      .pic-tile .pic-name { font-size: 18px; font-weight: 700; color: var(--ink-soft); }
+      .pic-tile.hidden-tile .pic { color: var(--ink-soft); font-weight: 900; }
+      .memorize-note { font-size: 18px; color: var(--ink-soft); margin-top: 14px; }
+
+      /* ---------- 고르기 타일 ---------- */
+      .pick-count { font-size: 20px; font-weight: 800; margin: 0 0 14px; }
+      .pick-count strong { color: var(--accent-strong); font-size: 24px; }
+      .choice-grid {
+        display: flex; flex-wrap: wrap; justify-content: center; gap: 12px;
+      }
+      button.choice-tile {
+        width: 104px; min-height: 118px;
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+        background: var(--key);
+        border: 3px solid var(--key-line); border-radius: 16px;
+        padding: 12px 6px 10px;
+        font-family: inherit; cursor: pointer; color: var(--ink);
+      }
+      button.choice-tile .pic { font-size: 52px; line-height: 1.15; }
+      button.choice-tile .pic-name { font-size: 18px; font-weight: 700; color: var(--ink-soft); }
+      button.choice-tile.picked {
+        border-color: var(--accent);
+        background: var(--accent-soft);
+        box-shadow: inset 0 0 0 2px var(--accent);
+      }
+      button.choice-tile.picked .pic-name { color: var(--accent-strong); }
+      button.choice-tile:active { background: var(--accent-soft); }
+
+      .btn {
+        display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        min-height: 60px; padding: 14px 30px;
+        font-family: inherit; font-size: 22px; font-weight: 800;
+        border-radius: 16px; border: 2px solid transparent; cursor: pointer;
+      }
+      .btn-primary { background: var(--accent); color: #fff; }
+      .btn-primary:active { background: var(--accent-strong); }
+      .btn-ghost { background: transparent; color: var(--accent-strong); border-color: var(--accent); }
+      .btn-row { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 20px; }
+      button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+      button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+      .feedback {
+        margin-top: 20px; border-radius: 16px; padding: 20px 18px; text-align: center;
+      }
+      .feedback.good { background: var(--good-soft); }
+      .feedback.mid { background: var(--accent-soft); }
+      .feedback.bad { background: var(--bad-soft); }
+      .feedback .fb-title { font-size: 26px; font-weight: 900; margin: 0 0 6px; }
+      .feedback.good .fb-title { color: var(--good); }
+      .feedback.mid .fb-title { color: var(--accent-strong); }
+      .feedback.bad .fb-title { color: var(--bad); }
+      .feedback p { margin: 4px 0; font-size: 20px; }
+      .feedback .fb-answer { margin-top: 14px; }
+      .feedback .fb-answer .cap { display: block; font-size: 18px; font-weight: 700; color: var(--ink-soft); margin-bottom: 10px; }
+
+      .result-box { text-align: center; padding: 10px 0 2px; }
+      .result-score { font-size: clamp(52px, 14vw, 76px); font-weight: 900; color: var(--accent-strong); line-height: 1.1; margin: 6px 0; }
+      .result-msg { font-size: 22px; font-weight: 700; margin: 0 0 8px; }
+      .result-sub { font-size: 19px; color: var(--ink-soft); margin: 0; }
+
+      /* ---------- 설명 ---------- */
+      section.howto { margin-top: 48px; }
+      h2 {
+        font-size: 28px; font-weight: 900; letter-spacing: -0.01em;
+        margin: 0 0 16px; padding-bottom: 10px; border-bottom: 3px solid var(--accent-soft);
+      }
+      .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+      .steps li {
+        display: flex; gap: 16px; align-items: flex-start;
+        background: var(--card); border: 2px solid var(--line); border-radius: 18px; padding: 18px;
+      }
+      .step-num {
+        flex: 0 0 auto; width: 46px; height: 46px; border-radius: 50%;
+        background: var(--accent); color: #fff;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 23px; font-weight: 900;
+      }
+      .steps h3 { margin: 2px 0 4px; font-size: 22px; font-weight: 800; }
+      .steps p { margin: 0; font-size: 19px; color: var(--ink-soft); }
+      .example {
+        margin-top: 16px;
+        background: var(--bg-soft); border-radius: 18px; padding: 20px 14px;
+        text-align: center;
+      }
+      .example small { display: block; font-size: 17px; font-weight: 600; color: var(--ink-soft); margin-top: 10px; }
+
+      .level-table { width: 100%; border-collapse: collapse; font-size: 19px; }
+      .level-table th, .level-table td { padding: 12px 10px; text-align: left; border-bottom: 1px solid var(--line); }
+      .level-table th { font-weight: 800; background: var(--bg-soft); }
+      .level-table td.num, .level-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+      .tips { margin: 0; padding-left: 24px; display: grid; gap: 8px; font-size: 19px; }
+      .why p { font-size: 19px; color: var(--ink-soft); margin: 0 0 10px; }
+      .why strong { color: var(--ink); }
+
+      footer {
+        margin-top: 52px; padding-top: 20px; border-top: 2px solid var(--line);
+        font-size: 17px; color: var(--ink-soft); text-align: center;
+      }
+      footer a { color: var(--accent-strong); font-weight: 700; display: inline-block; padding: 10px 6px; }
+      .sr-only {
+        position: absolute; width: 1px; height: 1px; overflow: hidden;
+        clip: rect(0 0 0 0); white-space: nowrap;
+      }
+      [hidden] { display: none !important; }
+
+      @media (prefers-reduced-motion: reduce) {
+        * { transition: none !important; animation: none !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <noscript>
+      <div style="max-width:760px;margin:0 auto;padding:36px 18px;font-size:21px;line-height:1.6">
+        <p><strong>이 게임을 하려면 자바스크립트를 켜 주세요.</strong> 브라우저 설정에서 자바스크립트를 허용한 뒤 다시 열어 주세요.</p>
+        <p><strong>Please turn on JavaScript to play this game.</strong> Allow JavaScript in your browser settings and open this page again.</p>
+        <p><strong>このゲームをするにはJavaScriptをオンにしてください。</strong>ブラウザの設定でJavaScriptを許可してから、もう一度開いてください。</p>
+        <p><a href="https://blog.naver.com/sin4buja">오늘의 두뇌운동 블로그</a></p>
+      </div>
+    </noscript>
+    <main class="wrap" id="mainContent">
+      <!-- ============ 언어 선택 ============ -->
+      <div class="lang-bar" role="group" aria-label="Language / 언어 / 言語">
+        <button type="button" data-lang="ko" aria-pressed="true">한국어</button>
+        <button type="button" data-lang="en" aria-pressed="false">English</button>
+        <button type="button" data-lang="ja" aria-pressed="false">日本語</button>
+      </div>
+
+      <header>
+        <span class="day-chip"><span class="dot"></span><span id="chipText">오늘의 두뇌운동 · Day 4</span></span>
+        <h1 id="mainTitle">그림 기억하기</h1>
+        <p class="lede" id="ledeText">그림 속 물건들을 천천히 보고 외운 뒤, 그림이 가려지면 어떤 물건이 있었는지 골라 맞히는 기억력 게임이에요. 시간 제한이 없으니 서두르지 않아도 돼요. 오늘은 다섯 게임, 5분이면 충분해요.</p>
+        <p class="today-line" id="todayLine"></p>
+      </header>
+
+      <!-- ============ 게임 ============ -->
+      <div class="game-card" id="gameCard">
+        <div class="game-top">
+          <div class="round-label" id="roundLabel">게임 <span id="roundNow">1</span> <span class="of">/ 5</span></div>
+          <div class="score-label" id="scoreLabel">맞힌 게임 <strong>0개</strong></div>
+        </div>
+        <div class="progress-dots" id="progressDots" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <p class="level-line" id="levelLine"></p>
+
+        <div class="stage" id="stageBox" aria-live="polite"></div>
+      </div>
+
+      <!-- ============ 게임 방법 ============ -->
+      <section class="howto" aria-labelledby="howtoTitle">
+        <h2 id="howtoTitle">게임 방법</h2>
+        <ol class="steps">
+          <li>
+            <div class="step-num">1</div>
+            <div>
+              <h3 id="step1Title">그림을 보고 외워요</h3>
+              <p id="step1Text">「그림 보기」를 누르면 물건 그림들이 나타나요. 시간 제한이 없으니 하나씩 이름을 소리 내어 말하면서 외우면 더 잘 기억돼요.</p>
+            </div>
+          </li>
+          <li>
+            <div class="step-num">2</div>
+            <div>
+              <h3 id="step2Title">그림이 가려져요</h3>
+              <p id="step2Text">그림은 저절로 사라지지 않아요. 다 외웠을 때 「다 외웠어요」를 누르면 그때 그림이 가려져요.</p>
+            </div>
+          </li>
+          <li>
+            <div class="step-num">3</div>
+            <div>
+              <h3 id="step3Title">있었던 물건을 골라요</h3>
+              <p id="step3Text">여러 물건 중에서 그림에 있었던 것만 골라 눌러요. 개수를 다 채우면 「정답 확인」을 눌러요. 틀려도 괜찮아요. 뇌는 떠올리려고 애쓰는 순간 가장 활발해져요.</p>
+            </div>
+          </li>
+        </ol>
+        <div class="example">
+          <div class="pic-grid" aria-hidden="true">
+            <div class="pic-tile"><span class="pic">🍎</span><span class="pic-name" id="exName0">사과</span></div>
+            <div class="pic-tile"><span class="pic">☂️</span><span class="pic-name" id="exName1">우산</span></div>
+            <div class="pic-tile"><span class="pic">🐶</span><span class="pic-name" id="exName2">강아지</span></div>
+          </div>
+          <small id="exampleText">예시예요. 사과·우산·강아지를 외웠으면, 보기에서 이 세 가지만 고르면 정답이에요.</small>
+        </div>
+      </section>
+
+      <section class="howto" aria-labelledby="levelTitle">
+        <h2 id="levelTitle">오늘의 다섯 게임</h2>
+        <table class="level-table">
+          <thead>
+            <tr>
+              <th scope="col" id="thGame">게임</th>
+              <th scope="col" id="thLevel">난이도</th>
+              <th scope="col" class="num" id="thShow">외울 그림</th>
+              <th scope="col" class="num" id="thChoices">보기</th>
+              <th scope="col" id="thTime">외우는 시간</th>
+            </tr>
+          </thead>
+          <tbody id="levelTableBody"></tbody>
+        </table>
+      </section>
+
+      <section class="howto why" aria-labelledby="whyTitle">
+        <h2 id="whyTitle">왜 좋은 게임인가요?</h2>
+        <p id="whyText1"></p>
+        <p id="whyText2"></p>
+      </section>
+
+      <section class="howto" aria-labelledby="tipTitle">
+        <h2 id="tipTitle">더 잘 외우는 팁</h2>
+        <ul class="tips">
+          <li id="tip1"></li>
+          <li id="tip2"></li>
+          <li id="tip3"></li>
+          <li id="tip4"></li>
+        </ul>
+      </section>
+
+      <footer>
+        <p><span id="footerLine"></span><br /><span id="disclaimerText"></span></p>
+        <a href="https://blog.naver.com/sin4buja" target="_blank" rel="noopener" id="footerLink">Day 4 그림 기억하기</a>
+      </footer>
+    </main>
+
+    <script>
+      (function () {
+        "use strict";
+
+        /* ================= 번역 사전 ================= */
+        var T = {
+          ko: {
+            docTitle: "Day 4 그림 기억 게임",
+            chip: "오늘의 두뇌운동 · Day 4",
+            title: "그림 기억하기",
+            lede: "그림 속 물건들을 천천히 보고 외운 뒤, 그림이 가려지면 어떤 물건이 있었는지 골라 맞히는 기억력 게임이에요. 시간 제한이 없으니 서두르지 않아도 돼요. 오늘은 다섯 게임, 5분이면 충분해요.",
+            todayFmt: function (d, wk) { return d.getFullYear() + "년 " + (d.getMonth() + 1) + "월 " + d.getDate() + "일 (" + wk + ")"; },
+            todayLine: function (dateStr) {
+              return "오늘은 <strong>" + dateStr + "</strong> · 오늘의 그림은 날짜에 맞춰 정해져요. <strong>내일 오면 새로운 그림</strong>으로 바뀌어 있어요. 어디서든 바로 들어와서 할 수 있어요.";
+            },
+            week: ["일", "월", "화", "수", "목", "금", "토"],
+            gameWord: "게임",
+            scoreLabel: function (n) { return "맞힌 게임 <strong>" + n + "개</strong>"; },
+            levelLineDone: "오늘의 다섯 게임을 모두 마쳤어요. 수고하셨어요!",
+            levelLine: function (name, show) {
+              return "난이도 <strong>" + name + "</strong> · 외울 그림 <strong>" + show + "개</strong> · 외우는 시간 <strong>제한 없음</strong>";
+            },
+            readyFirst: "준비되셨나요?",
+            readyNext: "다음 게임이에요",
+            readySub: function (show) {
+              return "아래 버튼을 누르면 물건 그림 " + show + "개가 나타나요.<br />시간 제한이 없으니 천천히 외워 두세요.";
+            },
+            hiddenName: "그림",
+            btnShow: "그림 보기",
+            showMsg: "지금 외우세요!",
+            showSub: "물건 이름을 하나씩 소리 내어 말하면서 외우면 더 잘 기억돼요.",
+            memorizeNote: "시간 제한이 없어요. 그림은 사라지지 않으니 천천히 외우세요.",
+            btnHide: "다 외웠어요",
+            pickMsg: "그림이 가려졌어요",
+            pickSub: "방금 본 그림에 있었던 물건을 모두 골라 주세요.",
+            pickCount: function (now, show) { return "고른 그림 <strong>" + now + " / " + show + "개</strong>"; },
+            pickAria: "물건 고르기",
+            btnCheck: "정답 확인",
+            praise: ["완벽해요!", "대단하세요!", "정확해요!", "기억력이 반짝이네요!", "최고예요!"],
+            fbFullBody: function (show) { return "<p>그림에 있었던 물건 <strong>" + show + "개</strong>를 모두 맞혔어요!</p>"; },
+            fbMidTitle: "아주 잘 떠올리셨어요!",
+            fbMidBody: function (show, hit) { return "<p>" + show + "개 중 <strong>" + hit + "개</strong>를 맞혔어요. 아래 정답 그림을 한 번 더 살펴보세요.</p>"; },
+            fbBadTitle: "괜찮아요, 잘 애쓰셨어요.",
+            fbBadBody: function (show, hit) { return "<p>" + show + "개 중 <strong>" + hit + "개</strong>를 맞혔어요. 떠올리려 애쓴 것 자체가 운동이에요. 아래 정답 그림을 천천히 살펴보세요.</p>"; },
+            fbAnswerCap: "정답 그림",
+            btnResult: "오늘의 결과 보기",
+            btnNext: "다음 게임으로",
+            resultCap: "오늘의 결과 · 다 맞힌 게임",
+            resultMsgs: [
+              { msg: "다섯 게임 모두 맞혔어요!", sub: "오늘 뇌가 아주 기분 좋게 운동했어요. 내일도 새로운 그림이 기다리고 있어요." },
+              { msg: "아주 잘하셨어요!", sub: "조금 아쉬운 게임이 있어도 괜찮아요. 떠올리려고 애쓴 순간 뇌는 이미 운동하고 있었어요." },
+              { msg: "좋은 시작이에요!", sub: "처음에는 누구나 어려워요. 매일 5분씩 하다 보면 조금씩 더 잘 기억하게 될 거예요." },
+              { msg: "오늘도 해낸 것만으로 충분해요!", sub: "점수보다 매일 하는 것이 중요해요. 내일 새로운 그림으로 다시 만나요." }
+            ],
+            btnAgain: "새로운 그림으로 다시 하기",
+            resultNote: "내일 다시 오시면, 날짜가 바뀌어 또 다른 그림이 준비돼 있어요.",
+            howtoTitle: "게임 방법",
+            step1Title: "그림을 보고 외워요",
+            step1Text: "「그림 보기」를 누르면 물건 그림들이 나타나요. 시간 제한이 없으니 하나씩 이름을 소리 내어 말하면서 외우면 더 잘 기억돼요.",
+            step2Title: "그림이 가려져요",
+            step2Text: "그림은 저절로 사라지지 않아요. 다 외웠을 때 「다 외웠어요」를 누르면 그때 그림이 가려져요.",
+            step3Title: "있었던 물건을 골라요",
+            step3Text: "여러 물건 중에서 그림에 있었던 것만 골라 눌러요. 개수를 다 채우면 「정답 확인」을 눌러요. 틀려도 괜찮아요. 뇌는 떠올리려고 애쓰는 순간 가장 활발해져요.",
+            example: "예시예요. 사과·우산·강아지를 외웠으면, 보기에서 이 세 가지만 고르면 정답이에요.",
+            levelTitle: "오늘의 다섯 게임",
+            thGame: "게임", thLevel: "난이도", thShow: "외울 그림", thChoices: "보기", thTime: "외우는 시간",
+            noLimit: "제한 없음",
+            countUnit: function (n) { return n + "개"; },
+            whyTitle: "왜 좋은 게임인가요?",
+            why1: "눈으로 본 그림을 잠시 머릿속에 붙잡아 두는 힘은 <strong>시각 기억</strong>이에요. 냉장고 문을 닫은 뒤 무엇이 있었는지 떠올리는 것, 마트에서 본 물건을 찾는 것이 모두 시각 기억의 일이에요.",
+            why2: "그림을 하나씩 이름 붙여 외우고, 가려진 뒤 떠올려 고르는 과정이 시각 기억과 집중력을 함께 단련해요. 하루 다섯 게임, 딱 5분이면 충분합니다. 점수보다 <strong>매일 꾸준히 하는 것</strong>이 훨씬 중요해요.",
+            tipTitle: "더 잘 외우는 팁",
+            tips: [
+              "그림을 왼쪽에서 오른쪽으로 하나씩, 이름을 소리 내어 말해 보세요.",
+              "비슷한 것끼리 묶어 외워 보세요. 과일은 과일끼리, 동물은 동물끼리 묶으면 쉬워요.",
+              "물건들 사이에 이야기를 만들어 보세요. 「강아지가 우산을 쓰고 사과를 먹어요」처럼요.",
+              "틀린 게임은 점수에 연연하지 말고, 정답 그림을 보고 한 번 더 천천히 살펴보세요."
+            ],
+            footerLine: "오늘의 두뇌운동 · 뇌건강 놀이터지기가 매일 준비하는 치매예방 기억력 게임이에요.",
+            disclaimer: "이 게임은 놀이와 두뇌 활동 돕기가 목적이며, 의료 진단이나 치료를 대신하지 않아요.",
+            footerLink: "Day 4 그림 기억하기",
+            levels: ["몸풀기", "쉬움", "보통", "어려움", "최종 도전"]
+          },
+          en: {
+            docTitle: "Day 4 Picture Memory Game",
+            chip: "Daily Brain Exercise · Day 4",
+            title: "Picture Memory",
+            lede: "Look at the pictures slowly and memorize them. When they are hidden, pick the ones you saw. There is no time limit, so there is no need to hurry. Five games today — about 5 minutes is enough.",
+            todayFmt: function (d, wk) { return wk + ", " + ["January","February","March","April","May","June","July","August","September","October","November","December"][d.getMonth()] + " " + d.getDate() + ", " + d.getFullYear(); },
+            todayLine: function (dateStr) {
+              return "Today is <strong>" + dateStr + "</strong> · Today's pictures are chosen by the date. <strong>Come back tomorrow for new pictures.</strong> You can open this page and play right away, anywhere.";
+            },
+            week: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+            gameWord: "Game",
+            scoreLabel: function (n) { return "Games solved <strong>" + n + "</strong>"; },
+            levelLineDone: "You finished all five games today. Well done!",
+            levelLine: function (name, show) {
+              return "Level <strong>" + name + "</strong> · Pictures to memorize <strong>" + show + "</strong> · Memorizing time <strong>No limit</strong>";
+            },
+            readyFirst: "Are you ready?",
+            readyNext: "Here is the next game",
+            readySub: function (show) {
+              return "Press the button below and " + show + " pictures will appear.<br />There is no time limit, so memorize them slowly.";
+            },
+            hiddenName: "Picture",
+            btnShow: "Show pictures",
+            showMsg: "Memorize them now!",
+            showSub: "Saying each item's name out loud, one by one, helps you remember better.",
+            memorizeNote: "There is no time limit. The pictures will not disappear, so take your time.",
+            btnHide: "I've memorized them",
+            pickMsg: "The pictures are hidden",
+            pickSub: "Please pick all the items that were in the picture you just saw.",
+            pickCount: function (now, show) { return "Picked <strong>" + now + " / " + show + "</strong>"; },
+            pickAria: "Pick the items",
+            btnCheck: "Check answer",
+            praise: ["Perfect!", "Wonderful!", "Exactly right!", "What a sparkling memory!", "Excellent!"],
+            fbFullBody: function (show) { return "<p>You found all <strong>" + show + "</strong> items from the picture!</p>"; },
+            fbMidTitle: "You remembered very well!",
+            fbMidBody: function (show, hit) { return "<p>You got <strong>" + hit + " of " + show + "</strong>. Take another look at the correct pictures below.</p>"; },
+            fbBadTitle: "That's okay — you tried hard.",
+            fbBadBody: function (show, hit) { return "<p>You got <strong>" + hit + " of " + show + "</strong>. Trying to remember is itself the exercise. Look at the correct pictures below slowly.</p>"; },
+            fbAnswerCap: "Correct pictures",
+            btnResult: "See today's result",
+            btnNext: "Next game",
+            resultCap: "Today's result · Games fully solved",
+            resultMsgs: [
+              { msg: "You solved all five games!", sub: "Your brain had a happy workout today. New pictures will be waiting tomorrow." },
+              { msg: "Very well done!", sub: "It is fine if a game or two felt tricky. While you were trying to remember, your brain was already exercising." },
+              { msg: "A good start!", sub: "Everyone finds it hard at first. Five minutes a day, and remembering will get a little easier." },
+              { msg: "Finishing today is enough!", sub: "Playing every day matters far more than the score. See you tomorrow with new pictures." }
+            ],
+            btnAgain: "Play again with new pictures",
+            resultNote: "Come back tomorrow — the date changes and a new set of pictures will be ready.",
+            howtoTitle: "How to play",
+            step1Title: "Look at the pictures and memorize them",
+            step1Text: "Press “Show pictures” and the item pictures appear. There is no time limit, so say each name out loud as you memorize — it helps you remember better.",
+            step2Title: "The pictures get hidden",
+            step2Text: "The pictures never disappear on their own. When you have memorized them, press “I've memorized them” and only then are they hidden.",
+            step3Title: "Pick the items that were there",
+            step3Text: "From the items shown, tap only the ones that were in the picture. When you have picked the full count, press “Check answer”. It is okay to get some wrong — your brain works hardest at the moment you try to recall.",
+            example: "Example: if you memorized apple, umbrella, and dog, pick just those three from the choices and you are correct.",
+            levelTitle: "Today's five games",
+            thGame: "Game", thLevel: "Level", thShow: "Pictures", thChoices: "Choices", thTime: "Memorizing time",
+            noLimit: "No limit",
+            countUnit: function (n) { return String(n); },
+            whyTitle: "Why is this a good game?",
+            why1: "Holding a picture you saw in your mind for a while is called <strong>visual memory</strong>. Remembering what was in the fridge after closing the door, or finding an item you saw at the store — that is all visual memory at work.",
+            why2: "Naming each picture as you memorize it, then recalling and picking it after it is hidden, trains visual memory and focus together. Five games a day, just 5 minutes, is enough. <strong>Playing every day</strong> matters far more than the score.",
+            tipTitle: "Tips to remember better",
+            tips: [
+              "Go from left to right, one by one, and say each name out loud.",
+              "Group similar things together — fruit with fruit, animals with animals.",
+              "Make a little story: “The dog holds an umbrella and eats an apple.”",
+              "Do not worry about the score on a missed game — look at the correct pictures once more, slowly."
+            ],
+            footerLine: "Daily Brain Exercise · A memory game for brain health, prepared every day.",
+            disclaimer: "This game is for play and brain activity; it does not replace medical diagnosis or treatment.",
+            footerLink: "Day 4 · Picture Memory",
+            levels: ["Warm-up", "Easy", "Normal", "Hard", "Final Challenge"]
+          },
+          ja: {
+            docTitle: "Day 4 絵を覚えるゲーム",
+            chip: "今日の脳トレ · Day 4",
+            title: "絵を覚える",
+            lede: "絵の中のものをゆっくり見て覚え、絵が隠れたら、どのものがあったかを選んで当てる記憶ゲームです。時間制限はないので、急がなくて大丈夫です。今日は5ゲーム、5分で十分です。",
+            todayFmt: function (d, wk) { return d.getFullYear() + "年" + (d.getMonth() + 1) + "月" + d.getDate() + "日（" + wk + "）"; },
+            todayLine: function (dateStr) {
+              return "今日は <strong>" + dateStr + "</strong> · 今日の絵は日付に合わせて決まります。<strong>明日来ると新しい絵</strong>に変わっています。どこからでもすぐ開いて遊べます。";
+            },
+            week: ["日", "月", "火", "水", "木", "金", "土"],
+            gameWord: "ゲーム",
+            scoreLabel: function (n) { return "正解したゲーム <strong>" + n + "つ</strong>"; },
+            levelLineDone: "今日の5ゲームをすべて終えました。お疲れさまでした！",
+            levelLine: function (name, show) {
+              return "難易度 <strong>" + name + "</strong> · 覚える絵 <strong>" + show + "つ</strong> · 覚える時間 <strong>制限なし</strong>";
+            },
+            readyFirst: "準備はできましたか？",
+            readyNext: "次のゲームです",
+            readySub: function (show) {
+              return "下のボタンを押すと、ものの絵が " + show + "つ現れます。<br />時間制限はないので、ゆっくり覚えてください。";
+            },
+            hiddenName: "絵",
+            btnShow: "絵を見る",
+            showMsg: "今、覚えてください！",
+            showSub: "ものの名前を一つずつ声に出して言うと、もっとよく覚えられます。",
+            memorizeNote: "時間制限はありません。絵は消えないので、ゆっくり覚えてください。",
+            btnHide: "覚えました",
+            pickMsg: "絵が隠れました",
+            pickSub: "さっき見た絵にあったものを、すべて選んでください。",
+            pickCount: function (now, show) { return "選んだ絵 <strong>" + now + " / " + show + "つ</strong>"; },
+            pickAria: "ものを選ぶ",
+            btnCheck: "答え合わせ",
+            praise: ["完璧です！", "すごいです！", "正確です！", "記憶力がキラキラしています！", "最高です！"],
+            fbFullBody: function (show) { return "<p>絵にあったもの <strong>" + show + "つ</strong>をすべて当てました！</p>"; },
+            fbMidTitle: "とてもよく思い出せました！",
+            fbMidBody: function (show, hit) { return "<p>" + show + "つのうち <strong>" + hit + "つ</strong>当たりました。下の正解の絵をもう一度見てください。</p>"; },
+            fbBadTitle: "大丈夫です、よく頑張りました。",
+            fbBadBody: function (show, hit) { return "<p>" + show + "つのうち <strong>" + hit + "つ</strong>当たりました。思い出そうと努力すること自体が運動です。下の正解の絵をゆっくり見てください。</p>"; },
+            fbAnswerCap: "正解の絵",
+            btnResult: "今日の結果を見る",
+            btnNext: "次のゲームへ",
+            resultCap: "今日の結果 · 全部正解したゲーム",
+            resultMsgs: [
+              { msg: "5ゲームすべて正解しました！", sub: "今日は脳が気持ちよく運動しました。明日も新しい絵が待っています。" },
+              { msg: "とてもよくできました！", sub: "少し惜しいゲームがあっても大丈夫です。思い出そうと努力した瞬間、脳はすでに運動していました。" },
+              { msg: "良いスタートです！", sub: "最初は誰でも難しいものです。毎日5分ずつ続けると、少しずつよく覚えられるようになります。" },
+              { msg: "今日やり遂げただけで十分です！", sub: "点数より毎日続けることが大切です。明日、新しい絵でまた会いましょう。" }
+            ],
+            btnAgain: "新しい絵でもう一度",
+            resultNote: "明日また来ると、日付が変わって別の絵が用意されています。",
+            howtoTitle: "遊び方",
+            step1Title: "絵を見て覚えます",
+            step1Text: "「絵を見る」を押すと、ものの絵が現れます。時間制限はないので、一つずつ名前を声に出して言いながら覚えると、もっとよく記憶できます。",
+            step2Title: "絵が隠れます",
+            step2Text: "絵は勝手に消えません。覚え終わったら「覚えました」を押してください。そのとき絵が隠れます。",
+            step3Title: "あったものを選びます",
+            step3Text: "いろいろなものの中から、絵にあったものだけを選んで押してください。数をそろえたら「答え合わせ」を押してください。間違えても大丈夫です。脳は思い出そうと努力する瞬間にいちばん活発になります。",
+            example: "例です。りんご・傘・犬を覚えたら、選択肢からこの3つだけを選べば正解です。",
+            levelTitle: "今日の5ゲーム",
+            thGame: "ゲーム", thLevel: "難易度", thShow: "覚える絵", thChoices: "選択肢", thTime: "覚える時間",
+            noLimit: "制限なし",
+            countUnit: function (n) { return n + "つ"; },
+            whyTitle: "なぜ良いゲームなのですか？",
+            why1: "目で見た絵をしばらく頭の中にとどめておく力は<strong>視覚記憶</strong>です。冷蔵庫の扉を閉めたあと何があったか思い出すこと、お店で見たものを探すこと、すべて視覚記憶の仕事です。",
+            why2: "絵に一つずつ名前をつけて覚え、隠れたあと思い出して選ぶ過程が、視覚記憶と集中力を一緒に鍛えます。1日5ゲーム、ちょうど5分で十分です。点数より<strong>毎日続けること</strong>がずっと大切です。",
+            tipTitle: "もっとよく覚えるコツ",
+            tips: [
+              "絵を左から右へ一つずつ、名前を声に出して言ってみてください。",
+              "似たもの同士をまとめて覚えてみてください。果物は果物同士、動物は動物同士にまとめると簡単です。",
+              "もの同士でお話を作ってみてください。「犬が傘をさしてりんごを食べます」のように。",
+              "間違えたゲームは点数にこだわらず、正解の絵を見てもう一度ゆっくり眺めてください。"
+            ],
+            footerLine: "今日の脳トレ · 脳の健康のために毎日用意する記憶ゲームです。",
+            disclaimer: "このゲームは遊びと脳の活動のためのもので、医療の診断や治療の代わりにはなりません。",
+            footerLink: "Day 4 · 絵を覚える",
+            levels: ["ウォームアップ", "かんたん", "ふつう", "むずかしい", "最終チャレンジ"]
+          }
+        };
+
+        /* 물건 그림 모음: 그림은 같고, 이름만 언어별로 달라져요. id는 언어와 무관한 고유 번호예요. */
+        var ITEMS = [
+          { pic: "🍎", ko: "사과", en: "Apple", ja: "りんご" },
+          { pic: "🍌", ko: "바나나", en: "Banana", ja: "バナナ" },
+          { pic: "🍇", ko: "포도", en: "Grapes", ja: "ぶどう" },
+          { pic: "🍓", ko: "딸기", en: "Strawberry", ja: "いちご" },
+          { pic: "🍉", ko: "수박", en: "Watermelon", ja: "すいか" },
+          { pic: "🥕", ko: "당근", en: "Carrot", ja: "にんじん" },
+          { pic: "🍞", ko: "빵", en: "Bread", ja: "パン" },
+          { pic: "🥛", ko: "우유", en: "Milk", ja: "牛乳" },
+          { pic: "🎂", ko: "케이크", en: "Cake", ja: "ケーキ" },
+          { pic: "☂️", ko: "우산", en: "Umbrella", ja: "傘" },
+          { pic: "⏰", ko: "자명종", en: "Alarm clock", ja: "目覚まし時計" },
+          { pic: "👓", ko: "안경", en: "Glasses", ja: "めがね" },
+          { pic: "🔑", ko: "열쇠", en: "Key", ja: "鍵" },
+          { pic: "📕", ko: "책", en: "Book", ja: "本" },
+          { pic: "✏️", ko: "연필", en: "Pencil", ja: "鉛筆" },
+          { pic: "✂️", ko: "가위", en: "Scissors", ja: "はさみ" },
+          { pic: "☕", ko: "커피", en: "Coffee", ja: "コーヒー" },
+          { pic: "🧢", ko: "모자", en: "Hat", ja: "帽子" },
+          { pic: "👟", ko: "운동화", en: "Sneakers", ja: "スニーカー" },
+          { pic: "☎️", ko: "전화기", en: "Telephone", ja: "電話" },
+          { pic: "📷", ko: "카메라", en: "Camera", ja: "カメラ" },
+          { pic: "🔔", ko: "종", en: "Bell", ja: "ベル" },
+          { pic: "🕯️", ko: "촛불", en: "Candle", ja: "ろうそく" },
+          { pic: "🎈", ko: "풍선", en: "Balloon", ja: "風船" },
+          { pic: "🌷", ko: "튤립", en: "Tulip", ja: "チューリップ" },
+          { pic: "🌳", ko: "나무", en: "Tree", ja: "木" },
+          { pic: "🍄", ko: "버섯", en: "Mushroom", ja: "きのこ" },
+          { pic: "🏠", ko: "집", en: "House", ja: "家" },
+          { pic: "🚗", ko: "자동차", en: "Car", ja: "車" },
+          { pic: "🚲", ko: "자전거", en: "Bicycle", ja: "自転車" },
+          { pic: "🐶", ko: "강아지", en: "Dog", ja: "犬" },
+          { pic: "🐱", ko: "고양이", en: "Cat", ja: "猫" },
+          { pic: "🐦", ko: "새", en: "Bird", ja: "鳥" },
+          { pic: "🐟", ko: "물고기", en: "Fish", ja: "魚" },
+          { pic: "🦋", ko: "나비", en: "Butterfly", ja: "蝶" },
+          { pic: "⚽", ko: "축구공", en: "Soccer ball", ja: "サッカーボール" },
+          { pic: "🌙", ko: "달", en: "Moon", ja: "月" },
+          { pic: "⭐", ko: "별", en: "Star", ja: "星" },
+          { pic: "☀️", ko: "해", en: "Sun", ja: "太陽" }
+        ];
+        ITEMS.forEach(function (it, i) { it.id = i; });
+
+        var LEVELS = [
+          { show: 3, choices: 6 },
+          { show: 4, choices: 8 },
+          { show: 5, choices: 9 },
+          { show: 6, choices: 10 },
+          { show: 7, choices: 12 }
+        ];
+
+        /* ---------- 날짜 기반 랜덤 (언어와 무관하게 같은 그림) ---------- */
+        function mulberry32(seed) {
+          var a = seed >>> 0;
+          return function () {
+            a |= 0; a = (a + 0x6d2b79f5) | 0;
+            var t = Math.imul(a ^ (a >>> 15), 1 | a);
+            t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+          };
+        }
+
+        var now = new Date();
+        var dateSeed = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
+
+        function shuffled(rand, arr) {
+          var a = arr.slice();
+          for (var i = a.length - 1; i > 0; i--) {
+            var j = Math.floor(rand() * (i + 1));
+            var t = a[i]; a[i] = a[j]; a[j] = t;
+          }
+          return a;
+        }
+
+        function buildRounds(attempt) {
+          var rand = mulberry32(dateSeed * 1000 + attempt * 77 + 41);
+          return LEVELS.map(function (lv) {
+            var pool = shuffled(rand, ITEMS);
+            var answer = pool.slice(0, lv.show);
+            var options = shuffled(rand, pool.slice(0, lv.choices));
+            return { show: lv.show, choices: lv.choices, answer: answer, options: options };
+          });
+        }
+
+        /* ---------- 상태 ---------- */
+        var lang = "ko";
+        var attempt = 0;
+        var rounds = buildRounds(attempt);
+        var roundIdx = 0;
+        var score = 0;
+        var phase = "ready"; /* ready | show | pick | feedback | done */
+        var picked = {}; /* id -> true */
+        var lastHit = 0;
+
+        var stageBox = document.getElementById("stageBox");
+        var dotsEl = document.getElementById("progressDots");
+        var levelLineEl = document.getElementById("levelLine");
+
+        function t() { return T[lang]; }
+        function itemName(it) { return it[lang]; }
+        function esc(s) {
+          return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+        }
+        function namesOf(list) {
+          return list.map(itemName).join(", ");
+        }
+        function tileHtml(it) {
+          return '<div class="pic-tile"><span class="pic" aria-hidden="true">' + it.pic +
+            '</span><span class="pic-name">' + esc(itemName(it)) + "</span></div>";
+        }
+        function tilesHtml(list) {
+          return '<div class="pic-grid">' + list.map(tileHtml).join("") + "</div>";
+        }
+
+        /* ---------- 정적 문구 적용 ---------- */
+        function applyStatic() {
+          var s = t();
+          document.documentElement.lang = lang;
+          document.title = s.docTitle;
+          document.getElementById("chipText").textContent = s.chip;
+          document.getElementById("mainTitle").textContent = s.title;
+          document.getElementById("ledeText").textContent = s.lede;
+          var wk = s.week[now.getDay()];
+          document.getElementById("todayLine").innerHTML = s.todayLine(s.todayFmt(now, wk));
+          document.getElementById("howtoTitle").textContent = s.howtoTitle;
+          document.getElementById("step1Title").textContent = s.step1Title;
+          document.getElementById("step1Text").textContent = s.step1Text;
+          document.getElementById("step2Title").textContent = s.step2Title;
+          document.getElementById("step2Text").textContent = s.step2Text;
+          document.getElementById("step3Title").textContent = s.step3Title;
+          document.getElementById("step3Text").textContent = s.step3Text;
+          document.getElementById("exName0").textContent = itemName(ITEMS[0]);
+          document.getElementById("exName1").textContent = itemName(ITEMS[9]);
+          document.getElementById("exName2").textContent = itemName(ITEMS[30]);
+          document.getElementById("exampleText").textContent = s.example;
+          document.getElementById("levelTitle").textContent = s.levelTitle;
+          document.getElementById("thGame").textContent = s.thGame;
+          document.getElementById("thLevel").textContent = s.thLevel;
+          document.getElementById("thShow").textContent = s.thShow;
+          document.getElementById("thChoices").textContent = s.thChoices;
+          document.getElementById("thTime").textContent = s.thTime;
+          var rows = "";
+          LEVELS.forEach(function (lv, i) {
+            rows += "<tr><td>" + esc(s.gameWord) + " " + (i + 1) + "</td><td>" + esc(s.levels[i]) + "</td>" +
+              '<td class="num">' + esc(s.countUnit(lv.show)) + "</td>" +
+              '<td class="num">' + esc(s.countUnit(lv.choices)) + "</td><td>" + esc(s.noLimit) + "</td></tr>";
+          });
+          document.getElementById("levelTableBody").innerHTML = rows;
+          document.getElementById("whyTitle").textContent = s.whyTitle;
+          document.getElementById("whyText1").innerHTML = s.why1;
+          document.getElementById("whyText2").innerHTML = s.why2;
+          document.getElementById("tipTitle").textContent = s.tipTitle;
+          for (var i = 1; i <= 4; i++) {
+            document.getElementById("tip" + i).textContent = s.tips[i - 1];
+          }
+          document.getElementById("footerLine").textContent = s.footerLine;
+          document.getElementById("disclaimerText").textContent = s.disclaimer;
+          document.getElementById("footerLink").textContent = s.footerLink;
+          var btns = document.querySelectorAll(".lang-bar button");
+          for (var b = 0; b < btns.length; b++) {
+            btns[b].setAttribute("aria-pressed", btns[b].getAttribute("data-lang") === lang ? "true" : "false");
+          }
+        }
+
+        function renderTop() {
+          var s = t();
+          document.getElementById("roundLabel").innerHTML =
+            esc(s.gameWord) + ' <span id="roundNow">' + Math.min(roundIdx + 1, 5) + '</span> <span class="of">/ 5</span>';
+          document.getElementById("scoreLabel").innerHTML = s.scoreLabel(score);
+          var dots = dotsEl.children;
+          for (var i = 0; i < dots.length; i++) {
+            dots[i].className = i < roundIdx || phase === "done" ? "done" : i === roundIdx ? "now" : "";
+          }
+          if (phase === "done") {
+            levelLineEl.textContent = s.levelLineDone;
+          } else {
+            var r = rounds[roundIdx];
+            levelLineEl.innerHTML = s.levelLine(s.levels[roundIdx], r.show);
+          }
+        }
+
+        /* ---------- 단계별 화면 ---------- */
+        function renderStage() {
+          if (phase === "ready") showReady();
+          else if (phase === "show") showPicture();
+          else if (phase === "pick") showPick();
+          else if (phase === "feedback") renderFeedback();
+          else if (phase === "done") showResult();
+        }
+
+        function showReady() {
+          phase = "ready"; renderTop();
+          var s = t();
+          var r = rounds[roundIdx];
+          var hidden = "";
+          for (var i = 0; i < r.show; i++) {
+            hidden += '<div class="pic-tile hidden-tile"><span class="pic">?</span><span class="pic-name">' + esc(s.hiddenName) + "</span></div>";
+          }
+          stageBox.innerHTML =
+            '<p class="stage-msg">' + (roundIdx === 0 ? esc(s.readyFirst) : esc(s.readyNext)) + "</p>" +
+            '<p class="stage-sub">' + s.readySub(r.show) + "</p>" +
+            '<div class="pic-board"><div class="pic-grid">' + hidden + "</div></div>" +
+            '<div class="btn-row"><button type="button" class="btn btn-primary" id="btnShow">' + esc(s.btnShow) + "</button></div>";
+          document.getElementById("btnShow").addEventListener("click", function () { showPicture(); });
+        }
+
+        function showPicture() {
+          phase = "show"; renderTop();
+          var s = t();
+          var r = rounds[roundIdx];
+          stageBox.innerHTML =
+            '<p class="stage-msg">' + esc(s.showMsg) + "</p>" +
+            '<p class="stage-sub">' + esc(s.showSub) + "</p>" +
+            '<div class="pic-board">' + tilesHtml(r.answer) + "</div>" +
+            '<p class="memorize-note">' + esc(s.memorizeNote) + "</p>" +
+            '<div class="btn-row"><button type="button" class="btn btn-primary" id="btnHide">' + esc(s.btnHide) + "</button></div>";
+          document.getElementById("btnHide").addEventListener("click", function () { picked = {}; showPick(); });
+        }
+
+        function pickCount() {
+          var n = 0;
+          for (var k in picked) if (picked[k]) n++;
+          return n;
+        }
+
+        function choiceHtml() {
+          var s = t();
+          var r = rounds[roundIdx];
+          var html = '<div class="choice-grid" role="group" aria-label="' + esc(s.pickAria) + '">';
+          r.options.forEach(function (it) {
+            var on = picked[it.id] ? " picked" : "";
+            html += '<button type="button" class="choice-tile' + on + '" data-id="' + it.id +
+              '" aria-pressed="' + (picked[it.id] ? "true" : "false") + '">' +
+              '<span class="pic" aria-hidden="true">' + it.pic + "</span>" +
+              '<span class="pic-name">' + esc(itemName(it)) + "</span></button>";
+          });
+          return html + "</div>";
+        }
+
+        function showPick() {
+          phase = "pick"; renderTop();
+          var s = t();
+          var r = rounds[roundIdx];
+          stageBox.innerHTML =
+            '<p class="stage-msg">' + esc(s.pickMsg) + "</p>" +
+            '<p class="stage-sub">' + esc(s.pickSub) + "</p>" +
+            '<p class="pick-count" id="pickCountLine">' + s.pickCount(pickCount(), r.show) + "</p>" +
+            '<div id="choiceWrap">' + choiceHtml() + "</div>" +
+            '<div class="btn-row"><button type="button" class="btn btn-primary" id="btnCheck" disabled>' + esc(s.btnCheck) + "</button></div>";
+          bindChoices();
+          document.getElementById("btnCheck").addEventListener("click", checkAnswer);
+          refreshPick();
+        }
+
+        function bindChoices() {
+          var tiles = stageBox.querySelectorAll("[data-id]");
+          for (var i = 0; i < tiles.length; i++) {
+            tiles[i].addEventListener("click", function () { togglePick(Number(this.getAttribute("data-id"))); });
+          }
+        }
+
+        function togglePick(id) {
+          if (phase !== "pick") return;
+          var r = rounds[roundIdx];
+          if (picked[id]) picked[id] = false;
+          else {
+            if (pickCount() >= r.show) return;
+            picked[id] = true;
+          }
+          refreshPick();
+        }
+
+        function refreshPick() {
+          var s = t();
+          var r = rounds[roundIdx];
+          var wrap = document.getElementById("choiceWrap");
+          if (wrap) { wrap.innerHTML = choiceHtml(); bindChoices(); }
+          var line = document.getElementById("pickCountLine");
+          if (line) line.innerHTML = s.pickCount(pickCount(), r.show);
+          var btn = document.getElementById("btnCheck");
+          if (btn) btn.disabled = pickCount() !== r.show;
+        }
+
+        function checkAnswer() {
+          if (phase !== "pick") return;
+          var r = rounds[roundIdx];
+          var hit = 0;
+          r.answer.forEach(function (it) { if (picked[it.id]) hit++; });
+          lastHit = hit;
+          if (hit === r.show) score++;
+          phase = "feedback";
+          renderFeedback();
+        }
+
+        function renderFeedback() {
+          renderTop();
+          var s = t();
+          var r = rounds[roundIdx];
+          var hit = lastHit;
+          var full = hit === r.show;
+          var last = roundIdx === rounds.length - 1;
+          var cls, title, body;
+          if (full) {
+            cls = "good";
+            title = s.praise[roundIdx % s.praise.length];
+            body = s.fbFullBody(r.show);
+          } else if (hit >= Math.ceil(r.show / 2)) {
+            cls = "mid";
+            title = s.fbMidTitle;
+            body = s.fbMidBody(r.show, hit);
+          } else {
+            cls = "bad";
+            title = s.fbBadTitle;
+            body = s.fbBadBody(r.show, hit);
+          }
+          stageBox.innerHTML =
+            '<div class="feedback ' + cls + '">' +
+            '<p class="fb-title">' + esc(title) + "</p>" + body +
+            '<div class="fb-answer"><span class="cap">' + esc(s.fbAnswerCap) + " · " + esc(namesOf(r.answer)) + "</span>" +
+            tilesHtml(r.answer) + "</div>" +
+            "</div>" +
+            '<div class="btn-row"><button type="button" class="btn btn-primary" id="btnNext">' +
+            esc(last ? s.btnResult : s.btnNext) + "</button></div>";
+          document.getElementById("btnNext").addEventListener("click", function () {
+            if (last) { showResult(); }
+            else { roundIdx++; picked = {}; showReady(); }
+          });
+        }
+
+        function showResult() {
+          phase = "done"; renderTop();
+          var s = t();
+          var m = score === 5 ? s.resultMsgs[0] : score >= 3 ? s.resultMsgs[1] : score >= 1 ? s.resultMsgs[2] : s.resultMsgs[3];
+          stageBox.innerHTML =
+            '<div class="result-box">' +
+            '<p class="stage-sub" style="margin-bottom:0">' + esc(s.resultCap) + "</p>" +
+            '<p class="result-score">' + score + " / 5</p>" +
+            '<p class="result-msg">' + esc(m.msg) + "</p>" +
+            '<p class="result-sub">' + esc(m.sub) + "</p>" +
+            '<div class="btn-row">' +
+            '<button type="button" class="btn btn-primary" id="btnAgain">' + esc(s.btnAgain) + "</button>" +
+            "</div>" +
+            '<p class="stage-sub" style="margin-top:16px">' + esc(s.resultNote) + "</p>" +
+            "</div>";
+          document.getElementById("btnAgain").addEventListener("click", function () {
+            attempt++;
+            rounds = buildRounds(attempt);
+            roundIdx = 0; score = 0; picked = {};
+            showReady();
+            document.getElementById("gameCard").scrollIntoView({ behavior: "smooth", block: "start" });
+          });
+        }
+
+        /* ---------- 언어 전환: 진행 중인 게임·점수·그림은 그대로, 문구만 바뀌어요 ---------- */
+        var langBtns = document.querySelectorAll(".lang-bar button");
+        for (var b = 0; b < langBtns.length; b++) {
+          langBtns[b].addEventListener("click", function () {
+            var next = this.getAttribute("data-lang");
+            if (next === lang) return;
+            lang = next;
+            applyStatic();
+            renderStage();
+          });
+        }
+
+        applyStatic();
+        showReady();
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,970 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Day 8 가을 음식 기억하기</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #fff6e9;
+        --bg-soft: #ffedd3;
+        --card: #fffdf8;
+        --ink: #4a2b12;
+        --ink-soft: #7a5230;
+        --line: #f0cf9f;
+        --orange: #d95f06;
+        --orange-deep: #b34a02;
+        --orange-soft: #ffe3bd;
+        --selected-bg: #ffd9a3;
+        --selected-line: #d95f06;
+        --good: #2e7d32;
+        --good-bg: #e2f2df;
+        --missed-bg: #fff0d6;
+        --wrong: #b3261e;
+        --wrong-bg: #fbe3e0;
+        --shadow: 0 6px 20px rgba(146, 84, 20, 0.14);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #251305;
+          --bg-soft: #33200c;
+          --card: #38220f;
+          --ink: #fdeed3;
+          --ink-soft: #e8c9a0;
+          --line: #6b4423;
+          --orange: #f08a2e;
+          --orange-deep: #ffb066;
+          --orange-soft: #57350f;
+          --selected-bg: #7a4a12;
+          --selected-line: #ffb066;
+          --good: #9fd89b;
+          --good-bg: #274a24;
+          --missed-bg: #57350f;
+          --wrong: #ffb0a6;
+          --wrong-bg: #5c241e;
+          --shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+        }
+      }
+      * { box-sizing: border-box; }
+      html { -webkit-text-size-adjust: 100%; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "Noto Sans KR", "Malgun Gothic", sans-serif;
+        font-size: 1.25rem;
+        line-height: 1.6;
+      }
+      .wrap {
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 1.25rem 1rem 3rem;
+      }
+
+      /* ---------- 언어 선택 ---------- */
+      .lang-bar {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.6rem;
+        margin-bottom: 0.5rem;
+      }
+      .lang-btn {
+        font-family: inherit;
+        cursor: pointer;
+        min-height: 56px;
+        padding: 0.55rem 1.4rem;
+        font-size: 1.25rem;
+        font-weight: 900;
+        border-radius: 999px;
+        border: 3px solid var(--line);
+        background: var(--card);
+        color: var(--ink-soft);
+        transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+      }
+      .lang-btn.active {
+        background: var(--orange);
+        border-color: var(--orange);
+        color: #fff;
+      }
+      @media (prefers-color-scheme: dark) { .lang-btn.active { color: #2a1503; } }
+      .lang-btn:focus-visible {
+        outline: 4px solid var(--orange);
+        outline-offset: 3px;
+      }
+
+      /* ---------- 머리말 ---------- */
+      .hero { text-align: center; padding: 0.5rem 0 0.5rem; }
+      .day-badge {
+        display: inline-block;
+        margin: 0 0 0.75rem;
+        padding: 0.35rem 1.1rem;
+        background: var(--orange-soft);
+        color: var(--orange-deep);
+        border-radius: 999px;
+        font-size: 1.15rem;
+        font-weight: 700;
+      }
+      h1 {
+        font-family: "Jua", "Noto Sans KR", sans-serif;
+        font-weight: 400;
+        font-size: clamp(2.4rem, 9vw, 3.6rem);
+        line-height: 1.2;
+        margin: 0 0 0.6rem;
+        color: var(--ink);
+      }
+      .lead {
+        margin: 0 auto;
+        max-width: 34rem;
+        font-size: 1.35rem;
+        color: var(--ink-soft);
+      }
+
+      /* ---------- 게임 틀 ---------- */
+      .game-shell {
+        margin-top: 1.5rem;
+        background: var(--card);
+        border: 2px solid var(--line);
+        border-radius: 24px;
+        box-shadow: var(--shadow);
+        padding: 1.5rem 1.25rem 1.75rem;
+      }
+      .game-top {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem 1rem;
+        margin-bottom: 1rem;
+      }
+      .progress-text {
+        margin: 0;
+        font-size: 1.4rem;
+        font-weight: 900;
+        color: var(--orange-deep);
+      }
+      .dots { display: flex; gap: 0.5rem; }
+      .dot {
+        width: 20px; height: 20px;
+        border-radius: 50%;
+        border: 3px solid var(--orange);
+        background: transparent;
+      }
+      .dot.done { background: var(--orange); }
+      .dot.now { background: var(--orange-soft); box-shadow: 0 0 0 4px var(--orange-soft); }
+
+      .phase-title {
+        font-family: "Jua", "Noto Sans KR", sans-serif;
+        font-weight: 400;
+        font-size: 1.9rem;
+        line-height: 1.3;
+        margin: 0.25rem 0 0.4rem;
+        text-align: center;
+      }
+      .phase-desc {
+        margin: 0 0 1.25rem;
+        text-align: center;
+        font-size: 1.3rem;
+        color: var(--ink-soft);
+      }
+
+      /* 음식 카드 격자 */
+      .food-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+        gap: 0.8rem;
+        margin-bottom: 1.5rem;
+      }
+      .food-card {
+        background: var(--bg-soft);
+        border: 2px solid var(--line);
+        border-radius: 18px;
+        padding: 1rem 0.4rem 0.8rem;
+        text-align: center;
+      }
+      .food-emoji { display: block; font-size: 3.4rem; line-height: 1.15; }
+      .food-name { display: block; font-size: 1.5rem; font-weight: 900; margin-top: 0.3rem; }
+
+      /* 고르기 버튼 격자 */
+      .pick-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+        gap: 0.8rem;
+        margin-bottom: 1.25rem;
+      }
+      .pick-btn {
+        font-family: inherit;
+        cursor: pointer;
+        background: var(--card);
+        color: var(--ink);
+        border: 3px solid var(--line);
+        border-radius: 18px;
+        padding: 0.9rem 0.4rem 0.75rem;
+        min-height: 118px;
+        text-align: center;
+        transition: background 0.15s ease, border-color 0.15s ease;
+      }
+      .pick-btn .food-emoji { font-size: 3rem; }
+      .pick-btn .food-name { font-size: 1.45rem; margin-top: 0.2rem; }
+      .pick-btn.selected {
+        background: var(--selected-bg);
+        border-color: var(--selected-line);
+        box-shadow: inset 0 0 0 2px var(--selected-line);
+      }
+      .pick-btn:focus-visible, .btn:focus-visible {
+        outline: 4px solid var(--orange);
+        outline-offset: 3px;
+      }
+      .pick-btn:disabled { cursor: default; opacity: 1; }
+      .pick-btn.review-good { background: var(--good-bg); border-color: var(--good); }
+      .pick-btn.review-missed { background: var(--missed-bg); border-color: var(--orange); border-style: dashed; }
+      .pick-btn.review-wrong { background: var(--wrong-bg); border-color: var(--wrong); }
+      .review-tag {
+        display: block;
+        margin-top: 0.35rem;
+        font-size: 1.05rem;
+        font-weight: 700;
+      }
+      .review-good .review-tag { color: var(--good); }
+      .review-missed .review-tag { color: var(--orange-deep); }
+      .review-wrong .review-tag { color: var(--wrong); }
+
+      .pick-count {
+        text-align: center;
+        font-size: 1.35rem;
+        font-weight: 700;
+        margin: 0 0 1.1rem;
+      }
+      .pick-count strong { color: var(--orange-deep); font-size: 1.55rem; }
+      .warn {
+        text-align: center;
+        color: var(--wrong);
+        font-weight: 700;
+        font-size: 1.25rem;
+        margin: 0 0 1rem;
+        min-height: 1.6em;
+      }
+
+      /* 큰 버튼 */
+      .btn-row { display: flex; flex-wrap: wrap; gap: 0.8rem; justify-content: center; }
+      .btn {
+        font-family: inherit;
+        cursor: pointer;
+        border-radius: 999px;
+        border: 3px solid var(--orange);
+        font-size: 1.4rem;
+        font-weight: 900;
+        min-height: 64px;
+        padding: 0.8rem 2rem;
+        transition: background 0.15s ease, transform 0.1s ease;
+      }
+      .btn-primary { background: var(--orange); color: #fff; }
+      @media (prefers-color-scheme: dark) { .btn-primary { color: #2a1503; } }
+      .btn-primary:active { transform: scale(0.98); }
+      .btn-ghost { background: transparent; color: var(--orange-deep); }
+      .under-game { margin-top: 1.4rem; text-align: center; }
+      .under-game .btn { font-size: 1.25rem; min-height: 60px; }
+
+      /* 결과 */
+      .result-score {
+        text-align: center;
+        font-family: "Jua", "Noto Sans KR", sans-serif;
+        font-size: 2.1rem;
+        line-height: 1.35;
+        margin: 0.25rem 0 0.4rem;
+      }
+      .result-msg { text-align: center; font-size: 1.35rem; margin: 0 0 1.25rem; color: var(--ink-soft); }
+      .missed-line { text-align: center; font-size: 1.25rem; margin: 0 0 1.25rem; }
+      .missed-line strong { color: var(--orange-deep); }
+
+      /* 전체 결과 */
+      .summary-list { list-style: none; margin: 0 0 1.25rem; padding: 0; }
+      .summary-list li {
+        display: flex; justify-content: space-between; align-items: baseline; gap: 1rem;
+        padding: 0.7rem 0.4rem;
+        border-bottom: 2px dashed var(--line);
+        font-size: 1.35rem;
+      }
+      .summary-list li:last-child { border-bottom: none; }
+      .summary-list .sc { font-weight: 900; color: var(--orange-deep); white-space: nowrap; }
+      .summary-total {
+        text-align: center;
+        font-family: "Jua", "Noto Sans KR", sans-serif;
+        font-size: 2rem;
+        margin: 0 0 0.5rem;
+      }
+
+      /* ---------- 안내 구역 ---------- */
+      .info-section { margin-top: 2.5rem; }
+      .info-section h2 {
+        font-family: "Jua", "Noto Sans KR", sans-serif;
+        font-weight: 400;
+        font-size: 2rem;
+        margin: 0 0 1rem;
+        color: var(--ink);
+      }
+      .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.9rem; }
+      .steps li {
+        display: flex; gap: 1rem; align-items: flex-start;
+        background: var(--card);
+        border: 2px solid var(--line);
+        border-radius: 18px;
+        padding: 1.1rem 1.2rem;
+        font-size: 1.35rem;
+      }
+      .step-num {
+        flex: 0 0 auto;
+        width: 52px; height: 52px;
+        border-radius: 50%;
+        background: var(--orange);
+        color: #fff;
+        font-family: "Jua", "Noto Sans KR", sans-serif;
+        font-size: 1.6rem;
+        display: flex; align-items: center; justify-content: center;
+      }
+      @media (prefers-color-scheme: dark) { .step-num { color: #2a1503; } }
+      .steps p { margin: 0; padding-top: 0.45rem; }
+      .steps strong { color: var(--orange-deep); }
+
+      .table-wrap { overflow-x: auto; border-radius: 18px; border: 2px solid var(--line); background: var(--card); }
+      table { border-collapse: collapse; width: 100%; font-size: 1.3rem; }
+      th, td { padding: 0.85rem 1rem; text-align: left; }
+      thead th { background: var(--orange-soft); color: var(--orange-deep); font-weight: 900; }
+      tbody tr + tr td { border-top: 2px solid var(--line); }
+      tbody td.num, thead th.num { text-align: center; }
+
+      .tips { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.9rem; }
+      .tips li {
+        background: var(--card);
+        border: 2px solid var(--line);
+        border-radius: 18px;
+        padding: 1.1rem 1.2rem;
+        font-size: 1.35rem;
+      }
+      .tips strong { color: var(--orange-deep); }
+
+      .closing {
+        margin-top: 2.5rem;
+        text-align: center;
+        font-size: 1.3rem;
+        color: var(--ink-soft);
+      }
+
+      @media (max-width: 480px) {
+        .food-grid, .pick-grid { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); }
+        .btn { width: 100%; }
+        .btn-row { flex-direction: column; }
+        .under-game .btn { width: auto; }
+        .lang-btn { flex: 1 1 30%; padding: 0.55rem 0.5rem; }
+        table { font-size: 1.18rem; }
+        th, td { padding: 0.75rem 0.6rem; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .pick-btn, .btn, .lang-btn { transition: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <div class="lang-bar" role="group" aria-label="Language / 언어 / 言語">
+        <button type="button" class="lang-btn active" data-lang="ko" aria-pressed="true">한국어</button>
+        <button type="button" class="lang-btn" data-lang="en" aria-pressed="false">English</button>
+        <button type="button" class="lang-btn" data-lang="ja" aria-pressed="false">日本語</button>
+      </div>
+
+      <header class="hero">
+        <p class="day-badge" id="badgeEl">오늘의 두뇌운동 · Day 8</p>
+        <h1 id="titleEl">가을 음식 기억하기</h1>
+        <p class="lead" id="leadEl">가을에 나는 맛있는 음식을 천천히 보고 외운 뒤,<br />다시 찾아보는 기억 게임이에요.</p>
+      </header>
+
+      <section class="game-shell" id="gameShell" aria-label="가을 음식 기억 게임">
+        <div class="game-top">
+          <p class="progress-text" id="progressText">1번째 게임 · 모두 5개</p>
+          <div class="dots" id="dots" aria-hidden="true"></div>
+        </div>
+        <div id="gameArea"></div>
+        <div class="under-game">
+          <button type="button" class="btn btn-ghost" id="newSetBtn">새로운 것으로 다시 하기</button>
+        </div>
+      </section>
+
+      <section class="info-section" id="howSection" aria-label="게임 방법">
+        <h2 id="howTitle">게임 방법</h2>
+        <ol class="steps">
+          <li>
+            <span class="step-num" aria-hidden="true">1</span>
+            <p id="step1">음식을 <strong>천천히 보며 외워요.</strong> 시간 제한이 없으니 급하지 않아요.</p>
+          </li>
+          <li>
+            <span class="step-num" aria-hidden="true">2</span>
+            <p id="step2">다 외웠으면 <strong>‘다 외웠어요’</strong> 버튼을 눌러요. 음식이 사라져요.</p>
+          </li>
+          <li>
+            <span class="step-num" aria-hidden="true">3</span>
+            <p id="step3">아까 본 음식을 <strong>모두 찾아 눌러요.</strong> 그리고 ‘확인하기’를 눌러요.</p>
+          </li>
+        </ol>
+      </section>
+
+      <section class="info-section" id="diffSection" aria-label="난이도 안내">
+        <h2 id="diffTitle">난이도 안내</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th id="thGame">게임</th><th class="num" id="thFoods">외울 음식</th><th id="thDiff">난이도</th></tr>
+            </thead>
+            <tbody id="diffBody">
+              <tr><td>1번째 게임</td><td class="num">3가지</td><td>아주 쉬워요</td></tr>
+              <tr><td>2번째 게임</td><td class="num">4가지</td><td>쉬워요</td></tr>
+              <tr><td>3번째 게임</td><td class="num">5가지</td><td>보통이에요</td></tr>
+              <tr><td>4번째 게임</td><td class="num">6가지</td><td>조금 어려워요</td></tr>
+              <tr><td>5번째 게임</td><td class="num">7가지</td><td>어려워요</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="info-section" id="tipsSection" aria-label="잘하는 요령">
+        <h2 id="tipsTitle">잘하는 요령</h2>
+        <ul class="tips" id="tipsList">
+          <li><strong>소리 내어 읽어 보세요.</strong> 음식 이름을 입으로 말하면 더 잘 외워져요.</li>
+          <li><strong>끼리끼리 묶어 보세요.</strong> 과일은 과일끼리, 바다 음식은 바다 음식끼리 묶으면 쉬워요.</li>
+          <li><strong>맛을 떠올려 보세요.</strong> 달콤한 감, 고소한 밤처럼 맛을 생각하면 기억에 남아요.</li>
+          <li><strong>틀려도 괜찮아요.</strong> 천천히 다시 하면 돼요. 하는 것 자체가 두뇌 운동이에요.</li>
+        </ul>
+      </section>
+
+      <p class="closing" id="closingEl">오늘도 두뇌 운동 한 판, 수고하셨어요.</p>
+    </main>
+
+    <script>
+      (function () {
+        "use strict";
+
+        var FOODS = [
+          { id: "chestnut", emoji: "🌰", ko: "밤", en: "Chestnut", ja: "栗" },
+          { id: "persimmon", emoji: "🟠", ko: "감", en: "Persimmon", ja: "柿" },
+          { id: "apple", emoji: "🍎", ko: "사과", en: "Apple", ja: "りんご" },
+          { id: "pear", emoji: "🍐", ko: "배", en: "Pear", ja: "梨" },
+          { id: "sweetpotato", emoji: "🍠", ko: "고구마", en: "Sweet Potato", ja: "さつまいも" },
+          { id: "pumpkin", emoji: "🎃", ko: "호박", en: "Pumpkin", ja: "かぼちゃ" },
+          { id: "jujube", emoji: "🍒", ko: "대추", en: "Jujube", ja: "なつめ" },
+          { id: "ginkgo", emoji: "🟡", ko: "은행", en: "Ginkgo Nut", ja: "銀杏" },
+          { id: "matsutake", emoji: "🍄", ko: "송이버섯", en: "Matsutake Mushroom", ja: "松茸" },
+          { id: "oyster", emoji: "🦪", ko: "굴", en: "Oyster", ja: "牡蠣" },
+          { id: "shad", emoji: "🐟", ko: "전어", en: "Gizzard Shad", ja: "コノシロ" },
+          { id: "crab", emoji: "🦀", ko: "꽃게", en: "Blue Crab", ja: "ワタリガニ" },
+          { id: "radish", emoji: "⚪", ko: "무", en: "Radish", ja: "大根" },
+          { id: "cabbage", emoji: "🥬", ko: "배추", en: "Napa Cabbage", ja: "白菜" },
+          { id: "tangerine", emoji: "🍊", ko: "귤", en: "Tangerine", ja: "みかん" },
+          { id: "yuzu", emoji: "🍋", ko: "유자", en: "Yuzu", ja: "ゆず" },
+          { id: "pinenut", emoji: "🫘", ko: "잣", en: "Pine Nut", ja: "松の実" },
+          { id: "walnut", emoji: "🥜", ko: "호두", en: "Walnut", ja: "くるみ" }
+        ];
+        var DISTRACTORS = 5;
+
+        var STRINGS = {
+          ko: {
+            docTitle: "Day 8 가을 음식 기억하기",
+            badge: "오늘의 두뇌운동 · Day 8",
+            title: "가을 음식 기억하기",
+            lead: "가을에 나는 맛있는 음식을 천천히 보고 외운 뒤,<br />다시 찾아보는 기억 게임이에요.",
+            gameAria: "가을 음식 기억 게임",
+            howAria: "게임 방법",
+            diffAria: "난이도 안내",
+            tipsAria: "잘하는 요령",
+            newSet: "새로운 것으로 다시 하기",
+            progress: function (n) { return n + "번째 게임 · 모두 5개"; },
+            progressSummary: "전체 결과",
+            memorizeTitle: "이 음식들을 외워 보세요",
+            memorizeDesc: function (n) { return "모두 " + n + "가지예요. 천천히, 소리 내어 읽어 보세요."; },
+            memorizedBtn: "다 외웠어요",
+            recallTitle: "아까 본 음식을 모두 눌러 주세요",
+            recallDesc: function (n) { return "모두 " + n + "가지를 골라야 해요."; },
+            pickCount: function (c) { return "지금까지 <strong>" + c + "</strong>개 골랐어요"; },
+            warnEmpty: "먼저 음식을 하나라도 골라 주세요.",
+            checkBtn: "확인하기",
+            seeAgainBtn: "한 번 더 보기",
+            tagGood: "맞혔어요",
+            tagMissed: "이것도 있었어요",
+            tagWrong: "이건 없었어요",
+            resultScore: function (total, found) { return total + "가지 중 " + found + "가지를 맞혔어요"; },
+            resultPerfect: "완벽해요! 하나도 빠짐없이 다 맞혔어요.",
+            resultGreat: "아주 잘하셨어요! 거의 다 맞혔어요.",
+            resultGood: "잘하셨어요! 조금만 더 하면 돼요.",
+            resultOk: "괜찮아요. 천천히 한 번 더 해 보세요.",
+            missedPrefix: "놓친 음식: ",
+            nextBtn: "다음 게임 하기",
+            viewSummaryBtn: "전체 결과 보기",
+            retryBtn: "이 게임 한 번 더",
+            summaryTitle: "오늘의 결과",
+            summaryItemLabel: function (i, total) { return (i + 1) + "번째 게임 (" + total + "가지)"; },
+            summaryItemScore: function (found) { return found + "가지 맞힘"; },
+            summaryTotal: function (all, found) { return "모두 " + all + "가지 중 " + found + "가지를 맞혔어요"; },
+            summaryPerfect: "대단해요! 다섯 게임 모두 완벽했어요.",
+            summaryGreat: "아주 잘하셨어요! 기억력이 튼튼해요.",
+            summaryGood: "잘하셨어요! 내일도 한 판 해 보세요.",
+            summaryOk: "수고하셨어요! 매일 하면 점점 더 잘하게 돼요.",
+            againTodayBtn: "오늘 음식으로 처음부터",
+            howTitle: "게임 방법",
+            step1: "음식을 <strong>천천히 보며 외워요.</strong> 시간 제한이 없으니 급하지 않아요.",
+            step2: "다 외웠으면 <strong>‘다 외웠어요’</strong> 버튼을 눌러요. 음식이 사라져요.",
+            step3: "아까 본 음식을 <strong>모두 찾아 눌러요.</strong> 그리고 ‘확인하기’를 눌러요.",
+            diffTitle: "난이도 안내",
+            thGame: "게임",
+            thFoods: "외울 음식",
+            thDiff: "난이도",
+            diffRows: [
+              ["1번째 게임", "3가지", "아주 쉬워요"],
+              ["2번째 게임", "4가지", "쉬워요"],
+              ["3번째 게임", "5가지", "보통이에요"],
+              ["4번째 게임", "6가지", "조금 어려워요"],
+              ["5번째 게임", "7가지", "어려워요"]
+            ],
+            tipsTitle: "잘하는 요령",
+            tips: [
+              "<strong>소리 내어 읽어 보세요.</strong> 음식 이름을 입으로 말하면 더 잘 외워져요.",
+              "<strong>끼리끼리 묶어 보세요.</strong> 과일은 과일끼리, 바다 음식은 바다 음식끼리 묶으면 쉬워요.",
+              "<strong>맛을 떠올려 보세요.</strong> 달콤한 감, 고소한 밤처럼 맛을 생각하면 기억에 남아요.",
+              "<strong>틀려도 괜찮아요.</strong> 천천히 다시 하면 돼요. 하는 것 자체가 두뇌 운동이에요."
+            ],
+            closing: "오늘도 두뇌 운동 한 판, 수고하셨어요."
+          },
+          en: {
+            docTitle: "Day 8 Remember Autumn Foods",
+            badge: "Today's Brain Exercise · Day 8",
+            title: "Remember Autumn Foods",
+            lead: "Look slowly at tasty autumn foods, memorize them,<br />then find them again in this memory game.",
+            gameAria: "Autumn food memory game",
+            howAria: "How to play",
+            diffAria: "Difficulty guide",
+            tipsAria: "Helpful tips",
+            newSet: "Play Again with New Foods",
+            progress: function (n) { return "Game " + n + " of 5"; },
+            progressSummary: "Your Results",
+            memorizeTitle: "Memorize These Foods",
+            memorizeDesc: function (n) { return "There are " + n + " foods. Take your time and read them aloud."; },
+            memorizedBtn: "I've Memorized Them",
+            recallTitle: "Tap All the Foods You Saw",
+            recallDesc: function (n) { return "Please choose all " + n + " foods."; },
+            pickCount: function (c) { return "You picked <strong>" + c + "</strong> so far"; },
+            warnEmpty: "Please pick at least one food first.",
+            checkBtn: "Check Answers",
+            seeAgainBtn: "Look Again",
+            tagGood: "Correct!",
+            tagMissed: "This was there too",
+            tagWrong: "This wasn't there",
+            resultScore: function (total, found) { return "You got " + found + " out of " + total + " right"; },
+            resultPerfect: "Perfect! You found every single one.",
+            resultGreat: "Great job! You got almost all of them.",
+            resultGood: "Well done! Just a little more to go.",
+            resultOk: "That's okay. Take your time and try again.",
+            missedPrefix: "Foods you missed: ",
+            nextBtn: "Play Next Game",
+            viewSummaryBtn: "See Final Results",
+            retryBtn: "Play This Game Again",
+            summaryTitle: "Today's Results",
+            summaryItemLabel: function (i, total) { return "Game " + (i + 1) + " (" + total + " foods)"; },
+            summaryItemScore: function (found) { return found + " correct"; },
+            summaryTotal: function (all, found) { return "You got " + found + " out of " + all + " in total"; },
+            summaryPerfect: "Amazing! You were perfect in all five games.",
+            summaryGreat: "Great job! Your memory is strong.",
+            summaryGood: "Well done! Try another round tomorrow.",
+            summaryOk: "Good effort! Practice a little every day and you'll get better.",
+            againTodayBtn: "Start Over with Today's Foods",
+            howTitle: "How to Play",
+            step1: "Look at the foods <strong>slowly and memorize them.</strong> There is no time limit, so take your time.",
+            step2: "When you're ready, tap <strong>“I've Memorized Them.”</strong> The foods will disappear.",
+            step3: "Tap <strong>all the foods you saw before.</strong> Then tap “Check Answers.”",
+            diffTitle: "Difficulty Guide",
+            thGame: "Game",
+            thFoods: "Foods to Remember",
+            thDiff: "Difficulty",
+            diffRows: [
+              ["Game 1", "3 foods", "Very Easy"],
+              ["Game 2", "4 foods", "Easy"],
+              ["Game 3", "5 foods", "Medium"],
+              ["Game 4", "6 foods", "A Bit Hard"],
+              ["Game 5", "7 foods", "Hard"]
+            ],
+            tipsTitle: "Helpful Tips",
+            tips: [
+              "<strong>Read the names aloud.</strong> Saying a food's name out loud helps you remember it.",
+              "<strong>Group similar foods together.</strong> Fruits with fruits, seafood with seafood — grouping makes it easier.",
+              "<strong>Picture the taste.</strong> Sweet persimmon, nutty chestnut — thinking of the flavor helps it stick.",
+              "<strong>Mistakes are okay.</strong> Just try again slowly. Playing itself is the brain exercise."
+            ],
+            closing: "Great work on today's brain exercise!"
+          },
+          ja: {
+            docTitle: "Day 8 秋の食べ物を覚えよう",
+            badge: "今日の脳トレーニング · Day 8",
+            title: "秋の食べ物を覚えよう",
+            lead: "秋のおいしい食べ物をゆっくり見て覚えて、<br />もう一度探す記憶ゲームです。",
+            gameAria: "秋の食べ物 記憶ゲーム",
+            howAria: "遊び方",
+            diffAria: "難易度のご案内",
+            tipsAria: "上手に覚えるコツ",
+            newSet: "新しい食べ物で もう一度",
+            progress: function (n) { return n + "番目のゲーム · 全5ゲーム"; },
+            progressSummary: "全体の結果",
+            memorizeTitle: "この食べ物を覚えましょう",
+            memorizeDesc: function (n) { return "全部で" + n + "種類です。ゆっくり、声に出して読んでみてください。"; },
+            memorizedBtn: "覚えました",
+            recallTitle: "さっき見た食べ物を全部押してください",
+            recallDesc: function (n) { return "全部で" + n + "種類選んでください。"; },
+            pickCount: function (c) { return "今まで <strong>" + c + "</strong>個 選びました"; },
+            warnEmpty: "まず食べ物を1つ以上選んでください。",
+            checkBtn: "答え合わせ",
+            seeAgainBtn: "もう一度見る",
+            tagGood: "当たり！",
+            tagMissed: "これもありました",
+            tagWrong: "これはありませんでした",
+            resultScore: function (total, found) { return total + "種類中 " + found + "種類 正解しました"; },
+            resultPerfect: "完璧です！全部正解しました。",
+            resultGreat: "とてもよくできました！ほぼ全部正解です。",
+            resultGood: "よくできました！あと少しです。",
+            resultOk: "大丈夫です。ゆっくりもう一度やってみましょう。",
+            missedPrefix: "見逃した食べ物： ",
+            nextBtn: "次のゲームへ",
+            viewSummaryBtn: "全体の結果を見る",
+            retryBtn: "このゲームをもう一度",
+            summaryTitle: "今日の結果",
+            summaryItemLabel: function (i, total) { return (i + 1) + "番目のゲーム（" + total + "種類）"; },
+            summaryItemScore: function (found) { return found + "種類 正解"; },
+            summaryTotal: function (all, found) { return "全部で" + all + "種類中 " + found + "種類 正解しました"; },
+            summaryPerfect: "すごいです！5ゲーム全部完璧でした。",
+            summaryGreat: "とてもよくできました！記憶力がしっかりしています。",
+            summaryGood: "よくできました！明日も1ゲームやってみましょう。",
+            summaryOk: "お疲れさまでした！毎日続けると、だんだん上手になります。",
+            againTodayBtn: "今日の食べ物で最初から",
+            howTitle: "遊び方",
+            step1: "食べ物を<strong>ゆっくり見て覚えます。</strong>時間制限はないので、急がなくて大丈夫です。",
+            step2: "覚えたら<strong>「覚えました」</strong>ボタンを押します。食べ物が消えます。",
+            step3: "さっき見た食べ物を<strong>全部探して押します。</strong>そして「答え合わせ」を押します。",
+            diffTitle: "難易度のご案内",
+            thGame: "ゲーム",
+            thFoods: "覚える食べ物",
+            thDiff: "難易度",
+            diffRows: [
+              ["1番目のゲーム", "3種類", "とても簡単"],
+              ["2番目のゲーム", "4種類", "簡単"],
+              ["3番目のゲーム", "5種類", "普通"],
+              ["4番目のゲーム", "6種類", "少し難しい"],
+              ["5番目のゲーム", "7種類", "難しい"]
+            ],
+            tipsTitle: "上手に覚えるコツ",
+            tips: [
+              "<strong>声に出して読んでみましょう。</strong>食べ物の名前を口に出すと、よく覚えられます。",
+              "<strong>仲間同士でまとめましょう。</strong>果物は果物同士、海の食べ物は海の食べ物同士にまとめると簡単です。",
+              "<strong>味を思い浮かべましょう。</strong>甘い柿、香ばしい栗のように味を考えると記憶に残ります。",
+              "<strong>間違えても大丈夫です。</strong>ゆっくりもう一度やれば大丈夫です。やること自体が脳トレーニングです。"
+            ],
+            closing: "今日も脳トレーニング、お疲れさまでした。"
+          }
+        };
+
+        function hashSeed(str) {
+          var h = 1779033703 ^ str.length;
+          for (var i = 0; i < str.length; i++) {
+            h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+            h = (h << 13) | (h >>> 19);
+          }
+          return h >>> 0;
+        }
+        function mulberry32(a) {
+          return function () {
+            a |= 0;
+            a = (a + 0x6d2b79f5) | 0;
+            var t = Math.imul(a ^ (a >>> 15), 1 | a);
+            t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+          };
+        }
+        function shuffle(arr, rand) {
+          for (var i = arr.length - 1; i > 0; i--) {
+            var j = Math.floor(rand() * (i + 1));
+            var tmp = arr[i];
+            arr[i] = arr[j];
+            arr[j] = tmp;
+          }
+          return arr;
+        }
+        function todayKey() {
+          var d = new Date();
+          var m = String(d.getMonth() + 1).padStart(2, "0");
+          var day = String(d.getDate()).padStart(2, "0");
+          return d.getFullYear() + "-" + m + "-" + day;
+        }
+        function buildGames(seedStr) {
+          var rand = mulberry32(hashSeed(seedStr));
+          var games = [];
+          for (var g = 0; g < 5; g++) {
+            var n = 3 + g;
+            var pool = shuffle(FOODS.slice(), rand);
+            var targets = pool.slice(0, n);
+            var distractors = pool.slice(n, n + DISTRACTORS);
+            var options = shuffle(targets.concat(distractors), rand);
+            games.push({ targets: targets, options: options });
+          }
+          return games;
+        }
+
+        var area = document.getElementById("gameArea");
+        var progressText = document.getElementById("progressText");
+        var dotsEl = document.getElementById("dots");
+
+        var lang = "ko";
+        var games = buildGames("day8-" + todayKey());
+        var current = 0;
+        var phase = "memorize";
+        var selected = {};
+        var results = [];
+
+        function t() { return STRINGS[lang]; }
+        function foodName(food) { return food[lang]; }
+        function isTarget(game, id) {
+          return game.targets.some(function (f) { return f.id === id; });
+        }
+        function foodInner(food) {
+          return '<span class="food-emoji" aria-hidden="true">' + food.emoji + "</span>" +
+                 '<span class="food-name">' + foodName(food) + "</span>";
+        }
+        function renderProgress() {
+          if (phase === "summary") {
+            progressText.textContent = t().progressSummary;
+          } else {
+            progressText.textContent = t().progress(current + 1);
+          }
+          var html = "";
+          for (var i = 0; i < 5; i++) {
+            var cls = "dot";
+            if (results[i]) cls += " done";
+            else if (i === current && phase !== "summary") cls += " now";
+            html += '<span class="' + cls + '"></span>';
+          }
+          dotsEl.innerHTML = html;
+        }
+
+        function applyStaticTexts() {
+          var s = t();
+          document.title = s.docTitle;
+          document.documentElement.lang = lang === "ko" ? "ko" : (lang === "en" ? "en" : "ja");
+          document.getElementById("badgeEl").textContent = s.badge;
+          document.getElementById("titleEl").textContent = s.title;
+          document.getElementById("leadEl").innerHTML = s.lead;
+          document.getElementById("gameShell").setAttribute("aria-label", s.gameAria);
+          document.getElementById("howSection").setAttribute("aria-label", s.howAria);
+          document.getElementById("diffSection").setAttribute("aria-label", s.diffAria);
+          document.getElementById("tipsSection").setAttribute("aria-label", s.tipsAria);
+          document.getElementById("newSetBtn").textContent = s.newSet;
+          document.getElementById("howTitle").textContent = s.howTitle;
+          document.getElementById("step1").innerHTML = s.step1;
+          document.getElementById("step2").innerHTML = s.step2;
+          document.getElementById("step3").innerHTML = s.step3;
+          document.getElementById("diffTitle").textContent = s.diffTitle;
+          document.getElementById("thGame").textContent = s.thGame;
+          document.getElementById("thFoods").textContent = s.thFoods;
+          document.getElementById("thDiff").textContent = s.thDiff;
+          document.getElementById("diffBody").innerHTML = s.diffRows.map(function (r) {
+            return "<tr><td>" + r[0] + '</td><td class="num">' + r[1] + "</td><td>" + r[2] + "</td></tr>";
+          }).join("");
+          document.getElementById("tipsTitle").textContent = s.tipsTitle;
+          document.getElementById("tipsList").innerHTML = s.tips.map(function (tip) {
+            return "<li>" + tip + "</li>";
+          }).join("");
+          document.getElementById("closingEl").textContent = s.closing;
+          document.querySelectorAll(".lang-btn").forEach(function (btn) {
+            var active = btn.getAttribute("data-lang") === lang;
+            btn.classList.toggle("active", active);
+            btn.setAttribute("aria-pressed", active ? "true" : "false");
+          });
+        }
+
+        function renderMemorize() {
+          phase = "memorize";
+          selected = {};
+          var game = games[current];
+          var cards = game.targets.map(function (f) {
+            return '<div class="food-card">' + foodInner(f) + "</div>";
+          }).join("");
+          area.innerHTML =
+            '<h2 class="phase-title">' + t().memorizeTitle + "</h2>" +
+            '<p class="phase-desc">' + t().memorizeDesc(game.targets.length) + "</p>" +
+            '<div class="food-grid">' + cards + "</div>" +
+            '<div class="btn-row"><button type="button" class="btn btn-primary" id="memorizedBtn">' + t().memorizedBtn + "</button></div>";
+          renderProgress();
+          document.getElementById("memorizedBtn").addEventListener("click", function () { renderRecall(); });
+        }
+
+        function renderRecall(keepSelected) {
+          var saved = keepSelected ? selected : {};
+          phase = "recall";
+          selected = {};
+          Object.keys(saved).forEach(function (k) { selected[k] = true; });
+          var game = games[current];
+          var btns = game.options.map(function (f) {
+            var sel = !!selected[f.id];
+            return '<button type="button" class="pick-btn' + (sel ? " selected" : "") + '" data-id="' + f.id + '" aria-pressed="' + (sel ? "true" : "false") + '">' + foodInner(f) + "</button>";
+          }).join("");
+          var count = Object.keys(selected).length;
+          area.innerHTML =
+            '<h2 class="phase-title">' + t().recallTitle + "</h2>" +
+            '<p class="phase-desc">' + t().recallDesc(game.targets.length) + "</p>" +
+            '<div class="pick-grid">' + btns + "</div>" +
+            '<p class="pick-count" id="pickCount" aria-live="polite">' + t().pickCount(count) + "</p>" +
+            '<p class="warn" id="warnMsg" aria-live="polite"></p>' +
+            '<div class="btn-row">' +
+              '<button type="button" class="btn btn-primary" id="checkBtn">' + t().checkBtn + "</button>" +
+              '<button type="button" class="btn btn-ghost" id="seeAgainBtn">' + t().seeAgainBtn + "</button>" +
+            "</div>";
+          renderProgress();
+
+          var countEl = document.getElementById("pickCount");
+          area.querySelectorAll(".pick-btn").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+              var id = btn.getAttribute("data-id");
+              if (selected[id]) {
+                delete selected[id];
+                btn.classList.remove("selected");
+                btn.setAttribute("aria-pressed", "false");
+              } else {
+                selected[id] = true;
+                btn.classList.add("selected");
+                btn.setAttribute("aria-pressed", "true");
+              }
+              var c = Object.keys(selected).length;
+              countEl.innerHTML = t().pickCount(c);
+              document.getElementById("warnMsg").textContent = "";
+            });
+          });
+          document.getElementById("seeAgainBtn").addEventListener("click", function () { renderMemorize(); });
+          document.getElementById("checkBtn").addEventListener("click", function () {
+            if (Object.keys(selected).length === 0) {
+              document.getElementById("warnMsg").textContent = t().warnEmpty;
+              return;
+            }
+            renderResult();
+          });
+        }
+
+        function renderResult() {
+          phase = "result";
+          var game = games[current];
+          var found = 0, missedIds = [], missedNames = [];
+          game.targets.forEach(function (f) {
+            if (selected[f.id]) found++;
+            else { missedIds.push(f.id); missedNames.push(foodName(f)); }
+          });
+          results[current] = { found: found, total: game.targets.length, missedIds: missedIds };
+
+          var btns = game.options.map(function (f) {
+            var target = isTarget(game, f.id);
+            var picked = !!selected[f.id];
+            var cls = "pick-btn", tag = "";
+            if (target && picked) { cls += " review-good"; tag = t().tagGood; }
+            else if (target && !picked) { cls += " review-missed"; tag = t().tagMissed; }
+            else if (!target && picked) { cls += " review-wrong"; tag = t().tagWrong; }
+            var tagHtml = tag ? '<span class="review-tag">' + tag + "</span>" : "";
+            return '<button type="button" class="' + cls + '" disabled>' + foodInner(f) + tagHtml + "</button>";
+          }).join("");
+
+          var total = game.targets.length;
+          var msg;
+          if (found === total) msg = t().resultPerfect;
+          else if (found >= total - 1) msg = t().resultGreat;
+          else if (found >= Math.ceil(total / 2)) msg = t().resultGood;
+          else msg = t().resultOk;
+
+          var missedHtml = "";
+          if (missedNames.length) {
+            missedHtml = '<p class="missed-line">' + t().missedPrefix + "<strong>" + missedNames.join(", ") + "</strong></p>";
+          }
+          var nextLabel = current < 4 ? t().nextBtn : t().viewSummaryBtn;
+          area.innerHTML =
+            '<p class="result-score">' + t().resultScore(total, found) + "</p>" +
+            '<p class="result-msg">' + msg + "</p>" +
+            '<div class="pick-grid">' + btns + "</div>" +
+            missedHtml +
+            '<div class="btn-row">' +
+              '<button type="button" class="btn btn-primary" id="nextBtn">' + nextLabel + "</button>" +
+              '<button type="button" class="btn btn-ghost" id="retryBtn">' + t().retryBtn + "</button>" +
+            "</div>";
+          renderProgress();
+          document.getElementById("retryBtn").addEventListener("click", function () { renderMemorize(); });
+          document.getElementById("nextBtn").addEventListener("click", function () {
+            if (current < 4) { current++; renderMemorize(); }
+            else renderSummary();
+          });
+        }
+
+        function renderSummary() {
+          phase = "summary";
+          var totalFound = 0, totalAll = 0;
+          var items = results.map(function (r, i) {
+            totalFound += r.found; totalAll += r.total;
+            return "<li><span>" + t().summaryItemLabel(i, r.total) + "</span>" +
+                   '<span class="sc">' + t().summaryItemScore(r.found) + "</span></li>";
+          }).join("");
+          var msg;
+          if (totalFound === totalAll) msg = t().summaryPerfect;
+          else if (totalFound >= 20) msg = t().summaryGreat;
+          else if (totalFound >= 13) msg = t().summaryGood;
+          else msg = t().summaryOk;
+          area.innerHTML =
+            '<h2 class="phase-title">' + t().summaryTitle + "</h2>" +
+            '<ul class="summary-list">' + items + "</ul>" +
+            '<p class="summary-total">' + t().summaryTotal(totalAll, totalFound) + "</p>" +
+            '<p class="result-msg">' + msg + "</p>" +
+            '<div class="btn-row">' +
+              '<button type="button" class="btn btn-primary" id="againTodayBtn">' + t().againTodayBtn + "</button>" +
+              '<button type="button" class="btn btn-ghost" id="againNewBtn">' + t().newSet + "</button>" +
+            "</div>";
+          renderProgress();
+          document.getElementById("againTodayBtn").addEventListener("click", function () {
+            current = 0; results = []; renderMemorize();
+          });
+          document.getElementById("againNewBtn").addEventListener("click", startNewSet);
+        }
+
+        function renderCurrent() {
+          if (phase === "memorize") renderMemorize();
+          else if (phase === "recall") renderRecall(true);
+          else if (phase === "result") renderResult();
+          else if (phase === "summary") renderSummary();
+        }
+
+        function setLang(newLang) {
+          if (!STRINGS[newLang] || newLang === lang) {
+            if (STRINGS[newLang]) { applyStaticTexts(); renderCurrent(); }
+            return;
+          }
+          lang = newLang;
+          applyStaticTexts();
+          renderCurrent();
+        }
+
+        function startNewSet() {
+          games = buildGames("day8-new-" + Date.now() + "-" + Math.floor(Math.random() * 1000000000));
+          current = 0;
+          results = [];
+          renderMemorize();
+        }
+
+        document.querySelectorAll(".lang-btn").forEach(function (btn) {
+          btn.addEventListener("click", function () { setLang(btn.getAttribute("data-lang")); });
+        });
+        document.getElementById("newSetBtn").addEventListener("click", startNewSet);
+        applyStaticTexts();
+        renderMemorize();
+      })();
+    </script>
+  </body>
+</html>
