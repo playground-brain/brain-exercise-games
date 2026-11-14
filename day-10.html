@@ -4,310 +4,447 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Day 10 가족·친구 이름 기억하기 | 오늘의 두뇌운동</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
+  :root {
+    --bg: #fff6e9;
+    --bg-soft: #ffedd3;
+    --card: #fffdf8;
+    --ink: #4a2b12;
+    --ink-soft: #7a5230;
+    --line: #f0cf9f;
+    --orange: #d95f06;
+    --orange-deep: #b34a02;
+    --orange-soft: #ffe3bd;
+    --selected-bg: #ffd9a3;
+    --selected-line: #d95f06;
+    --good: #2e7d32;
+    --good-bg: #e2f2df;
+    --missed-bg: #fff0d6;
+    --wrong: #b3261e;
+    --wrong-bg: #fbe3e0;
+    --shadow: 0 6px 20px rgba(146, 84, 20, 0.14);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #251305;
+      --bg-soft: #3a2110;
+      --card: #38220f;
+      --ink: #fdeed3;
+      --ink-soft: #dcbd93;
+      --line: #6e4a26;
+      --orange: #f08a2e;
+      --orange-deep: #ffb066;
+      --orange-soft: #54340f;
+      --selected-bg: #7a4d16;
+      --selected-line: #f08a2e;
+      --good: #8fd694;
+      --good-bg: #1e3d1c;
+      --missed-bg: #4d3608;
+      --wrong: #ff9d94;
+      --wrong-bg: #4d1a15;
+      --shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+    }
+  }
   * { box-sizing: border-box; }
   body {
-    margin: 0; padding: 0;
-    background: #FFF7E8;
-    color: #4A2C14;
-    font-family: "Malgun Gothic", "Noto Sans KR", sans-serif;
-    font-size: 24px; line-height: 1.7;
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Noto Sans KR", sans-serif;
+    font-size: 1.25rem;
+    line-height: 1.6;
   }
-  .wrap { max-width: 900px; margin: 0 auto; padding: 20px 18px 60px; }
-  header { text-align: center; padding: 26px 10px 10px; }
-  h1 { font-size: 40px; color: #C85A17; margin: 10px 0 6px; line-height: 1.3; }
-  .subtitle { font-size: 26px; color: #7A4A21; }
-  .lang-bar { display: flex; justify-content: center; gap: 12px; margin: 18px 0 8px; flex-wrap: wrap; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+
+  /* language buttons */
+  .lang-bar { display: flex; justify-content: center; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 1.4rem; }
   .lang-btn {
-    font-size: 26px; font-weight: bold; padding: 14px 26px;
-    border-radius: 40px; border: 3px solid #E8823A;
-    background: #FFFDF7; color: #C85A17; cursor: pointer;
+    border-radius: 999px; border: 3px solid var(--line); background: var(--card);
+    color: var(--ink-soft); min-height: 56px; font-size: 1.25rem; font-weight: 900;
+    padding: 0.55rem 1.4rem; cursor: pointer; font-family: inherit;
   }
-  .lang-btn.active { background: #E8823A; color: #fff; }
-  .card {
-    background: #FFFDF7; border: 3px solid #F5C99B; border-radius: 22px;
-    padding: 26px 24px; margin: 26px 0;
+  .lang-btn.active { background: var(--orange); border-color: var(--orange); color: #fff; }
+
+  /* header */
+  header { text-align: center; margin-bottom: 1.6rem; }
+  .day-badge {
+    display: inline-block; border-radius: 999px; background: var(--orange-soft);
+    color: var(--orange-deep); font-size: 1.15rem; font-weight: 700; padding: 0.35rem 1.1rem;
   }
-  .card h2 { font-size: 32px; color: #C85A17; margin: 0 0 12px; }
-  .card h3 { font-size: 28px; color: #C85A17; margin: 18px 0 8px; }
-  .card p, .card li { font-size: 24px; }
-  .big-btn {
-    display: inline-block; font-size: 28px; font-weight: bold;
-    padding: 18px 34px; margin: 14px 6px 4px 0;
-    border-radius: 40px; border: none; cursor: pointer;
-    background: #E8823A; color: #fff;
+  h1 {
+    font-family: "Jua", sans-serif; font-size: clamp(2.4rem, 9vw, 3.6rem);
+    line-height: 1.2; margin: 0.9rem 0 0.6rem; font-weight: 400;
   }
-  .big-btn.secondary { background: #FFF3DF; color: #C85A17; border: 3px solid #E8823A; }
-  .big-btn:disabled { opacity: 0.5; cursor: default; }
-  .name-chip {
-    display: inline-block; font-size: 32px; font-weight: bold;
-    background: #FFE8C7; border: 3px solid #F5A95C; border-radius: 18px;
-    padding: 14px 26px; margin: 8px;
+  .lead { font-size: 1.35rem; color: var(--ink-soft); max-width: 34rem; margin: 0 auto; }
+
+  /* section titles */
+  h2.section-title { font-family: "Jua", sans-serif; font-weight: 400; font-size: 1.9rem; text-align: center; margin: 2.4rem 0 1rem; }
+
+  /* game shell */
+  .game-shell {
+    background: var(--card); border: 2px solid var(--line); border-radius: 24px;
+    box-shadow: var(--shadow); padding: 1.5rem 1.25rem 1.75rem;
   }
-  .pair-row { font-size: 28px; margin: 10px 0; }
-  .pair-row b { color: #C85A17; }
-  .opt-btn {
-    font-size: 28px; font-weight: bold; padding: 16px 26px; margin: 8px;
-    border-radius: 18px; border: 3px solid #E8823A;
-    background: #FFFDF7; color: #4A2C14; cursor: pointer; min-width: 140px;
+  .progress-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.2rem; }
+  .progress-text { font-size: 1.4rem; font-weight: 900; color: var(--orange-deep); }
+  .dots { display: flex; gap: 0.5rem; }
+  .dot { width: 20px; height: 20px; border-radius: 50%; border: 3px solid var(--orange); background: transparent; }
+  .dot.done { background: var(--orange); }
+  .dot.now { background: var(--orange-soft); box-shadow: 0 0 0 3px var(--bg), 0 0 0 6px var(--orange); }
+
+  .phase-title { font-family: "Jua", sans-serif; font-weight: 400; font-size: 1.9rem; text-align: center; margin: 0.4rem 0 0.3rem; line-height: 1.3; }
+  .phase-desc { text-align: center; color: var(--ink-soft); font-size: 1.3rem; margin: 0 0 1.2rem; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 0.8rem; margin-bottom: 1.3rem; }
+  .food-card {
+    background: var(--bg-soft); border: 2px solid var(--line); border-radius: 18px;
+    text-align: center; padding: 1rem 0.4rem 0.9rem;
   }
-  .opt-btn.selected { background: #E8823A; color: #fff; }
-  .opt-btn:disabled { opacity: 0.6; cursor: default; }
-  .match-grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin: 12px 0; }
-  .match-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-  .match-name { font-size: 28px; font-weight: bold; min-width: 130px; color: #C85A17; }
-  .match-row .opt-btn { font-size: 24px; padding: 12px 20px; min-width: 110px; }
-  .feedback { font-size: 30px; font-weight: bold; margin: 16px 0; padding: 16px; border-radius: 16px; }
-  .feedback.good { background: #E4F5D8; color: #2E6B1E; }
-  .feedback.bad { background: #FDE8D8; color: #A33A00; }
-  .badge {
-    display: inline-block; font-size: 22px; font-weight: bold; color: #fff;
-    background: #F2994A; border-radius: 30px; padding: 6px 18px; margin-left: 10px;
-    vertical-align: middle;
+  .food-card .emoji { font-size: 3.4rem; line-height: 1.15; display: block; }
+  .food-card .name { font-size: 1.5rem; font-weight: 900; display: block; margin-top: 0.3rem; }
+
+  .pick-btn {
+    background: var(--card); border: 3px solid var(--line); border-radius: 18px;
+    min-height: 118px; text-align: center; padding: 0.8rem 0.4rem; cursor: pointer;
+    font-family: inherit; color: var(--ink); width: 100%;
   }
-  table.diff { width: 100%; border-collapse: collapse; font-size: 24px; margin: 10px 0; }
-  table.diff th, table.diff td { border: 2px solid #F5C99B; padding: 12px 10px; text-align: left; }
-  table.diff th { background: #FFE8C7; color: #C85A17; }
-  .order-picked { font-size: 28px; font-weight: bold; color: #C85A17; min-height: 44px; margin: 10px 0; }
-  .note { font-size: 22px; color: #7A4A21; }
-  .progress {
-    text-align: center; font-size: 30px; font-weight: bold; color: #C85A17;
-    background: #FFE8C7; border: 3px solid #F5A95C; border-radius: 22px;
-    padding: 16px; margin: 20px 0 4px;
+  .pick-btn .emoji { font-size: 3rem; line-height: 1.15; display: block; }
+  .pick-btn .name { font-size: 1.45rem; font-weight: 900; display: block; margin-top: 0.25rem; }
+  .pick-btn.selected { background: var(--selected-bg); border-color: var(--selected-line); box-shadow: inset 0 0 0 2px var(--selected-line); }
+  .pick-btn .tag { display: inline-block; margin-top: 0.45rem; font-size: 1.05rem; font-weight: 900; border-radius: 999px; padding: 0.1rem 0.7rem; }
+  .pick-btn.got { background: var(--good-bg); border-color: var(--good); cursor: default; }
+  .pick-btn.got .tag { background: var(--good); color: #fff; }
+  .pick-btn.missed { background: var(--missed-bg); border-color: var(--orange); border-style: dashed; cursor: default; }
+  .pick-btn.missed .tag { background: var(--orange-soft); color: var(--orange-deep); }
+  .pick-btn.wrongpick { background: var(--wrong-bg); border-color: var(--wrong); cursor: default; }
+  .pick-btn.wrongpick .tag { background: var(--wrong); color: #fff; }
+  .pick-btn.plain { opacity: 0.75; cursor: default; }
+
+  .picked-count { text-align: center; font-size: 1.3rem; margin: 0 0 1rem; }
+  .picked-count b { font-size: 1.55rem; color: var(--orange-deep); }
+  .warn { text-align: center; color: var(--wrong); font-weight: 700; font-size: 1.3rem; margin: 0 0 1rem; }
+
+  .score-line { font-family: "Jua", sans-serif; font-size: 2.1rem; text-align: center; margin: 0.6rem 0 0.3rem; line-height: 1.3; }
+  .praise { text-align: center; font-size: 1.35rem; color: var(--ink-soft); margin: 0 0 1.2rem; }
+  .missed-line { text-align: center; font-size: 1.3rem; margin: 0 0 1.2rem; }
+  .missed-line b { color: var(--orange-deep); }
+
+  .btn-row { display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap; margin-top: 0.4rem; }
+  .btn {
+    border-radius: 999px; border: 3px solid var(--orange); font-size: 1.4rem; font-weight: 900;
+    min-height: 64px; padding: 0.8rem 2rem; cursor: pointer; font-family: inherit;
   }
-  .progress .score { display: block; font-size: 24px; color: #7A4A21; margin-top: 4px; }
-  .finish-msg { text-align: center; }
-  .finish-msg .big-score { font-size: 40px; font-weight: bold; color: #C85A17; }
-  footer { text-align: center; font-size: 22px; color: #7A4A21; margin-top: 30px; }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--orange); color: #fff; }
+  .btn-ghost { background: transparent; color: var(--orange-deep); }
+  .new-set-row { text-align: center; margin-top: 1.1rem; }
+
+  .total-list { list-style: none; margin: 0 0 1.2rem; padding: 0; }
+  .total-list li { font-size: 1.35rem; padding: 0.55rem 0.2rem; border-bottom: 2px dashed var(--line); text-align: center; }
+  .total-list li:last-child { border-bottom: none; }
+  .total-score { font-family: "Jua", sans-serif; font-size: 2rem; text-align: center; margin: 0.4rem 0 0.3rem; line-height: 1.3; }
+
+  /* steps & tips cards */
+  .steps, .tips { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.8rem; }
+  .steps li, .tips li {
+    background: var(--card); border: 2px solid var(--line); border-radius: 18px;
+    font-size: 1.35rem; padding: 1rem 1.1rem; display: flex; gap: 1rem; align-items: flex-start;
+  }
+  .steps .num {
+    flex: 0 0 auto; width: 52px; height: 52px; border-radius: 50%; background: var(--orange);
+    color: #fff; font-family: "Jua", sans-serif; font-size: 1.6rem;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .steps li p, .tips li p { margin: 0.35rem 0 0; }
+  .steps strong, .tips strong { color: var(--orange-deep); }
+
+  /* difficulty table */
+  .diff-wrap { background: var(--card); border: 2px solid var(--line); border-radius: 18px; overflow: hidden; }
+  table.diff { width: 100%; border-collapse: collapse; font-size: 1.3rem; }
+  table.diff th, table.diff td { padding: 0.8rem 1rem; text-align: left; }
+  table.diff thead th { background: var(--orange-soft); color: var(--orange-deep); font-weight: 900; }
+  table.diff tbody tr + tr td, table.diff tbody tr + tr th { border-top: 2px solid var(--line); }
+
+  .closing { text-align: center; font-size: 1.3rem; color: var(--ink-soft); margin-top: 2.4rem; }
+
+  button:focus-visible, a:focus-visible { outline: 4px solid var(--orange); outline-offset: 3px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+  @media (max-width: 480px) {
+    .btn-row { flex-direction: column; }
+    .btn-row .btn { width: 100%; }
+    .new-set-row .btn { width: 100%; }
+    .grid { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); }
+    .lang-bar { flex-wrap: nowrap; }
+    .lang-btn { flex: 1 1 30%; padding: 0.55rem 0.4rem; }
+    table.diff { font-size: 1.18rem; }
+    .progress-text { font-size: 1.25rem; }
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header>
-    <div class="lang-bar" id="langBar">
-      <button class="lang-btn active" data-lang="ko">한국어</button>
-      <button class="lang-btn" data-lang="en">English</button>
-      <button class="lang-btn" data-lang="ja">日本語</button>
-    </div>
-    <h1 id="title"></h1>
-    <div class="subtitle" id="subtitle"></div>
-  </header>
 
-  <div class="progress" id="progressBar"></div>
-
-  <div id="games"></div>
-
-  <div style="text-align:center;">
-    <button class="big-btn secondary" id="reshuffleBtn"></button>
+  <div class="lang-bar" id="langBar" role="group" aria-label="Language">
+    <button class="lang-btn active" data-lang="ko">한국어</button>
+    <button class="lang-btn" data-lang="en">English</button>
+    <button class="lang-btn" data-lang="ja">日本語</button>
   </div>
 
-  <div class="card" id="howCard"></div>
-  <div class="card" id="diffCard"></div>
-  <div class="card" id="whyCard"></div>
-  <div class="card" id="tipsCard"></div>
-  <footer id="footerNote"></footer>
+  <header>
+    <span class="day-badge" id="badge"></span>
+    <h1 id="title"></h1>
+    <p class="lead" id="lead"></p>
+  </header>
+
+  <main>
+    <section class="game-shell" aria-label="Game">
+      <div class="progress-row">
+        <div class="progress-text" id="progressText"></div>
+        <div class="dots" id="dots" aria-hidden="true"></div>
+      </div>
+      <div id="gameArea"></div>
+    </section>
+    <div class="new-set-row">
+      <button class="btn btn-ghost" id="newSetBtn" data-act="new-set"></button>
+    </div>
+
+    <section id="howSection">
+      <h2 class="section-title" id="howTitle"></h2>
+      <ol class="steps" id="stepsList"></ol>
+    </section>
+
+    <section id="diffSection">
+      <h2 class="section-title" id="diffTitle"></h2>
+      <div class="diff-wrap">
+        <table class="diff">
+          <thead><tr id="diffHead"></tr></thead>
+          <tbody id="diffBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="tipsSection">
+      <h2 class="section-title" id="tipsTitle"></h2>
+      <ul class="tips" id="tipsList"></ul>
+    </section>
+
+    <p class="closing" id="closing"></p>
+  </main>
 </div>
 
 <script>
 "use strict";
 
-/* ---------- i18n ---------- */
-const I18N = {
+/* ---------- item pool: 18 people (id + emoji + names in 3 languages) ---------- */
+const ITEMS = [
+  { id: "p01", emoji: "👵", ko: "순자", en: "Grace",  ja: "よしこ" },
+  { id: "p02", emoji: "👴", ko: "영수", en: "Henry",  ja: "ひろし" },
+  { id: "p03", emoji: "👩", ko: "영희", en: "Mary",   ja: "はな" },
+  { id: "p04", emoji: "👨", ko: "철수", en: "James",  ja: "たろう" },
+  { id: "p05", emoji: "👦", ko: "민준", en: "Liam",   ja: "ゆうと" },
+  { id: "p06", emoji: "👧", ko: "서연", en: "Emma",   ja: "さくら" },
+  { id: "p07", emoji: "👩", ko: "미영", en: "Alice",  ja: "みちこ" },
+  { id: "p08", emoji: "👦", ko: "지호", en: "Noah",   ja: "けんじ" },
+  { id: "p09", emoji: "👧", ko: "하은", en: "Sophia", ja: "あい" },
+  { id: "p10", emoji: "👦", ko: "도윤", en: "Jack",   ja: "だいすけ" },
+  { id: "p11", emoji: "👧", ko: "채원", en: "Lily",   ja: "えみ" },
+  { id: "p12", emoji: "👵", ko: "순옥", en: "Rose",   ja: "きよこ" },
+  { id: "p13", emoji: "👴", ko: "만수", en: "Frank",  ja: "しげる" },
+  { id: "p14", emoji: "👵", ko: "금자", en: "Betty",  ja: "としこ" },
+  { id: "p15", emoji: "👴", ko: "덕수", en: "George", ja: "まさる" },
+  { id: "p16", emoji: "👩", ko: "정숙", en: "Susan",  ja: "けいこ" },
+  { id: "p17", emoji: "👨", ko: "태현", en: "David",  ja: "たくや" },
+  { id: "p18", emoji: "👧", ko: "수아", en: "Mia",    ja: "ゆい" }
+];
+const ITEM_BY_ID = {};
+ITEMS.forEach(function (it) { ITEM_BY_ID[it.id] = it; });
+
+/* ---------- strings ---------- */
+const STRINGS = {
   ko: {
-    title: "Day 10 가족·친구 이름 기억하기",
-    subtitle: "오늘 5~10분, 함께 외워봐요",
+    badge: "오늘의 두뇌운동 · Day 10",
+    title: "가족·친구 이름 기억하기",
+    lead: "오늘은 가족과 친구들의 이름을 외워 보세요. 얼굴을 떠올리며 천천히 읽으면 더 잘 외워져요.",
+    progress: "{n}번째 게임 · 모두 5개",
+    totalProgress: "전체 결과",
+    memorizeTitle: "이 이름들을 외워 보세요",
+    memorizeDesc: "모두 {n}명이에요. 천천히, 소리 내어 읽어 보세요.",
+    memorizedBtn: "다 외웠어요",
+    pickTitle: "아까 본 이름을 모두 눌러 주세요",
+    pickDesc: "모두 {n}명을 골라야 해요.",
+    pickedCount: "지금까지 <b>{n}</b>명 골랐어요",
+    checkBtn: "확인하기",
+    lookAgainBtn: "한 번 더 보기",
+    warnEmpty: "먼저 이름을 하나라도 골라 주세요.",
+    scoreText: "{total}명 중 {got}명을 맞혔어요",
+    praisePerfect: "완벽해요! 이름을 하나도 빠뜨리지 않았어요.",
+    praiseGreat: "아주 잘하셨어요! 거의 다 맞혔어요.",
+    praiseGood: "잘하셨어요! 천천히 하면 더 잘할 수 있어요.",
+    praiseLow: "괜찮아요. 틀려도 괜찮아요. 천천히 다시 하면 돼요.",
+    tagGot: "맞혔어요",
+    tagMissed: "이것도 있었어요",
+    tagWrong: "이건 없었어요",
+    missedLine: "놓친 이름: <b>{names}</b>",
+    nextBtn: "다음 게임 하기",
+    retryBtn: "이 게임 한 번 더",
+    finalBtn: "전체 결과 보기",
+    totalTitle: "오늘의 결과",
+    totalLine: "{i}번째 게임 ({n}명) — {got}명 맞힘",
+    totalScore: "모두 25명 중 {got}명을 맞혔어요",
+    restartTodayBtn: "오늘 이름으로 처음부터",
+    newSetBtn: "새로운 것으로 다시 하기",
     howTitle: "게임 방법",
-    howSteps: [
-      "1. 화면에 나오는 이름을 천천히 읽어요.",
-      "2. 다 외웠다고 생각되면 \"다 외웠어요\" 버튼을 눌러요. 외우는 시간 제한은 없어요.",
-      "3. 가려진 이름을 보기에서 고르고, 정답을 확인하면 다음 게임으로 넘어가요."
+    steps: [
+      "화면에 나오는 <strong>이름과 얼굴</strong>을 천천히, 소리 내어 읽으며 외워 보세요.",
+      "다 외웠으면 <strong>다 외웠어요</strong> 버튼을 눌러요. 시간 제한은 없으니 천천히 하세요.",
+      "아까 본 이름을 <strong>모두 눌러</strong> 주세요. 맞혔는지 바로 알려 드려요."
     ],
-    diffTitle: "오늘의 다섯 게임",
-    diffHead: ["게임", "난이도", "내용", "외우는 시간"],
+    diffTitle: "난이도 안내",
+    diffHead: ["게임", "외울 이름", "난이도"],
     diffRows: [
-      ["게임 1", "쉬움", "이름 3개 외우기", "제한 없음"],
-      ["게임 2", "보통", "이름과 관계 연결하기", "제한 없음"],
-      ["게임 3", "보통", "이름 순서 맞히기", "제한 없음"],
-      ["게임 4", "조금 어려움", "이름과 좋아하는 것 연결하기", "제한 없음"],
-      ["게임 5", "어려움", "모임 자리 기억하기", "제한 없음"]
+      ["1번째 게임", "3명", "아주 쉬워요"],
+      ["2번째 게임", "4명", "쉬워요"],
+      ["3번째 게임", "5명", "보통이에요"],
+      ["4번째 게임", "6명", "조금 어려워요"],
+      ["5번째 게임", "7명", "어려워요"]
     ],
-    progressGame: "게임",
-    solvedLabel: "맞힌 게임",
-    nextGame: "다음 게임으로",
-    finishBtn: "결과 보기",
-    finishTitle: "오늘의 게임 5개를 다 했어요!",
-    finishText: "수고하셨어요. 오늘 외운 이름들을 저녁에 한 번 더 떠올려 보세요.",
-    restart: "처음부터 다시 하기",
-    whyTitle: "왜 좋은 게임인가요?",
-    whyParas: [
-      "사람 이름은 뜻이 담긴 단어보다 외우기 어렵지만, 얼굴과 관계, 좋아하는 것을 함께 묶으면 훨씬 잘 남아요. 오늘 게임은 이름을 그냥 외우는 것이 아니라, 관계와 이야기를 붙여서 외우도록 되어 있어요.",
-      "이름을 머릿속에 붙잡아 두고 떠올리는 동안 작업기억이 일해요. 점수보다 매일 꾸준히 하는 것이 훨씬 중요해요. 틀려도 괜찮아요. 떠올리려고 애쓰는 순간이 바로 연습이에요."
-    ],
-    tipsTitle: "더 잘 외우는 팁",
+    tipsTitle: "잘하는 요령",
     tips: [
-      "이름을 소리 내어 읽으면 더 잘 외워져요.",
-      "틀려도 괜찮아요. 다시 하면 됩니다.",
-      "\"새로운 것으로 다시 하기\" 버튼을 누르면 새 문제가 나와요.",
-      "가족과 함께 하면 더 재미있어요."
+      "<strong>소리 내어 읽기</strong> — 이름을 소리 내어 읽으면 눈과 귀를 함께 써서 더 잘 외워져요.",
+      "<strong>얼굴 떠올리기</strong> — 이름과 함께 그 사람의 얼굴을 떠올리면 오래 남아요.",
+      "<strong>끼리끼리 묶기</strong> — 가족끼리, 친구끼리 묶어서 외우면 쉬워요.",
+      "<strong>틀려도 괜찮아요</strong> — 틀린 이름은 한 번 더 소리 내어 읽어 보세요. 그것도 좋은 연습이에요."
     ],
-    reshuffle: "새로운 것으로 다시 하기",
-    memorized: "다 외웠어요",
-    check: "정답 확인",
-    retry: "다시 하기",
-    correct: "정답이에요! 잘하셨어요.",
-    wrong: "아쉬워요. 정답을 확인하고 다시 해보세요.",
-    yourPick: "내가 고른 것",
-    answerIs: "정답",
-    pick3: "화면에 나온 이름 3개를 골라주세요.",
-    pickOrder: "외운 순서대로 이름을 눌러주세요.",
-    matchHint: "각 이름에 맞는 것을 골라주세요.",
-    seatHint: "1번 자리부터 순서대로 이름을 눌러주세요.",
-    memorizeHint: "천천히 읽고 외우세요. 시간 제한은 없어요.",
-    seat: "번 자리",
-    footer: "오늘의 두뇌운동 · 로그인 없이 누구나 바로 할 수 있어요",
-    games: [
-      { name: "이름 3개 외우기", level: "쉬움", desc: "이름 3개를 외우고, 보기에서 골라요." },
-      { name: "이름과 관계 연결하기", level: "보통", desc: "이름과 관계를 연결해요." },
-      { name: "이름 순서 맞히기", level: "보통", desc: "이름 5개를 순서대로 외워요." },
-      { name: "이름과 좋아하는 것 연결하기", level: "조금 어려움", desc: "이름과 좋아하는 것을 연결해요." },
-      { name: "모임 자리 기억하기", level: "어려움", desc: "이름 7개와 자리를 함께 외워요." }
-    ],
-    names: ["영희","철수","민준","서연","순자","영수","미영","지호","하은","도윤","채원"],
-    relations: ["할머니","아빠","엄마","친구","이웃","동생","선생님"],
-    favorites: ["김치찌개","산책","노래","바둑","꽃","낚시","독서"]
+    closing: "오늘도 두뇌 운동 한 판, 수고하셨어요."
   },
   en: {
-    title: "Day 10 Remember Family and Friends' Names",
-    subtitle: "Let's practice together for 5–10 minutes today",
-    howTitle: "How to Play",
-    howSteps: [
-      "1. Read the names on the screen slowly.",
-      "2. When you have memorized them, press \"I memorized them\". There is no time limit.",
-      "3. Pick the names from the choices, check the answer, and move on to the next game."
+    badge: "Today's Brain Exercise · Day 10",
+    title: "Remembering Family & Friends' Names",
+    lead: "Today, memorize the names of family and friends. Picture each face as you read slowly — it helps the names stick.",
+    progress: "Game {n} of 5",
+    totalProgress: "Total result",
+    memorizeTitle: "Memorize these names",
+    memorizeDesc: "There are {n} people. Read them slowly, out loud.",
+    memorizedBtn: "I memorized them",
+    pickTitle: "Tap all the names you saw",
+    pickDesc: "Pick all {n} people.",
+    pickedCount: "You've picked <b>{n}</b> so far",
+    checkBtn: "Check",
+    lookAgainBtn: "Look again",
+    warnEmpty: "Please pick at least one name first.",
+    scoreText: "You got {got} of {total} names",
+    praisePerfect: "Perfect! You didn't miss a single name.",
+    praiseGreat: "Great job! You got almost all of them.",
+    praiseGood: "Well done! Take it slowly and you'll do even better.",
+    praiseLow: "That's okay. Mistakes are fine — just try again slowly.",
+    tagGot: "Got it",
+    tagMissed: "This was there too",
+    tagWrong: "This wasn't there",
+    missedLine: "Names you missed: <b>{names}</b>",
+    nextBtn: "Next game",
+    retryBtn: "Play this game again",
+    finalBtn: "See the total result",
+    totalTitle: "Today's result",
+    totalLine: "Game {i} ({n} people) — got {got}",
+    totalScore: "You got {got} of 25 names in total",
+    restartTodayBtn: "Start over with today's names",
+    newSetBtn: "Play with new ones",
+    howTitle: "How to play",
+    steps: [
+      "Read the <strong>names and faces</strong> on the screen slowly, out loud, and memorize them.",
+      "When you're ready, press <strong>I memorized them</strong>. There is no time limit — take your time.",
+      "Tap <strong>all the names you saw</strong>. You'll see right away how you did."
     ],
-    diffTitle: "Today's Five Games",
-    diffHead: ["Game", "Level", "What you do", "Memorizing time"],
+    diffTitle: "Difficulty guide",
+    diffHead: ["Game", "Names to remember", "Level"],
     diffRows: [
-      ["Game 1", "Easy", "Remember 3 names", "No limit"],
-      ["Game 2", "Medium", "Match names and relationships", "No limit"],
-      ["Game 3", "Medium", "Remember the order of names", "No limit"],
-      ["Game 4", "A bit hard", "Match names and favorites", "No limit"],
-      ["Game 5", "Hard", "Remember seats at a gathering", "No limit"]
+      ["Game 1", "3 people", "Very easy"],
+      ["Game 2", "4 people", "Easy"],
+      ["Game 3", "5 people", "Medium"],
+      ["Game 4", "6 people", "A bit hard"],
+      ["Game 5", "7 people", "Hard"]
     ],
-    progressGame: "Game",
-    solvedLabel: "Games solved",
-    nextGame: "Next game",
-    finishBtn: "See the result",
-    finishTitle: "You finished all 5 games today!",
-    finishText: "Well done. Try recalling today's names once more this evening.",
-    restart: "Start over",
-    whyTitle: "Why is this good for your brain?",
-    whyParas: [
-      "Names are harder to memorize than meaningful words, but they stick much better when you tie them to a face, a relationship, and a favorite thing. Today's games attach relationships and small stories to each name instead of asking you to memorize names alone.",
-      "While you hold names in your mind and recall them, your working memory is at work. Doing a little every day matters far more than the score. It is okay to be wrong — the effort of trying to recall is the practice itself."
-    ],
-    tipsTitle: "Tips to Remember Better",
+    tipsTitle: "Tips",
     tips: [
-      "Reading names out loud helps you remember them.",
-      "It is okay to be wrong. Just try again.",
-      "Press \"Play with new ones\" for new questions.",
-      "It is more fun with family."
+      "<strong>Read out loud</strong> — Saying names out loud uses your eyes and ears together, so they stick better.",
+      "<strong>Picture the face</strong> — Recall the person's face with the name, and it stays longer.",
+      "<strong>Group them</strong> — Family together, friends together — grouping makes memorizing easier.",
+      "<strong>Mistakes are fine</strong> — Read a missed name out loud once more. That's good practice too."
     ],
-    reshuffle: "Play with new ones",
-    memorized: "I memorized them",
-    check: "Check the answer",
-    retry: "Try again",
-    correct: "Correct! Well done.",
-    wrong: "Not quite. Check the answer and try again.",
-    yourPick: "Your picks",
-    answerIs: "Answer",
-    pick3: "Pick the 3 names you saw on the screen.",
-    pickOrder: "Tap the names in the order you memorized.",
-    matchHint: "Pick the right match for each name.",
-    seatHint: "Tap the names in seat order, starting from seat 1.",
-    memorizeHint: "Read slowly and memorize. There is no time limit.",
-    seat: "Seat ",
-    footer: "Today's Brain Exercise · Anyone can play right away, no login needed",
-    games: [
-      { name: "Remember 3 Names", level: "Easy", desc: "Memorize 3 names and pick them from the choices." },
-      { name: "Match Names and Relationships", level: "Medium", desc: "Match each name with a relationship." },
-      { name: "Remember the Order of Names", level: "Medium", desc: "Memorize 5 names in order." },
-      { name: "Match Names and Favorites", level: "A bit hard", desc: "Match each name with a favorite thing." },
-      { name: "Remember the Seats", level: "Hard", desc: "Memorize 7 names and their seats." }
-    ],
-    names: ["Mary","James","Emma","Liam","Grace","Henry","Alice","Noah","Sophia","Jack","Lily"],
-    relations: ["grandmother","father","mother","friend","neighbor","younger sibling","teacher"],
-    favorites: ["kimchi stew","walking","singing","baduk","flowers","fishing","reading"]
+    closing: "Great work — that's today's brain exercise done."
   },
   ja: {
-    title: "Day 10 家族や友だちの名前を覚える",
-    subtitle: "今日5〜10分、一緒に覚えましょう",
+    badge: "今日の脳トレ · Day 10",
+    title: "家族や友だちの名前を覚える",
+    lead: "今日は家族や友だちの名前を覚えましょう。顔を思い浮かべながらゆっくり読むと、覚えやすくなります。",
+    progress: "{n}つ目のゲーム · 全部で5つ",
+    totalProgress: "全体の結果",
+    memorizeTitle: "この名前を覚えましょう",
+    memorizeDesc: "全部で{n}人です。ゆっくり、声に出して読みましょう。",
+    memorizedBtn: "覚えました",
+    pickTitle: "さっき見た名前を全部押してください",
+    pickDesc: "全部で{n}人を選んでください。",
+    pickedCount: "今まで <b>{n}</b> 人選びました",
+    checkBtn: "確かめる",
+    lookAgainBtn: "もう一度見る",
+    warnEmpty: "まず名前を1つでも選んでください。",
+    scoreText: "{total}人中 {got}人を当てました",
+    praisePerfect: "完璧です！1人ももらさず覚えました。",
+    praiseGreat: "とてもよくできました！ほとんど当たりました。",
+    praiseGood: "よくできました！ゆっくりやれば、もっとできます。",
+    praiseLow: "大丈夫です。まちがえても大丈夫。ゆっくりもう一度やってみましょう。",
+    tagGot: "当たり",
+    tagMissed: "これもありました",
+    tagWrong: "これはありませんでした",
+    missedLine: "もれた名前: <b>{names}</b>",
+    nextBtn: "次のゲームへ",
+    retryBtn: "このゲームをもう一度",
+    finalBtn: "全体の結果を見る",
+    totalTitle: "今日の結果",
+    totalLine: "{i}つ目のゲーム（{n}人）— {got}人当てました",
+    totalScore: "全部で25人中 {got}人を当てました",
+    restartTodayBtn: "今日の名前で最初から",
+    newSetBtn: "新しいものではじめる",
     howTitle: "遊び方",
-    howSteps: [
-      "1. 画面に出る名前をゆっくり読みます。",
-      "2. 覚えたと思ったら「覚えました」ボタンを押します。時間制限はありません。",
-      "3. かくれた名前をえらんで答えを確かめたら、次のゲームに進みます。"
+    steps: [
+      "画面に出る<strong>名前と顔</strong>を、ゆっくり声に出して読みながら覚えましょう。",
+      "覚えたら<strong>覚えました</strong>ボタンを押します。時間制限はないので、あわてなくて大丈夫です。",
+      "さっき見た名前を<strong>全部押して</strong>ください。結果はすぐ分かります。"
     ],
-    diffTitle: "今日の5つのゲーム",
-    diffHead: ["ゲーム", "むずかしさ", "内容", "覚える時間"],
+    diffTitle: "むずかしさの案内",
+    diffHead: ["ゲーム", "覚える名前", "むずかしさ"],
     diffRows: [
-      ["ゲーム1", "やさしい", "名前を3つ覚える", "制限なし"],
-      ["ゲーム2", "ふつう", "名前と関係をつなげる", "制限なし"],
-      ["ゲーム3", "ふつう", "名前の順番を当てる", "制限なし"],
-      ["ゲーム4", "すこしむずかしい", "名前と好きなものをつなげる", "制限なし"],
-      ["ゲーム5", "むずかしい", "集まりの席を覚える", "制限なし"]
+      ["1つ目のゲーム", "3人", "とてもやさしい"],
+      ["2つ目のゲーム", "4人", "やさしい"],
+      ["3つ目のゲーム", "5人", "ふつう"],
+      ["4つ目のゲーム", "6人", "すこしむずかしい"],
+      ["5つ目のゲーム", "7人", "むずかしい"]
     ],
-    progressGame: "ゲーム",
-    solvedLabel: "正解したゲーム",
-    nextGame: "次のゲームへ",
-    finishBtn: "結果を見る",
-    finishTitle: "今日のゲーム5つを全部終えました！",
-    finishText: "おつかれさまでした。今日覚えた名前を、夜にもう一度思い出してみてください。",
-    restart: "最初からもう一度",
-    whyTitle: "なぜ良いゲームなのですか？",
-    whyParas: [
-      "人の名前は意味のある言葉より覚えにくいものですが、顔や関係、好きなものと結びつけると、ぐっと残りやすくなります。今日のゲームは、名前をそのまま覚えるのではなく、関係や小さな物語を結びつけて覚えるようになっています。",
-      "名前を頭の中にとどめて思い出している間、ワーキングメモリが働いています。点数よりも、毎日少しずつ続けることがずっと大切です。まちがえても大丈夫です。思い出そうとする努力こそが練習です。"
-    ],
-    tipsTitle: "もっと覚えるコツ",
+    tipsTitle: "上手にやるコツ",
     tips: [
-      "名前を声に出して読むと覚えやすいです。",
-      "まちがえても大丈夫です。もう一度やってみましょう。",
-      "「新しいものではじめる」ボタンを押すと新しい問題が出ます。",
-      "家族と一緒だと、もっと楽しいです。"
+      "<strong>声に出して読む</strong> — 名前を声に出すと、目と耳を一緒に使うので覚えやすくなります。",
+      "<strong>顔を思い浮かべる</strong> — 名前と一緒にその人の顔を思い浮かべると、長く残ります。",
+      "<strong>仲間ごとにまとめる</strong> — 家族は家族、友だちは友だちとまとめると覚えやすいです。",
+      "<strong>まちがえても大丈夫</strong> — まちがえた名前は、もう一度声に出して読んでみましょう。それも良い練習です。"
     ],
-    reshuffle: "新しいものではじめる",
-    memorized: "覚えました",
-    check: "答えを確かめる",
-    retry: "もう一度",
-    correct: "正解です！よくできました。",
-    wrong: "ざんねん。答えを見て、もう一度やってみましょう。",
-    yourPick: "あなたがえらんだもの",
-    answerIs: "答え",
-    pick3: "画面に出た名前を3つえらんでください。",
-    pickOrder: "覚えた順番に名前を押してください。",
-    matchHint: "それぞれの名前に合うものをえらんでください。",
-    seatHint: "1番の席から順番に名前を押してください。",
-    memorizeHint: "ゆっくり読んで覚えましょう。時間制限はありません。",
-    seat: "番の席",
-    footer: "今日の脳トレーニング · ログインなしで、だれでもすぐ遊べます",
-    games: [
-      { name: "名前を3つ覚える", level: "やさしい", desc: "名前を3つ覚えて、えらびます。" },
-      { name: "名前と関係をつなげる", level: "ふつう", desc: "名前と関係をつなげます。" },
-      { name: "名前の順番を当てる", level: "ふつう", desc: "名前を5つ順番に覚えます。" },
-      { name: "名前と好きなものをつなげる", level: "すこしむずかしい", desc: "名前と好きなものをつなげます。" },
-      { name: "集まりの席を覚える", level: "むずかしい", desc: "名前を7つと席を一緒に覚えます。" }
-    ],
-    names: ["はな","たろう","さくら","けんじ","よしこ","ひろし","みちこ","ゆうと","あい","だいすけ","えみ"],
-    relations: ["おばあさん","おとうさん","おかあさん","ともだち","となり","おとうと","せんせい"],
-    favorites: ["キムチチゲ","さんぽ","うた","いご","はな","つり","どくしょ"]
+    closing: "今日も脳トレを一回分、おつかれさまでした。"
   }
 };
 
-/* ---------- seeded random: same day = same questions, next day = new ---------- */
-function todaySeed() {
-  const d = new Date();
-  return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+/* ---------- seeded random (string seed -> hash -> mulberry32) ---------- */
+function hashSeed(str) {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
 }
 function mulberry32(seed) {
   let a = seed >>> 0;
@@ -326,306 +463,245 @@ function shuffled(arr, rand) {
   }
   return a;
 }
-function pickN(arr, n, rand) { return shuffled(arr, rand).slice(0, n); }
+function todayStr() {
+  const d = new Date();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return d.getFullYear() + "-" + mm + "-" + dd;
+}
+function dateSeedStr() { return "day10-" + todayStr(); }
+
+/* Draw one set of 5 games from a seed string.
+   Per game: shuffle the 18-item pool, first N are answers, next 5 are distractors. */
+function buildSet(seedStr) {
+  const rand = mulberry32(hashSeed(seedStr));
+  const games = [];
+  for (let g = 0; g < 5; g++) {
+    const n = g + 3;
+    const order = shuffled(ITEMS.map(function (it) { return it.id; }), rand);
+    const answers = order.slice(0, n);
+    const distractors = order.slice(n, n + 5);
+    const picks = shuffled(answers.concat(distractors), rand);
+    games.push({ n: n, answers: answers, picks: picks });
+  }
+  return games;
+}
 
 /* ---------- state ---------- */
 let lang = "ko";
-let reshuffleCount = 0; // "새로운 것으로 다시 하기" presses
-const gameState = {};   // per game: { phase: 'mem'|'ask'|'done', data, ... }
-/* one game at a time, like Day 1–9: progress through games 1 → 5 in order */
-let currentGame = 1;
-let finishedAll = false;
-const solvedGames = {}; // gameNo -> true once answered correctly
+let setSeed = dateSeedStr();
+let games = buildSet(setSeed);
+let cur = 0;                 // current game index 0..4
+let phase = "mem";           // mem | pick | result | total
+let selected = new Set();    // item ids picked in the current game
+let warnShown = false;
+let scores = [null, null, null, null, null]; // {total, got} per game
 
-function solvedCount() {
-  return Object.keys(solvedGames).filter(function (k) { return solvedGames[k]; }).length;
-}
-function resetProgress() {
-  currentGame = 1;
-  finishedAll = false;
-  for (const k in solvedGames) delete solvedGames[k];
-}
-
-function seedFor(gameNo) {
-  return todaySeed() * 1000 + reshuffleCount * 97 + gameNo * 13;
-}
-function t() { return I18N[lang]; }
+function S() { return STRINGS[lang]; }
 function el(id) { return document.getElementById(id); }
-
-/* ---------- game data builders (seeded per day) ---------- */
-function buildGameData(n) {
-  const L = t();
-  const rand = mulberry32(seedFor(n));
-  if (n === 1) {
-    const picked = pickN(L.names, 3, rand);
-    const rest = L.names.filter(function (x) { return picked.indexOf(x) === -1; });
-    const distract = pickN(rest, 3, rand);
-    return { picked: picked, options: shuffled(picked.concat(distract), rand) };
-  }
-  if (n === 2) {
-    const names = pickN(L.names, 4, rand);
-    const rels = pickN(L.relations, 4, rand);
-    return { pairs: names.map(function (nm, i) { return { name: nm, rel: rels[i] }; }),
-             relOptions: shuffled(rels.slice(), rand) };
-  }
-  if (n === 3) {
-    return { order: pickN(L.names, 5, rand) };
-  }
-  if (n === 4) {
-    const names = pickN(L.names, 5, rand);
-    const favs = pickN(L.favorites, 5, rand);
-    return { pairs: names.map(function (nm, i) { return { name: nm, fav: favs[i] }; }),
-             favOptions: shuffled(favs.slice(), rand) };
-  }
-  // game 5
-  return { order: pickN(L.names, 7, rand) };
+function fmt(tpl, map) {
+  return tpl.replace(/\{(\w+)\}/g, function (_, k) { return map[k]; });
 }
+function itemName(it) { return it[lang]; }
 
-function initGame(n) {
-  gameState[n] = { phase: "mem", data: buildGameData(n), sel: [], picks: {}, orderSel: [], fb: "" };
-}
-
-/* ---------- static sections ---------- */
-function renderStatic() {
-  const L = t();
+/* ---------- static texts (explicit function — no MutationObserver) ---------- */
+function applyStaticTexts() {
+  const L = S();
+  el("badge").textContent = L.badge;
   el("title").textContent = L.title;
-  el("subtitle").textContent = L.subtitle;
-  el("howCard").innerHTML = "<h2>" + L.howTitle + "</h2>" +
-    L.howSteps.map(function (s) { return "<p>" + s + "</p>"; }).join("");
-  let dh = "<h2>" + L.diffTitle + "</h2><table class=\"diff\"><tr>";
-  L.diffHead.forEach(function (h) { dh += "<th>" + h + "</th>"; });
-  dh += "</tr>";
-  L.diffRows.forEach(function (r) {
-    dh += "<tr>" + r.map(function (c) { return "<td>" + c + "</td>"; }).join("") + "</tr>";
-  });
-  dh += "</table>";
-  el("diffCard").innerHTML = dh;
-  el("whyCard").innerHTML = "<h2>" + L.whyTitle + "</h2>" +
-    L.whyParas.map(function (s) { return "<p>" + s + "</p>"; }).join("");
-  el("tipsCard").innerHTML = "<h2>" + L.tipsTitle + "</h2><ul>" +
-    L.tips.map(function (s) { return "<li>" + s + "</li>"; }).join("") + "</ul>";
-  el("reshuffleBtn").textContent = L.reshuffle;
-  el("footerNote").textContent = L.footer;
+  el("lead").textContent = L.lead;
+  el("newSetBtn").textContent = L.newSetBtn;
+  el("howTitle").textContent = L.howTitle;
+  el("howSection").setAttribute("aria-label", L.howTitle);
+  el("stepsList").innerHTML = L.steps.map(function (s, i) {
+    return "<li><span class=\"num\">" + (i + 1) + "</span><p>" + s + "</p></li>";
+  }).join("");
+  el("diffTitle").textContent = L.diffTitle;
+  el("diffSection").setAttribute("aria-label", L.diffTitle);
+  el("diffHead").innerHTML = L.diffHead.map(function (h) { return "<th>" + h + "</th>"; }).join("");
+  el("diffBody").innerHTML = L.diffRows.map(function (r) {
+    return "<tr><td>" + r[0] + "</td><td>" + r[1] + "</td><td>" + r[2] + "</td></tr>";
+  }).join("");
+  el("tipsTitle").textContent = L.tipsTitle;
+  el("tipsSection").setAttribute("aria-label", L.tipsTitle);
+  el("tipsList").innerHTML = L.tips.map(function (s) { return "<li><p>" + s + "</p></li>"; }).join("");
+  el("closing").textContent = L.closing;
   document.querySelectorAll(".lang-btn").forEach(function (b) {
     b.classList.toggle("active", b.getAttribute("data-lang") === lang);
   });
   document.documentElement.lang = lang;
-}
-
-/* ---------- game rendering ---------- */
-function gameCard(n) {
-  const L = t();
-  const g = L.games[n - 1];
-  const st = gameState[n];
-  let html = "<div class=\"card\" id=\"game" + n + "\">" +
-    "<h2>" + n + ". " + g.name + "<span class=\"badge\">" + g.level + "</span></h2>" +
-    "<p>" + g.desc + "</p>";
-  if (st.phase === "mem") {
-    html += "<p class=\"note\">" + L.memorizeHint + "</p>";
-    html += memorizeHtml(n);
-    html += "<br><button class=\"big-btn\" data-act=\"mem-done\" data-game=\"" + n + "\">" + L.memorized + "</button>";
-  } else if (st.phase === "ask") {
-    html += askHtml(n);
-  } else {
-    html += memorizeHtml(n);
-    html += st.fb;
-    html += "<br><button class=\"big-btn secondary\" data-act=\"retry\" data-game=\"" + n + "\">" + L.retry + "</button>";
-    if (n < 5) {
-      html += "<button class=\"big-btn\" data-act=\"next\" data-game=\"" + n + "\">" + L.nextGame + "</button>";
-    } else {
-      html += "<button class=\"big-btn\" data-act=\"finish\" data-game=\"" + n + "\">" + L.finishBtn + "</button>";
-    }
-  }
-  html += "</div>";
-  return html;
-}
-
-function memorizeHtml(n) {
-  const st = gameState[n];
-  const d = st.data;
-  if (n === 1) {
-    return d.picked.map(function (nm) { return "<span class=\"name-chip\">" + nm + "</span>"; }).join("");
-  }
-  if (n === 2) {
-    return d.pairs.map(function (p) {
-      return "<div class=\"pair-row\"><b>" + p.name + "</b> — " + p.rel + "</div>";
-    }).join("");
-  }
-  if (n === 3) {
-    return d.order.map(function (nm, i) {
-      return "<div class=\"pair-row\"><b>" + (i + 1) + "</b>. " + nm + "</div>";
-    }).join("");
-  }
-  if (n === 4) {
-    return d.pairs.map(function (p) {
-      return "<div class=\"pair-row\"><b>" + p.name + "</b> — " + p.fav + "</div>";
-    }).join("");
-  }
-  const L = t();
-  return d.order.map(function (nm, i) {
-    return "<div class=\"pair-row\"><b>" + (i + 1) + L.seat + "</b> — " + nm + "</div>";
-  }).join("");
-}
-
-function askHtml(n) {
-  const L = t();
-  const st = gameState[n];
-  const d = st.data;
-  let html = "";
-  if (n === 1) {
-    html += "<p>" + L.pick3 + "</p>";
-    html += d.options.map(function (nm) {
-      const sel = st.sel.indexOf(nm) !== -1 ? " selected" : "";
-      return "<button class=\"opt-btn" + sel + "\" data-act=\"pick\" data-game=\"1\" data-val=\"" + nm + "\">" + nm + "</button>";
-    }).join("");
-    html += "<br><button class=\"big-btn\" data-act=\"check\" data-game=\"1\" " +
-      (st.sel.length === 3 ? "" : "disabled") + ">" + L.check + "</button>";
-  } else if (n === 2 || n === 4) {
-    const opts = n === 2 ? d.relOptions : d.favOptions;
-    html += "<p>" + L.matchHint + "</p><div class=\"match-grid\">";
-    d.pairs.forEach(function (p) {
-      html += "<div class=\"match-row\"><span class=\"match-name\">" + p.name + "</span>";
-      opts.forEach(function (o) {
-        const sel = st.picks[p.name] === o ? " selected" : "";
-        html += "<button class=\"opt-btn" + sel + "\" data-act=\"match\" data-game=\"" + n +
-          "\" data-name=\"" + p.name + "\" data-val=\"" + o + "\">" + o + "</button>";
-      });
-      html += "</div>";
-    });
-    html += "</div><button class=\"big-btn\" data-act=\"check\" data-game=\"" + n + "\">" + L.check + "</button>";
-  } else {
-    const opts = shuffled(d.order.slice(), mulberry32(seedFor(n) + 5));
-    html += "<p>" + (n === 3 ? L.pickOrder : L.seatHint) + "</p>";
-    html += "<div class=\"order-picked\">" + L.yourPick + ": " + st.orderSel.join(" → ") + "</div>";
-    html += opts.map(function (nm) {
-      const used = st.orderSel.indexOf(nm) !== -1;
-      return "<button class=\"opt-btn\" data-act=\"order\" data-game=\"" + n + "\" data-val=\"" + nm + "\" " +
-        (used ? "disabled" : "") + ">" + nm + "</button>";
-    }).join("");
-    html += "<br><button class=\"big-btn\" data-act=\"check\" data-game=\"" + n + "\" " +
-      (st.orderSel.length === d.order.length ? "" : "disabled") + ">" + L.check + "</button>";
-  }
-  return html;
-}
-
-function renderProgress() {
-  const L = t();
-  const shown = finishedAll ? 5 : currentGame;
-  el("progressBar").innerHTML = L.progressGame + " " + shown + " / 5" +
-    "<span class=\"score\">" + L.solvedLabel + ": " + solvedCount() + " / 5</span>";
-}
-
-function finishCard() {
-  const L = t();
-  return "<div class=\"card finish-msg\">" +
-    "<h2>" + L.finishTitle + "</h2>" +
-    "<p class=\"big-score\">" + L.solvedLabel + ": " + solvedCount() + " / 5</p>" +
-    "<p>" + L.finishText + "</p>" +
-    "<button class=\"big-btn\" data-act=\"restart\">" + L.restart + "</button></div>";
-}
-
-function renderGames() {
   renderProgress();
-  el("games").innerHTML = finishedAll ? finishCard() : gameCard(currentGame);
+  renderGame();
 }
 
-function renderAll() {
-  renderStatic();
-  renderGames();
-}
-
-/* ---------- checking ---------- */
-function checkAnswer(n) {
-  const L = t();
-  const st = gameState[n];
-  const d = st.data;
-  let ok = false;
-  let answerText = "";
-  if (n === 1) {
-    ok = st.sel.length === 3 && st.sel.every(function (x) { return d.picked.indexOf(x) !== -1; });
-    answerText = d.picked.join(", ");
-  } else if (n === 2) {
-    ok = d.pairs.every(function (p) { return st.picks[p.name] === p.rel; });
-    answerText = d.pairs.map(function (p) { return p.name + " - " + p.rel; }).join(", ");
-  } else if (n === 3 || n === 5) {
-    ok = st.orderSel.join("|") === d.order.join("|");
-    answerText = d.order.join(" → ");
+/* ---------- rendering ---------- */
+function renderProgress() {
+  const L = S();
+  if (phase === "total") {
+    el("progressText").textContent = L.totalProgress;
   } else {
-    ok = d.pairs.every(function (p) { return st.picks[p.name] === p.fav; });
-    answerText = d.pairs.map(function (p) { return p.name + " - " + p.fav; }).join(", ");
+    el("progressText").textContent = fmt(L.progress, { n: cur + 1 });
   }
-  if (ok) solvedGames[n] = true;
-  st.phase = "done";
-  st.fb = "<div class=\"feedback " + (ok ? "good" : "bad") + "\">" + (ok ? L.correct : L.wrong) + "</div>" +
-    "<p>" + L.answerIs + ": " + answerText + "</p>";
-  renderGames();
+  let dots = "";
+  for (let i = 0; i < 5; i++) {
+    let cls = "dot";
+    if (phase === "total" || scores[i] !== null) cls += " done";
+    else if (i === cur) cls += " now";
+    dots += "<span class=\"" + cls + "\"></span>";
+  }
+  el("dots").innerHTML = dots;
 }
 
-/* ---------- events (plain handlers; no MutationObserver) ---------- */
-el("games").addEventListener("click", function (e) {
+function cardHtml(it) {
+  return "<div class=\"food-card\"><span class=\"emoji\" aria-hidden=\"true\">" + it.emoji +
+    "</span><span class=\"name\">" + itemName(it) + "</span></div>";
+}
+
+function renderGame() {
+  const L = S();
+  const area = el("gameArea");
+  if (phase === "total") { area.innerHTML = totalHtml(); return; }
+  const g = games[cur];
+  let html = "";
+  if (phase === "mem") {
+    html += "<h3 class=\"phase-title\">" + L.memorizeTitle + "</h3>";
+    html += "<p class=\"phase-desc\">" + fmt(L.memorizeDesc, { n: g.n }) + "</p>";
+    html += "<div class=\"grid\">" + g.answers.map(function (id) { return cardHtml(ITEM_BY_ID[id]); }).join("") + "</div>";
+    html += "<div class=\"btn-row\"><button class=\"btn btn-primary\" data-act=\"mem-done\">" + L.memorizedBtn + "</button></div>";
+  } else if (phase === "pick") {
+    html += "<h3 class=\"phase-title\">" + L.pickTitle + "</h3>";
+    html += "<p class=\"phase-desc\">" + fmt(L.pickDesc, { n: g.n }) + "</p>";
+    html += "<div class=\"grid\">" + g.picks.map(function (id) {
+      const it = ITEM_BY_ID[id];
+      const sel = selected.has(id) ? " selected" : "";
+      return "<button class=\"pick-btn" + sel + "\" data-act=\"toggle\" data-id=\"" + id + "\">" +
+        "<span class=\"emoji\" aria-hidden=\"true\">" + it.emoji + "</span>" +
+        "<span class=\"name\">" + itemName(it) + "</span></button>";
+    }).join("") + "</div>";
+    html += "<p class=\"picked-count\">" + fmt(L.pickedCount, { n: selected.size }) + "</p>";
+    if (warnShown) html += "<p class=\"warn\">" + L.warnEmpty + "</p>";
+    html += "<div class=\"btn-row\">" +
+      "<button class=\"btn btn-primary\" data-act=\"check\">" + L.checkBtn + "</button>" +
+      "<button class=\"btn btn-ghost\" data-act=\"look-again\">" + L.lookAgainBtn + "</button></div>";
+  } else { // result
+    const sc = scores[cur];
+    html += "<p class=\"score-line\">" + fmt(L.scoreText, { total: sc.total, got: sc.got }) + "</p>";
+    html += "<p class=\"praise\">" + praiseFor(sc.got, sc.total) + "</p>";
+    html += "<div class=\"grid\">" + g.picks.map(function (id) {
+      const it = ITEM_BY_ID[id];
+      const isAnswer = g.answers.indexOf(id) !== -1;
+      const isPicked = selected.has(id);
+      let cls = "pick-btn plain", tag = "";
+      if (isAnswer && isPicked) { cls = "pick-btn got"; tag = "<span class=\"tag\">" + L.tagGot + "</span>"; }
+      else if (isAnswer && !isPicked) { cls = "pick-btn missed"; tag = "<span class=\"tag\">" + L.tagMissed + "</span>"; }
+      else if (!isAnswer && isPicked) { cls = "pick-btn wrongpick"; tag = "<span class=\"tag\">" + L.tagWrong + "</span>"; }
+      return "<button class=\"" + cls + "\" disabled>" +
+        "<span class=\"emoji\" aria-hidden=\"true\">" + it.emoji + "</span>" +
+        "<span class=\"name\">" + itemName(it) + "</span>" + tag + "</button>";
+    }).join("") + "</div>";
+    const missed = g.answers.filter(function (id) { return !selected.has(id); });
+    if (missed.length > 0) {
+      html += "<p class=\"missed-line\">" + fmt(L.missedLine, {
+        names: missed.map(function (id) { return itemName(ITEM_BY_ID[id]); }).join(", ")
+      }) + "</p>";
+    }
+    html += "<div class=\"btn-row\">";
+    if (cur < 4) html += "<button class=\"btn btn-primary\" data-act=\"next\">" + L.nextBtn + "</button>";
+    else html += "<button class=\"btn btn-primary\" data-act=\"final\">" + L.finalBtn + "</button>";
+    html += "<button class=\"btn btn-ghost\" data-act=\"retry-game\">" + L.retryBtn + "</button></div>";
+  }
+  area.innerHTML = html;
+}
+
+function praiseFor(got, total) {
+  const L = S();
+  const r = total === 0 ? 0 : got / total;
+  if (r >= 1) return L.praisePerfect;
+  if (r >= 0.75) return L.praiseGreat;
+  if (r >= 0.5) return L.praiseGood;
+  return L.praiseLow;
+}
+
+function totalHtml() {
+  const L = S();
+  let gotSum = 0;
+  let html = "<h3 class=\"phase-title\">" + L.totalTitle + "</h3>";
+  html += "<ul class=\"total-list\">";
+  scores.forEach(function (sc, i) {
+    gotSum += sc ? sc.got : 0;
+    html += "<li>" + fmt(L.totalLine, { i: i + 1, n: games[i].n, got: sc ? sc.got : 0 }) + "</li>";
+  });
+  html += "</ul>";
+  html += "<p class=\"total-score\">" + fmt(L.totalScore, { got: gotSum }) + "</p>";
+  html += "<p class=\"praise\">" + praiseFor(gotSum, 25) + "</p>";
+  html += "<div class=\"btn-row\"><button class=\"btn btn-primary\" data-act=\"restart-today\">" + L.restartTodayBtn + "</button></div>";
+  return html;
+}
+
+function renderAll() { renderProgress(); renderGame(); }
+
+function startSet(seedStr) {
+  setSeed = seedStr;
+  games = buildSet(seedStr);
+  cur = 0;
+  phase = "mem";
+  selected = new Set();
+  warnShown = false;
+  scores = [null, null, null, null, null];
+  renderAll();
+}
+
+/* ---------- events (explicit handlers only) ---------- */
+document.addEventListener("click", function (e) {
+  const langBtn = e.target.closest("button[data-lang]");
+  if (langBtn) {
+    const next = langBtn.getAttribute("data-lang");
+    if (next !== lang) { lang = next; applyStaticTexts(); } // selection & phase are kept
+    return;
+  }
   const btn = e.target.closest("button[data-act]");
   if (!btn) return;
   const act = btn.getAttribute("data-act");
-  if (act === "restart") {
-    resetProgress();
-    for (let g = 1; g <= 5; g++) initGame(g);
-    renderGames();
+  const g = games[cur];
+  if (act === "mem-done") {
+    phase = "pick"; warnShown = false; renderAll();
+  } else if (act === "toggle") {
+    const id = btn.getAttribute("data-id");
+    if (selected.has(id)) selected.delete(id); else selected.add(id);
+    warnShown = false;
+    renderGame();
+  } else if (act === "look-again") {
+    phase = "mem"; renderAll();
+  } else if (act === "check") {
+    if (selected.size === 0) { warnShown = true; renderGame(); return; }
+    let got = 0;
+    g.answers.forEach(function (id) { if (selected.has(id)) got++; });
+    scores[cur] = { total: g.n, got: got };
+    phase = "result";
+    renderAll();
+  } else if (act === "retry-game") {
+    selected = new Set(); warnShown = false; scores[cur] = null; phase = "mem";
+    renderAll();
     window.scrollTo({ top: 0, behavior: "smooth" });
-    return;
+  } else if (act === "next") {
+    cur += 1; selected = new Set(); warnShown = false; phase = "mem";
+    renderAll();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } else if (act === "final") {
+    phase = "total";
+    renderAll();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } else if (act === "restart-today") {
+    startSet(dateSeedStr());
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } else if (act === "new-set") {
+    startSet(dateSeedStr() + "-alt-" + Date.now());
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
-  const n = parseInt(btn.getAttribute("data-game"), 10);
-  const st = gameState[n];
-  if (act === "next") {
-    currentGame = n + 1;
-    renderGames();
-    window.scrollTo({ top: el("progressBar").offsetTop - 10, behavior: "smooth" });
-  }
-  else if (act === "finish") {
-    finishedAll = true;
-    renderGames();
-    window.scrollTo({ top: el("progressBar").offsetTop - 10, behavior: "smooth" });
-  }
-  else if (act === "mem-done") { st.phase = "ask"; renderGames(); }
-  else if (act === "retry") { initGame(n); renderGames(); }
-  else if (act === "pick") {
-    const v = btn.getAttribute("data-val");
-    const i = st.sel.indexOf(v);
-    if (i === -1) { if (st.sel.length < 3) st.sel.push(v); }
-    else st.sel.splice(i, 1);
-    renderGames();
-  }
-  else if (act === "match") {
-    st.picks[btn.getAttribute("data-name")] = btn.getAttribute("data-val");
-    renderGames();
-  }
-  else if (act === "order") {
-    const v = btn.getAttribute("data-val");
-    if (st.orderSel.indexOf(v) === -1) st.orderSel.push(v);
-    renderGames();
-  }
-  else if (act === "check") { checkAnswer(n); }
-});
-
-el("langBar").addEventListener("click", function (e) {
-  const btn = e.target.closest("button[data-lang]");
-  if (!btn) return;
-  lang = btn.getAttribute("data-lang");
-  resetProgress();
-  for (let n = 1; n <= 5; n++) initGame(n); // language change restarts the games with new words
-  renderAll();
-});
-
-el("reshuffleBtn").addEventListener("click", function () {
-  reshuffleCount++;
-  resetProgress();
-  for (let n = 1; n <= 5; n++) initGame(n);
-  renderAll();
-  window.scrollTo({ top: 0, behavior: "smooth" });
 });
 
 /* ---------- init ---------- */
-for (let n = 1; n <= 5; n++) initGame(n);
-renderAll();
+applyStaticTexts();
 </script>
 </body>
 </html>
