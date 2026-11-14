@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 10 가족·친구 이름 기억하기 | 오늘의 두뇌운동</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0;
+    background: #FFF7E8;
+    color: #4A2C14;
+    font-family: "Malgun Gothic", "Noto Sans KR", sans-serif;
+    font-size: 24px; line-height: 1.7;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 20px 18px 60px; }
+  header { text-align: center; padding: 26px 10px 10px; }
+  h1 { font-size: 40px; color: #C85A17; margin: 10px 0 6px; line-height: 1.3; }
+  .subtitle { font-size: 26px; color: #7A4A21; }
+  .lang-bar { display: flex; justify-content: center; gap: 12px; margin: 18px 0 8px; flex-wrap: wrap; }
+  .lang-btn {
+    font-size: 26px; font-weight: bold; padding: 14px 26px;
+    border-radius: 40px; border: 3px solid #E8823A;
+    background: #FFFDF7; color: #C85A17; cursor: pointer;
+  }
+  .lang-btn.active { background: #E8823A; color: #fff; }
+  .card {
+    background: #FFFDF7; border: 3px solid #F5C99B; border-radius: 22px;
+    padding: 26px 24px; margin: 26px 0;
+  }
+  .card h2 { font-size: 32px; color: #C85A17; margin: 0 0 12px; }
+  .card h3 { font-size: 28px; color: #C85A17; margin: 18px 0 8px; }
+  .card p, .card li { font-size: 24px; }
+  .big-btn {
+    display: inline-block; font-size: 28px; font-weight: bold;
+    padding: 18px 34px; margin: 14px 6px 4px 0;
+    border-radius: 40px; border: none; cursor: pointer;
+    background: #E8823A; color: #fff;
+  }
+  .big-btn.secondary { background: #FFF3DF; color: #C85A17; border: 3px solid #E8823A; }
+  .big-btn:disabled { opacity: 0.5; cursor: default; }
+  .name-chip {
+    display: inline-block; font-size: 32px; font-weight: bold;
+    background: #FFE8C7; border: 3px solid #F5A95C; border-radius: 18px;
+    padding: 14px 26px; margin: 8px;
+  }
+  .pair-row { font-size: 28px; margin: 10px 0; }
+  .pair-row b { color: #C85A17; }
+  .opt-btn {
+    font-size: 28px; font-weight: bold; padding: 16px 26px; margin: 8px;
+    border-radius: 18px; border: 3px solid #E8823A;
+    background: #FFFDF7; color: #4A2C14; cursor: pointer; min-width: 140px;
+  }
+  .opt-btn.selected { background: #E8823A; color: #fff; }
+  .opt-btn:disabled { opacity: 0.6; cursor: default; }
+  .match-grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin: 12px 0; }
+  .match-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .match-name { font-size: 28px; font-weight: bold; min-width: 130px; color: #C85A17; }
+  .match-row .opt-btn { font-size: 24px; padding: 12px 20px; min-width: 110px; }
+  .feedback { font-size: 30px; font-weight: bold; margin: 16px 0; padding: 16px; border-radius: 16px; }
+  .feedback.good { background: #E4F5D8; color: #2E6B1E; }
+  .feedback.bad { background: #FDE8D8; color: #A33A00; }
+  .badge {
+    display: inline-block; font-size: 22px; font-weight: bold; color: #fff;
+    background: #F2994A; border-radius: 30px; padding: 6px 18px; margin-left: 10px;
+    vertical-align: middle;
+  }
+  table.diff { width: 100%; border-collapse: collapse; font-size: 24px; margin: 10px 0; }
+  table.diff th, table.diff td { border: 2px solid #F5C99B; padding: 12px 10px; text-align: left; }
+  table.diff th { background: #FFE8C7; color: #C85A17; }
+  .order-picked { font-size: 28px; font-weight: bold; color: #C85A17; min-height: 44px; margin: 10px 0; }
+  .note { font-size: 22px; color: #7A4A21; }
+  footer { text-align: center; font-size: 22px; color: #7A4A21; margin-top: 30px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="lang-bar" id="langBar">
+      <button class="lang-btn active" data-lang="ko">한국어</button>
+      <button class="lang-btn" data-lang="en">English</button>
+      <button class="lang-btn" data-lang="ja">日本語</button>
+    </div>
+    <h1 id="title"></h1>
+    <div class="subtitle" id="subtitle"></div>
+  </header>
+
+  <div class="card" id="howCard"></div>
+  <div class="card" id="diffCard"></div>
+
+  <div style="text-align:center;">
+    <button class="big-btn secondary" id="reshuffleBtn"></button>
+  </div>
+
+  <div id="games"></div>
+
+  <div class="card" id="tipsCard"></div>
+  <footer id="footerNote"></footer>
+</div>
+
+<script>
+"use strict";
+
+/* ---------- i18n ---------- */
+const I18N = {
+  ko: {
+    title: "Day 10 가족·친구 이름 기억하기",
+    subtitle: "오늘 5~10분, 함께 외워봐요",
+    howTitle: "게임 방법",
+    howSteps: [
+      "1. 화면에 나오는 이름을 천천히 읽어요.",
+      "2. 다 외웠다고 생각되면 \"다 외웠어요\" 버튼을 눌러요. 외우는 시간 제한은 없어요.",
+      "3. 가려진 이름을 보기에서 골라요."
+    ],
+    diffTitle: "난이도표",
+    diffHead: ["게임", "난이도", "내용"],
+    diffRows: [
+      ["1번 게임", "쉬움", "이름 3개 외우기"],
+      ["2번 게임", "보통", "이름과 관계 연결하기"],
+      ["3번 게임", "보통", "이름 순서 맞히기"],
+      ["4번 게임", "조금 어려움", "이름과 좋아하는 것 연결하기"],
+      ["5번 게임", "어려움", "모임 자리 기억하기"]
+    ],
+    tipsTitle: "팁",
+    tips: [
+      "이름을 소리 내어 읽으면 더 잘 외워져요.",
+      "틀려도 괜찮아요. 다시 하면 됩니다.",
+      "\"새로운 것으로 다시 하기\" 버튼을 누르면 새 문제가 나와요.",
+      "가족과 함께 하면 더 재미있어요."
+    ],
+    reshuffle: "새로운 것으로 다시 하기",
+    memorized: "다 외웠어요",
+    check: "정답 확인",
+    retry: "다시 하기",
+    correct: "정답이에요! 잘하셨어요.",
+    wrong: "아쉬워요. 정답을 확인하고 다시 해보세요.",
+    yourPick: "내가 고른 것",
+    answerIs: "정답",
+    pick3: "화면에 나온 이름 3개를 골라주세요.",
+    pickOrder: "외운 순서대로 이름을 눌러주세요.",
+    matchHint: "각 이름에 맞는 것을 골라주세요.",
+    seatHint: "1번 자리부터 순서대로 이름을 눌러주세요.",
+    memorizeHint: "천천히 읽고 외우세요. 시간 제한은 없어요.",
+    seat: "번 자리",
+    footer: "오늘의 두뇌운동 · 로그인 없이 누구나 바로 할 수 있어요",
+    games: [
+      { name: "이름 3개 외우기", level: "쉬움", desc: "이름 3개를 외우고, 보기에서 골라요." },
+      { name: "이름과 관계 연결하기", level: "보통", desc: "이름과 관계를 연결해요." },
+      { name: "이름 순서 맞히기", level: "보통", desc: "이름 5개를 순서대로 외워요." },
+      { name: "이름과 좋아하는 것 연결하기", level: "조금 어려움", desc: "이름과 좋아하는 것을 연결해요." },
+      { name: "모임 자리 기억하기", level: "어려움", desc: "이름 7개와 자리를 함께 외워요." }
+    ],
+    names: ["영희","철수","민준","서연","순자","영수","미영","지호","하은","도윤","채원"],
+    relations: ["할머니","아빠","엄마","친구","이웃","동생","선생님"],
+    favorites: ["김치찌개","산책","노래","바둑","꽃","낚시","독서"]
+  },
+  en: {
+    title: "Day 10 Remember Family and Friends' Names",
+    subtitle: "Let's practice together for 5–10 minutes today",
+    howTitle: "How to Play",
+    howSteps: [
+      "1. Read the names on the screen slowly.",
+      "2. When you have memorized them, press \"I memorized them\". There is no time limit.",
+      "3. Pick the names from the choices."
+    ],
+    diffTitle: "Difficulty Levels",
+    diffHead: ["Game", "Level", "What you do"],
+    diffRows: [
+      ["Game 1", "Easy", "Remember 3 names"],
+      ["Game 2", "Medium", "Match names and relationships"],
+      ["Game 3", "Medium", "Remember the order of names"],
+      ["Game 4", "A bit hard", "Match names and favorites"],
+      ["Game 5", "Hard", "Remember seats at a gathering"]
+    ],
+    tipsTitle: "Tips",
+    tips: [
+      "Reading names out loud helps you remember them.",
+      "It is okay to be wrong. Just try again.",
+      "Press \"Play with new ones\" for new questions.",
+      "It is more fun with family."
+    ],
+    reshuffle: "Play with new ones",
+    memorized: "I memorized them",
+    check: "Check the answer",
+    retry: "Try again",
+    correct: "Correct! Well done.",
+    wrong: "Not quite. Check the answer and try again.",
+    yourPick: "Your picks",
+    answerIs: "Answer",
+    pick3: "Pick the 3 names you saw on the screen.",
+    pickOrder: "Tap the names in the order you memorized.",
+    matchHint: "Pick the right match for each name.",
+    seatHint: "Tap the names in seat order, starting from seat 1.",
+    memorizeHint: "Read slowly and memorize. There is no time limit.",
+    seat: "Seat ",
+    footer: "Today's Brain Exercise · Anyone can play right away, no login needed",
+    games: [
+      { name: "Remember 3 Names", level: "Easy", desc: "Memorize 3 names and pick them from the choices." },
+      { name: "Match Names and Relationships", level: "Medium", desc: "Match each name with a relationship." },
+      { name: "Remember the Order of Names", level: "Medium", desc: "Memorize 5 names in order." },
+      { name: "Match Names and Favorites", level: "A bit hard", desc: "Match each name with a favorite thing." },
+      { name: "Remember the Seats", level: "Hard", desc: "Memorize 7 names and their seats." }
+    ],
+    names: ["Mary","James","Emma","Liam","Grace","Henry","Alice","Noah","Sophia","Jack","Lily"],
+    relations: ["grandmother","father","mother","friend","neighbor","younger sibling","teacher"],
+    favorites: ["kimchi stew","walking","singing","baduk","flowers","fishing","reading"]
+  },
+  ja: {
+    title: "Day 10 家族や友だちの名前を覚える",
+    subtitle: "今日5〜10分、一緒に覚えましょう",
+    howTitle: "遊び方",
+    howSteps: [
+      "1. 画面に出る名前をゆっくり読みます。",
+      "2. 覚えたと思ったら「覚えました」ボタンを押します。時間制限はありません。",
+      "3. かくれた名前をえらびます。"
+    ],
+    diffTitle: "むずかしさの表",
+    diffHead: ["ゲーム", "むずかしさ", "内容"],
+    diffRows: [
+      ["1番のゲーム", "やさしい", "名前を3つ覚える"],
+      ["2番のゲーム", "ふつう", "名前と関係をつなげる"],
+      ["3番のゲーム", "ふつう", "名前の順番を当てる"],
+      ["4番のゲーム", "すこしむずかしい", "名前と好きなものをつなげる"],
+      ["5番のゲーム", "むずかしい", "集まりの席を覚える"]
+    ],
+    tipsTitle: "コツ",
+    tips: [
+      "名前を声に出して読むと覚えやすいです。",
+      "まちがえても大丈夫です。もう一度やってみましょう。",
+      "「新しいものではじめる」ボタンを押すと新しい問題が出ます。",
+      "家族と一緒だと、もっと楽しいです。"
+    ],
+    reshuffle: "新しいものではじめる",
+    memorized: "覚えました",
+    check: "答えを確かめる",
+    retry: "もう一度",
+    correct: "正解です！よくできました。",
+    wrong: "ざんねん。答えを見て、もう一度やってみましょう。",
+    yourPick: "あなたがえらんだもの",
+    answerIs: "答え",
+    pick3: "画面に出た名前を3つえらんでください。",
+    pickOrder: "覚えた順番に名前を押してください。",
+    matchHint: "それぞれの名前に合うものをえらんでください。",
+    seatHint: "1番の席から順番に名前を押してください。",
+    memorizeHint: "ゆっくり読んで覚えましょう。時間制限はありません。",
+    seat: "番の席",
+    footer: "今日の脳トレーニング · ログインなしで、だれでもすぐ遊べます",
+    games: [
+      { name: "名前を3つ覚える", level: "やさしい", desc: "名前を3つ覚えて、えらびます。" },
+      { name: "名前と関係をつなげる", level: "ふつう", desc: "名前と関係をつなげます。" },
+      { name: "名前の順番を当てる", level: "ふつう", desc: "名前を5つ順番に覚えます。" },
+      { name: "名前と好きなものをつなげる", level: "すこしむずかしい", desc: "名前と好きなものをつなげます。" },
+      { name: "集まりの席を覚える", level: "むずかしい", desc: "名前を7つと席を一緒に覚えます。" }
+    ],
+    names: ["はな","たろう","さくら","けんじ","よしこ","ひろし","みちこ","ゆうと","あい","だいすけ","えみ"],
+    relations: ["おばあさん","おとうさん","おかあさん","ともだち","となり","おとうと","せんせい"],
+    favorites: ["キムチチゲ","さんぽ","うた","いご","はな","つり","どくしょ"]
+  }
+};
+
+/* ---------- seeded random: same day = same questions, next day = new ---------- */
+function todaySeed() {
+  const d = new Date();
+  return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+}
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function shuffled(arr, rand) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    const tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+  }
+  return a;
+}
+function pickN(arr, n, rand) { return shuffled(arr, rand).slice(0, n); }
+
+/* ---------- state ---------- */
+let lang = "ko";
+let reshuffleCount = 0; // "새로운 것으로 다시 하기" presses
+const gameState = {};   // per game: { phase: 'mem'|'ask'|'done', data, ... }
+
+function seedFor(gameNo) {
+  return todaySeed() * 1000 + reshuffleCount * 97 + gameNo * 13;
+}
+function t() { return I18N[lang]; }
+function el(id) { return document.getElementById(id); }
+
+/* ---------- game data builders (seeded per day) ---------- */
+function buildGameData(n) {
+  const L = t();
+  const rand = mulberry32(seedFor(n));
+  if (n === 1) {
+    const picked = pickN(L.names, 3, rand);
+    const rest = L.names.filter(function (x) { return picked.indexOf(x) === -1; });
+    const distract = pickN(rest, 3, rand);
+    return { picked: picked, options: shuffled(picked.concat(distract), rand) };
+  }
+  if (n === 2) {
+    const names = pickN(L.names, 4, rand);
+    const rels = pickN(L.relations, 4, rand);
+    return { pairs: names.map(function (nm, i) { return { name: nm, rel: rels[i] }; }),
+             relOptions: shuffled(rels.slice(), rand) };
+  }
+  if (n === 3) {
+    return { order: pickN(L.names, 5, rand) };
+  }
+  if (n === 4) {
+    const names = pickN(L.names, 5, rand);
+    const favs = pickN(L.favorites, 5, rand);
+    return { pairs: names.map(function (nm, i) { return { name: nm, fav: favs[i] }; }),
+             favOptions: shuffled(favs.slice(), rand) };
+  }
+  // game 5
+  return { order: pickN(L.names, 7, rand) };
+}
+
+function initGame(n) {
+  gameState[n] = { phase: "mem", data: buildGameData(n), sel: [], picks: {}, orderSel: [], fb: "" };
+}
+
+/* ---------- static sections ---------- */
+function renderStatic() {
+  const L = t();
+  el("title").textContent = L.title;
+  el("subtitle").textContent = L.subtitle;
+  el("howCard").innerHTML = "<h2>" + L.howTitle + "</h2>" +
+    L.howSteps.map(function (s) { return "<p>" + s + "</p>"; }).join("");
+  let dh = "<h2>" + L.diffTitle + "</h2><table class=\"diff\"><tr>";
+  L.diffHead.forEach(function (h) { dh += "<th>" + h + "</th>"; });
+  dh += "</tr>";
+  L.diffRows.forEach(function (r) {
+    dh += "<tr><td>" + r[0] + "</td><td>" + r[1] + "</td><td>" + r[2] + "</td></tr>";
+  });
+  dh += "</table>";
+  el("diffCard").innerHTML = dh;
+  el("tipsCard").innerHTML = "<h2>" + L.tipsTitle + "</h2><ul>" +
+    L.tips.map(function (s) { return "<li>" + s + "</li>"; }).join("") + "</ul>";
+  el("reshuffleBtn").textContent = L.reshuffle;
+  el("footerNote").textContent = L.footer;
+  document.querySelectorAll(".lang-btn").forEach(function (b) {
+    b.classList.toggle("active", b.getAttribute("data-lang") === lang);
+  });
+  document.documentElement.lang = lang;
+}
+
+/* ---------- game rendering ---------- */
+function gameCard(n) {
+  const L = t();
+  const g = L.games[n - 1];
+  const st = gameState[n];
+  let html = "<div class=\"card\" id=\"game" + n + "\">" +
+    "<h2>" + n + ". " + g.name + "<span class=\"badge\">" + g.level + "</span></h2>" +
+    "<p>" + g.desc + "</p>";
+  if (st.phase === "mem") {
+    html += "<p class=\"note\">" + L.memorizeHint + "</p>";
+    html += memorizeHtml(n);
+    html += "<br><button class=\"big-btn\" data-act=\"mem-done\" data-game=\"" + n + "\">" + L.memorized + "</button>";
+  } else if (st.phase === "ask") {
+    html += askHtml(n);
+  } else {
+    html += memorizeHtml(n);
+    html += st.fb;
+    html += "<br><button class=\"big-btn secondary\" data-act=\"retry\" data-game=\"" + n + "\">" + L.retry + "</button>";
+  }
+  html += "</div>";
+  return html;
+}
+
+function memorizeHtml(n) {
+  const st = gameState[n];
+  const d = st.data;
+  if (n === 1) {
+    return d.picked.map(function (nm) { return "<span class=\"name-chip\">" + nm + "</span>"; }).join("");
+  }
+  if (n === 2) {
+    return d.pairs.map(function (p) {
+      return "<div class=\"pair-row\"><b>" + p.name + "</b> — " + p.rel + "</div>";
+    }).join("");
+  }
+  if (n === 3) {
+    return d.order.map(function (nm, i) {
+      return "<div class=\"pair-row\"><b>" + (i + 1) + "</b>. " + nm + "</div>";
+    }).join("");
+  }
+  if (n === 4) {
+    return d.pairs.map(function (p) {
+      return "<div class=\"pair-row\"><b>" + p.name + "</b> — " + p.fav + "</div>";
+    }).join("");
+  }
+  const L = t();
+  return d.order.map(function (nm, i) {
+    return "<div class=\"pair-row\"><b>" + (i + 1) + L.seat + "</b> — " + nm + "</div>";
+  }).join("");
+}
+
+function askHtml(n) {
+  const L = t();
+  const st = gameState[n];
+  const d = st.data;
+  let html = "";
+  if (n === 1) {
+    html += "<p>" + L.pick3 + "</p>";
+    html += d.options.map(function (nm) {
+      const sel = st.sel.indexOf(nm) !== -1 ? " selected" : "";
+      return "<button class=\"opt-btn" + sel + "\" data-act=\"pick\" data-game=\"1\" data-val=\"" + nm + "\">" + nm + "</button>";
+    }).join("");
+    html += "<br><button class=\"big-btn\" data-act=\"check\" data-game=\"1\" " +
+      (st.sel.length === 3 ? "" : "disabled") + ">" + L.check + "</button>";
+  } else if (n === 2 || n === 4) {
+    const opts = n === 2 ? d.relOptions : d.favOptions;
+    html += "<p>" + L.matchHint + "</p><div class=\"match-grid\">";
+    d.pairs.forEach(function (p) {
+      html += "<div class=\"match-row\"><span class=\"match-name\">" + p.name + "</span>";
+      opts.forEach(function (o) {
+        const sel = st.picks[p.name] === o ? " selected" : "";
+        html += "<button class=\"opt-btn" + sel + "\" data-act=\"match\" data-game=\"" + n +
+          "\" data-name=\"" + p.name + "\" data-val=\"" + o + "\">" + o + "</button>";
+      });
+      html += "</div>";
+    });
+    html += "</div><button class=\"big-btn\" data-act=\"check\" data-game=\"" + n + "\">" + L.check + "</button>";
+  } else {
+    const opts = shuffled(d.order.slice(), mulberry32(seedFor(n) + 5));
+    html += "<p>" + (n === 3 ? L.pickOrder : L.seatHint) + "</p>";
+    html += "<div class=\"order-picked\">" + L.yourPick + ": " + st.orderSel.join(" → ") + "</div>";
+    html += opts.map(function (nm) {
+      const used = st.orderSel.indexOf(nm) !== -1;
+      return "<button class=\"opt-btn\" data-act=\"order\" data-game=\"" + n + "\" data-val=\"" + nm + "\" " +
+        (used ? "disabled" : "") + ">" + nm + "</button>";
+    }).join("");
+    html += "<br><button class=\"big-btn\" data-act=\"check\" data-game=\"" + n + "\" " +
+      (st.orderSel.length === d.order.length ? "" : "disabled") + ">" + L.check + "</button>";
+  }
+  return html;
+}
+
+function renderGames() {
+  let html = "";
+  for (let n = 1; n <= 5; n++) html += gameCard(n);
+  el("games").innerHTML = html;
+}
+
+function renderAll() {
+  renderStatic();
+  renderGames();
+}
+
+/* ---------- checking ---------- */
+function checkAnswer(n) {
+  const L = t();
+  const st = gameState[n];
+  const d = st.data;
+  let ok = false;
+  let answerText = "";
+  if (n === 1) {
+    ok = st.sel.length === 3 && st.sel.every(function (x) { return d.picked.indexOf(x) !== -1; });
+    answerText = d.picked.join(", ");
+  } else if (n === 2) {
+    ok = d.pairs.every(function (p) { return st.picks[p.name] === p.rel; });
+    answerText = d.pairs.map(function (p) { return p.name + " - " + p.rel; }).join(", ");
+  } else if (n === 3 || n === 5) {
+    ok = st.orderSel.join("|") === d.order.join("|");
+    answerText = d.order.join(" → ");
+  } else {
+    ok = d.pairs.every(function (p) { return st.picks[p.name] === p.fav; });
+    answerText = d.pairs.map(function (p) { return p.name + " - " + p.fav; }).join(", ");
+  }
+  st.phase = "done";
+  st.fb = "<div class=\"feedback " + (ok ? "good" : "bad") + "\">" + (ok ? L.correct : L.wrong) + "</div>" +
+    "<p>" + L.answerIs + ": " + answerText + "</p>";
+  renderGames();
+}
+
+/* ---------- events (plain handlers; no MutationObserver) ---------- */
+el("games").addEventListener("click", function (e) {
+  const btn = e.target.closest("button[data-act]");
+  if (!btn) return;
+  const act = btn.getAttribute("data-act");
+  const n = parseInt(btn.getAttribute("data-game"), 10);
+  const st = gameState[n];
+  if (act === "mem-done") { st.phase = "ask"; renderGames(); }
+  else if (act === "retry") { initGame(n); renderGames(); }
+  else if (act === "pick") {
+    const v = btn.getAttribute("data-val");
+    const i = st.sel.indexOf(v);
+    if (i === -1) { if (st.sel.length < 3) st.sel.push(v); }
+    else st.sel.splice(i, 1);
+    renderGames();
+  }
+  else if (act === "match") {
+    st.picks[btn.getAttribute("data-name")] = btn.getAttribute("data-val");
+    renderGames();
+  }
+  else if (act === "order") {
+    const v = btn.getAttribute("data-val");
+    if (st.orderSel.indexOf(v) === -1) st.orderSel.push(v);
+    renderGames();
+  }
+  else if (act === "check") { checkAnswer(n); }
+});
+
+el("langBar").addEventListener("click", function (e) {
+  const btn = e.target.closest("button[data-lang]");
+  if (!btn) return;
+  lang = btn.getAttribute("data-lang");
+  for (let n = 1; n <= 5; n++) initGame(n); // language change restarts the games with new words
+  renderAll();
+});
+
+el("reshuffleBtn").addEventListener("click", function () {
+  reshuffleCount++;
+  for (let n = 1; n <= 5; n++) initGame(n);
+  renderAll();
+  window.scrollTo({ top: el("games").offsetTop - 20, behavior: "smooth" });
+});
+
+/* ---------- init ---------- */
+for (let n = 1; n <= 5; n++) initGame(n);
+renderAll();
+</script>
+</body>
+</html>
