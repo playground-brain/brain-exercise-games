@@ -70,6 +70,14 @@
   table.diff th { background: #FFE8C7; color: #C85A17; }
   .order-picked { font-size: 28px; font-weight: bold; color: #C85A17; min-height: 44px; margin: 10px 0; }
   .note { font-size: 22px; color: #7A4A21; }
+  .progress {
+    text-align: center; font-size: 30px; font-weight: bold; color: #C85A17;
+    background: #FFE8C7; border: 3px solid #F5A95C; border-radius: 22px;
+    padding: 16px; margin: 20px 0 4px;
+  }
+  .progress .score { display: block; font-size: 24px; color: #7A4A21; margin-top: 4px; }
+  .finish-msg { text-align: center; }
+  .finish-msg .big-score { font-size: 40px; font-weight: bold; color: #C85A17; }
   footer { text-align: center; font-size: 22px; color: #7A4A21; margin-top: 30px; }
 </style>
 </head>
@@ -85,15 +93,17 @@
     <div class="subtitle" id="subtitle"></div>
   </header>
 
-  <div class="card" id="howCard"></div>
-  <div class="card" id="diffCard"></div>
+  <div class="progress" id="progressBar"></div>
+
+  <div id="games"></div>
 
   <div style="text-align:center;">
     <button class="big-btn secondary" id="reshuffleBtn"></button>
   </div>
 
-  <div id="games"></div>
-
+  <div class="card" id="howCard"></div>
+  <div class="card" id="diffCard"></div>
+  <div class="card" id="whyCard"></div>
   <div class="card" id="tipsCard"></div>
   <footer id="footerNote"></footer>
 </div>
@@ -110,18 +120,30 @@ const I18N = {
     howSteps: [
       "1. 화면에 나오는 이름을 천천히 읽어요.",
       "2. 다 외웠다고 생각되면 \"다 외웠어요\" 버튼을 눌러요. 외우는 시간 제한은 없어요.",
-      "3. 가려진 이름을 보기에서 골라요."
+      "3. 가려진 이름을 보기에서 고르고, 정답을 확인하면 다음 게임으로 넘어가요."
     ],
-    diffTitle: "난이도표",
-    diffHead: ["게임", "난이도", "내용"],
+    diffTitle: "오늘의 다섯 게임",
+    diffHead: ["게임", "난이도", "내용", "외우는 시간"],
     diffRows: [
-      ["1번 게임", "쉬움", "이름 3개 외우기"],
-      ["2번 게임", "보통", "이름과 관계 연결하기"],
-      ["3번 게임", "보통", "이름 순서 맞히기"],
-      ["4번 게임", "조금 어려움", "이름과 좋아하는 것 연결하기"],
-      ["5번 게임", "어려움", "모임 자리 기억하기"]
+      ["게임 1", "쉬움", "이름 3개 외우기", "제한 없음"],
+      ["게임 2", "보통", "이름과 관계 연결하기", "제한 없음"],
+      ["게임 3", "보통", "이름 순서 맞히기", "제한 없음"],
+      ["게임 4", "조금 어려움", "이름과 좋아하는 것 연결하기", "제한 없음"],
+      ["게임 5", "어려움", "모임 자리 기억하기", "제한 없음"]
     ],
-    tipsTitle: "팁",
+    progressGame: "게임",
+    solvedLabel: "맞힌 게임",
+    nextGame: "다음 게임으로",
+    finishBtn: "결과 보기",
+    finishTitle: "오늘의 게임 5개를 다 했어요!",
+    finishText: "수고하셨어요. 오늘 외운 이름들을 저녁에 한 번 더 떠올려 보세요.",
+    restart: "처음부터 다시 하기",
+    whyTitle: "왜 좋은 게임인가요?",
+    whyParas: [
+      "사람 이름은 뜻이 담긴 단어보다 외우기 어렵지만, 얼굴과 관계, 좋아하는 것을 함께 묶으면 훨씬 잘 남아요. 오늘 게임은 이름을 그냥 외우는 것이 아니라, 관계와 이야기를 붙여서 외우도록 되어 있어요.",
+      "이름을 머릿속에 붙잡아 두고 떠올리는 동안 작업기억이 일해요. 점수보다 매일 꾸준히 하는 것이 훨씬 중요해요. 틀려도 괜찮아요. 떠올리려고 애쓰는 순간이 바로 연습이에요."
+    ],
+    tipsTitle: "더 잘 외우는 팁",
     tips: [
       "이름을 소리 내어 읽으면 더 잘 외워져요.",
       "틀려도 괜찮아요. 다시 하면 됩니다.",
@@ -161,18 +183,30 @@ const I18N = {
     howSteps: [
       "1. Read the names on the screen slowly.",
       "2. When you have memorized them, press \"I memorized them\". There is no time limit.",
-      "3. Pick the names from the choices."
+      "3. Pick the names from the choices, check the answer, and move on to the next game."
     ],
-    diffTitle: "Difficulty Levels",
-    diffHead: ["Game", "Level", "What you do"],
+    diffTitle: "Today's Five Games",
+    diffHead: ["Game", "Level", "What you do", "Memorizing time"],
     diffRows: [
-      ["Game 1", "Easy", "Remember 3 names"],
-      ["Game 2", "Medium", "Match names and relationships"],
-      ["Game 3", "Medium", "Remember the order of names"],
-      ["Game 4", "A bit hard", "Match names and favorites"],
-      ["Game 5", "Hard", "Remember seats at a gathering"]
+      ["Game 1", "Easy", "Remember 3 names", "No limit"],
+      ["Game 2", "Medium", "Match names and relationships", "No limit"],
+      ["Game 3", "Medium", "Remember the order of names", "No limit"],
+      ["Game 4", "A bit hard", "Match names and favorites", "No limit"],
+      ["Game 5", "Hard", "Remember seats at a gathering", "No limit"]
     ],
-    tipsTitle: "Tips",
+    progressGame: "Game",
+    solvedLabel: "Games solved",
+    nextGame: "Next game",
+    finishBtn: "See the result",
+    finishTitle: "You finished all 5 games today!",
+    finishText: "Well done. Try recalling today's names once more this evening.",
+    restart: "Start over",
+    whyTitle: "Why is this good for your brain?",
+    whyParas: [
+      "Names are harder to memorize than meaningful words, but they stick much better when you tie them to a face, a relationship, and a favorite thing. Today's games attach relationships and small stories to each name instead of asking you to memorize names alone.",
+      "While you hold names in your mind and recall them, your working memory is at work. Doing a little every day matters far more than the score. It is okay to be wrong — the effort of trying to recall is the practice itself."
+    ],
+    tipsTitle: "Tips to Remember Better",
     tips: [
       "Reading names out loud helps you remember them.",
       "It is okay to be wrong. Just try again.",
@@ -212,18 +246,30 @@ const I18N = {
     howSteps: [
       "1. 画面に出る名前をゆっくり読みます。",
       "2. 覚えたと思ったら「覚えました」ボタンを押します。時間制限はありません。",
-      "3. かくれた名前をえらびます。"
+      "3. かくれた名前をえらんで答えを確かめたら、次のゲームに進みます。"
     ],
-    diffTitle: "むずかしさの表",
-    diffHead: ["ゲーム", "むずかしさ", "内容"],
+    diffTitle: "今日の5つのゲーム",
+    diffHead: ["ゲーム", "むずかしさ", "内容", "覚える時間"],
     diffRows: [
-      ["1番のゲーム", "やさしい", "名前を3つ覚える"],
-      ["2番のゲーム", "ふつう", "名前と関係をつなげる"],
-      ["3番のゲーム", "ふつう", "名前の順番を当てる"],
-      ["4番のゲーム", "すこしむずかしい", "名前と好きなものをつなげる"],
-      ["5番のゲーム", "むずかしい", "集まりの席を覚える"]
+      ["ゲーム1", "やさしい", "名前を3つ覚える", "制限なし"],
+      ["ゲーム2", "ふつう", "名前と関係をつなげる", "制限なし"],
+      ["ゲーム3", "ふつう", "名前の順番を当てる", "制限なし"],
+      ["ゲーム4", "すこしむずかしい", "名前と好きなものをつなげる", "制限なし"],
+      ["ゲーム5", "むずかしい", "集まりの席を覚える", "制限なし"]
     ],
-    tipsTitle: "コツ",
+    progressGame: "ゲーム",
+    solvedLabel: "正解したゲーム",
+    nextGame: "次のゲームへ",
+    finishBtn: "結果を見る",
+    finishTitle: "今日のゲーム5つを全部終えました！",
+    finishText: "おつかれさまでした。今日覚えた名前を、夜にもう一度思い出してみてください。",
+    restart: "最初からもう一度",
+    whyTitle: "なぜ良いゲームなのですか？",
+    whyParas: [
+      "人の名前は意味のある言葉より覚えにくいものですが、顔や関係、好きなものと結びつけると、ぐっと残りやすくなります。今日のゲームは、名前をそのまま覚えるのではなく、関係や小さな物語を結びつけて覚えるようになっています。",
+      "名前を頭の中にとどめて思い出している間、ワーキングメモリが働いています。点数よりも、毎日少しずつ続けることがずっと大切です。まちがえても大丈夫です。思い出そうとする努力こそが練習です。"
+    ],
+    tipsTitle: "もっと覚えるコツ",
     tips: [
       "名前を声に出して読むと覚えやすいです。",
       "まちがえても大丈夫です。もう一度やってみましょう。",
@@ -286,6 +332,19 @@ function pickN(arr, n, rand) { return shuffled(arr, rand).slice(0, n); }
 let lang = "ko";
 let reshuffleCount = 0; // "새로운 것으로 다시 하기" presses
 const gameState = {};   // per game: { phase: 'mem'|'ask'|'done', data, ... }
+/* one game at a time, like Day 1–9: progress through games 1 → 5 in order */
+let currentGame = 1;
+let finishedAll = false;
+const solvedGames = {}; // gameNo -> true once answered correctly
+
+function solvedCount() {
+  return Object.keys(solvedGames).filter(function (k) { return solvedGames[k]; }).length;
+}
+function resetProgress() {
+  currentGame = 1;
+  finishedAll = false;
+  for (const k in solvedGames) delete solvedGames[k];
+}
 
 function seedFor(gameNo) {
   return todaySeed() * 1000 + reshuffleCount * 97 + gameNo * 13;
@@ -337,10 +396,12 @@ function renderStatic() {
   L.diffHead.forEach(function (h) { dh += "<th>" + h + "</th>"; });
   dh += "</tr>";
   L.diffRows.forEach(function (r) {
-    dh += "<tr><td>" + r[0] + "</td><td>" + r[1] + "</td><td>" + r[2] + "</td></tr>";
+    dh += "<tr>" + r.map(function (c) { return "<td>" + c + "</td>"; }).join("") + "</tr>";
   });
   dh += "</table>";
   el("diffCard").innerHTML = dh;
+  el("whyCard").innerHTML = "<h2>" + L.whyTitle + "</h2>" +
+    L.whyParas.map(function (s) { return "<p>" + s + "</p>"; }).join("");
   el("tipsCard").innerHTML = "<h2>" + L.tipsTitle + "</h2><ul>" +
     L.tips.map(function (s) { return "<li>" + s + "</li>"; }).join("") + "</ul>";
   el("reshuffleBtn").textContent = L.reshuffle;
@@ -369,6 +430,11 @@ function gameCard(n) {
     html += memorizeHtml(n);
     html += st.fb;
     html += "<br><button class=\"big-btn secondary\" data-act=\"retry\" data-game=\"" + n + "\">" + L.retry + "</button>";
+    if (n < 5) {
+      html += "<button class=\"big-btn\" data-act=\"next\" data-game=\"" + n + "\">" + L.nextGame + "</button>";
+    } else {
+      html += "<button class=\"big-btn\" data-act=\"finish\" data-game=\"" + n + "\">" + L.finishBtn + "</button>";
+    }
   }
   html += "</div>";
   return html;
@@ -442,10 +508,25 @@ function askHtml(n) {
   return html;
 }
 
+function renderProgress() {
+  const L = t();
+  const shown = finishedAll ? 5 : currentGame;
+  el("progressBar").innerHTML = L.progressGame + " " + shown + " / 5" +
+    "<span class=\"score\">" + L.solvedLabel + ": " + solvedCount() + " / 5</span>";
+}
+
+function finishCard() {
+  const L = t();
+  return "<div class=\"card finish-msg\">" +
+    "<h2>" + L.finishTitle + "</h2>" +
+    "<p class=\"big-score\">" + L.solvedLabel + ": " + solvedCount() + " / 5</p>" +
+    "<p>" + L.finishText + "</p>" +
+    "<button class=\"big-btn\" data-act=\"restart\">" + L.restart + "</button></div>";
+}
+
 function renderGames() {
-  let html = "";
-  for (let n = 1; n <= 5; n++) html += gameCard(n);
-  el("games").innerHTML = html;
+  renderProgress();
+  el("games").innerHTML = finishedAll ? finishCard() : gameCard(currentGame);
 }
 
 function renderAll() {
@@ -473,6 +554,7 @@ function checkAnswer(n) {
     ok = d.pairs.every(function (p) { return st.picks[p.name] === p.fav; });
     answerText = d.pairs.map(function (p) { return p.name + " - " + p.fav; }).join(", ");
   }
+  if (ok) solvedGames[n] = true;
   st.phase = "done";
   st.fb = "<div class=\"feedback " + (ok ? "good" : "bad") + "\">" + (ok ? L.correct : L.wrong) + "</div>" +
     "<p>" + L.answerIs + ": " + answerText + "</p>";
@@ -484,9 +566,26 @@ el("games").addEventListener("click", function (e) {
   const btn = e.target.closest("button[data-act]");
   if (!btn) return;
   const act = btn.getAttribute("data-act");
+  if (act === "restart") {
+    resetProgress();
+    for (let g = 1; g <= 5; g++) initGame(g);
+    renderGames();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    return;
+  }
   const n = parseInt(btn.getAttribute("data-game"), 10);
   const st = gameState[n];
-  if (act === "mem-done") { st.phase = "ask"; renderGames(); }
+  if (act === "next") {
+    currentGame = n + 1;
+    renderGames();
+    window.scrollTo({ top: el("progressBar").offsetTop - 10, behavior: "smooth" });
+  }
+  else if (act === "finish") {
+    finishedAll = true;
+    renderGames();
+    window.scrollTo({ top: el("progressBar").offsetTop - 10, behavior: "smooth" });
+  }
+  else if (act === "mem-done") { st.phase = "ask"; renderGames(); }
   else if (act === "retry") { initGame(n); renderGames(); }
   else if (act === "pick") {
     const v = btn.getAttribute("data-val");
@@ -511,15 +610,17 @@ el("langBar").addEventListener("click", function (e) {
   const btn = e.target.closest("button[data-lang]");
   if (!btn) return;
   lang = btn.getAttribute("data-lang");
+  resetProgress();
   for (let n = 1; n <= 5; n++) initGame(n); // language change restarts the games with new words
   renderAll();
 });
 
 el("reshuffleBtn").addEventListener("click", function () {
   reshuffleCount++;
+  resetProgress();
   for (let n = 1; n <= 5; n++) initGame(n);
   renderAll();
-  window.scrollTo({ top: el("games").offsetTop - 20, behavior: "smooth" });
+  window.scrollTo({ top: 0, behavior: "smooth" });
 });
 
 /* ---------- init ---------- */
