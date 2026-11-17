@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 14 집안 물건 카드 짝 맞추기 | 오늘의 두뇌운동</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fff6e9;
+    --bg-soft: #ffedd3;
+    --card: #fffdf8;
+    --ink: #4a2b12;
+    --ink-soft: #7a5230;
+    --line: #f0cf9f;
+    --orange: #d95f06;
+    --orange-deep: #b34a02;
+    --orange-soft: #ffe3bd;
+    --selected-bg: #ffd9a3;
+    --selected-line: #d95f06;
+    --good: #2e7d32;
+    --good-bg: #e2f2df;
+    --missed-bg: #fff0d6;
+    --wrong: #b3261e;
+    --wrong-bg: #fbe3e0;
+    --shadow: 0 6px 20px rgba(146, 84, 20, 0.14);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #251305;
+      --bg-soft: #3a2110;
+      --card: #38220f;
+      --ink: #fdeed3;
+      --ink-soft: #dcbd93;
+      --line: #6e4a26;
+      --orange: #f08a2e;
+      --orange-deep: #ffb066;
+      --orange-soft: #54340f;
+      --selected-bg: #7a4d16;
+      --selected-line: #f08a2e;
+      --good: #8fd694;
+      --good-bg: #1e3d1c;
+      --missed-bg: #4d3608;
+      --wrong: #ff9d94;
+      --wrong-bg: #4d1a15;
+      --shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Noto Sans KR", sans-serif;
+    font-size: 1.25rem;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+
+  /* language buttons */
+  .lang-bar { display: flex; justify-content: center; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 1.4rem; }
+  .lang-btn {
+    border-radius: 999px; border: 3px solid var(--line); background: var(--card);
+    color: var(--ink-soft); min-height: 56px; font-size: 1.25rem; font-weight: 900;
+    padding: 0.55rem 1.4rem; cursor: pointer; font-family: inherit;
+  }
+  .lang-btn.active { background: var(--orange); border-color: var(--orange); color: #fff; }
+
+  /* header */
+  header { text-align: center; margin-bottom: 1.6rem; }
+  .day-badge {
+    display: inline-block; border-radius: 999px; background: var(--orange-soft);
+    color: var(--orange-deep); font-size: 1.15rem; font-weight: 700; padding: 0.35rem 1.1rem;
+  }
+  h1 {
+    font-family: "Jua", sans-serif; font-size: clamp(2.4rem, 9vw, 3.6rem);
+    line-height: 1.2; margin: 0.9rem 0 0.6rem; font-weight: 400;
+  }
+  .lead { font-size: 1.35rem; color: var(--ink-soft); max-width: 34rem; margin: 0 auto; }
+
+  /* section titles */
+  h2.section-title { font-family: "Jua", sans-serif; font-weight: 400; font-size: 1.9rem; text-align: center; margin: 2.4rem 0 1rem; }
+
+  /* game shell */
+  .game-shell {
+    background: var(--card); border: 2px solid var(--line); border-radius: 24px;
+    box-shadow: var(--shadow); padding: 1.5rem 1.25rem 1.75rem;
+  }
+  .progress-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.2rem; }
+  .progress-text { font-size: 1.4rem; font-weight: 900; color: var(--orange-deep); }
+  .dots { display: flex; gap: 0.5rem; }
+  .dot { width: 20px; height: 20px; border-radius: 50%; border: 3px solid var(--orange); background: transparent; }
+  .dot.done { background: var(--orange); }
+  .dot.now { background: var(--orange-soft); box-shadow: 0 0 0 3px var(--bg), 0 0 0 6px var(--orange); }
+
+  .phase-title { font-family: "Jua", sans-serif; font-weight: 400; font-size: 1.9rem; text-align: center; margin: 0.4rem 0 0.3rem; line-height: 1.3; }
+  .phase-desc { text-align: center; color: var(--ink-soft); font-size: 1.3rem; margin: 0 0 1.2rem; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 0.8rem; margin-bottom: 1.3rem; }
+  .food-card {
+    background: var(--bg-soft); border: 2px solid var(--line); border-radius: 18px;
+    text-align: center; padding: 1rem 0.4rem 0.9rem;
+  }
+  .food-card .emoji { font-size: 3.4rem; line-height: 1.15; display: block; }
+  .food-card .item-icon { display: block; line-height: 0; }
+  .food-card .item-icon svg { width: 84px; height: 84px; }
+  .pick-btn .item-icon { display: block; line-height: 0; }
+  .pick-btn .item-icon svg { width: 76px; height: 76px; }
+  .food-card .name { font-size: 1.5rem; font-weight: 900; display: block; margin-top: 0.3rem; }
+
+  .pick-btn {
+    background: var(--card); border: 3px solid var(--line); border-radius: 18px;
+    min-height: 118px; text-align: center; padding: 0.8rem 0.4rem; cursor: pointer;
+    font-family: inherit; color: var(--ink); width: 100%;
+  }
+  .pick-btn .emoji { font-size: 3rem; line-height: 1.15; display: block; }
+  .pick-btn .name { font-size: 1.45rem; font-weight: 900; display: block; margin-top: 0.25rem; }
+  .pick-btn.selected { background: var(--selected-bg); border-color: var(--selected-line); box-shadow: inset 0 0 0 2px var(--selected-line); }
+  .pick-btn .tag { display: inline-block; margin-top: 0.45rem; font-size: 1.05rem; font-weight: 900; border-radius: 999px; padding: 0.1rem 0.7rem; }
+  .pick-btn.got { background: var(--good-bg); border-color: var(--good); cursor: default; }
+  .pick-btn.got .tag { background: var(--good); color: #fff; }
+  .pick-btn.missed { background: var(--missed-bg); border-color: var(--orange); border-style: dashed; cursor: default; }
+  .pick-btn.missed .tag { background: var(--orange-soft); color: var(--orange-deep); }
+  .pick-btn.wrongpick { background: var(--wrong-bg); border-color: var(--wrong); cursor: default; }
+  .pick-btn.wrongpick .tag { background: var(--wrong); color: #fff; }
+  .pick-btn.plain { opacity: 0.75; cursor: default; }
+
+  .pick-btn.face-down { background: var(--orange-soft); }
+  .pick-btn.face-down .q { font-size: 3rem; line-height: 1.15; display: block; font-weight: 900; color: var(--orange-deep); font-family: "Jua", sans-serif; }
+  .pick-btn.face-down .q-name { font-size: 1.45rem; font-weight: 900; display: block; margin-top: 0.25rem; color: var(--ink-soft); }
+  .picked-count { text-align: center; font-size: 1.3rem; margin: 0 0 1rem; }
+  .picked-count b { font-size: 1.55rem; color: var(--orange-deep); }
+  .warn { text-align: center; color: var(--wrong); font-weight: 700; font-size: 1.3rem; margin: 0 0 1rem; }
+
+  .score-line { font-family: "Jua", sans-serif; font-size: 2.1rem; text-align: center; margin: 0.6rem 0 0.3rem; line-height: 1.3; }
+  .praise { text-align: center; font-size: 1.35rem; color: var(--ink-soft); margin: 0 0 1.2rem; }
+  .missed-line { text-align: center; font-size: 1.3rem; margin: 0 0 1.2rem; }
+  .missed-line b { color: var(--orange-deep); }
+
+  .btn-row { display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap; margin-top: 0.4rem; }
+  .btn {
+    border-radius: 999px; border: 3px solid var(--orange); font-size: 1.4rem; font-weight: 900;
+    min-height: 64px; padding: 0.8rem 2rem; cursor: pointer; font-family: inherit;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--orange); color: #fff; }
+  .btn-ghost { background: transparent; color: var(--orange-deep); }
+  .new-set-row { text-align: center; margin-top: 1.1rem; }
+
+  .total-list { list-style: none; margin: 0 0 1.2rem; padding: 0; }
+  .total-list li { font-size: 1.35rem; padding: 0.55rem 0.2rem; border-bottom: 2px dashed var(--line); text-align: center; }
+  .total-list li:last-child { border-bottom: none; }
+  .total-score { font-family: "Jua", sans-serif; font-size: 2rem; text-align: center; margin: 0.4rem 0 0.3rem; line-height: 1.3; }
+
+  /* steps & tips cards */
+  .steps, .tips { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.8rem; }
+  .steps li, .tips li {
+    background: var(--card); border: 2px solid var(--line); border-radius: 18px;
+    font-size: 1.35rem; padding: 1rem 1.1rem; display: flex; gap: 1rem; align-items: flex-start;
+  }
+  .steps .num {
+    flex: 0 0 auto; width: 52px; height: 52px; border-radius: 50%; background: var(--orange);
+    color: #fff; font-family: "Jua", sans-serif; font-size: 1.6rem;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .steps li p, .tips li p { margin: 0.35rem 0 0; }
+  .steps strong, .tips strong { color: var(--orange-deep); }
+
+  /* difficulty table */
+  .diff-wrap { background: var(--card); border: 2px solid var(--line); border-radius: 18px; overflow: hidden; }
+  table.diff { width: 100%; border-collapse: collapse; font-size: 1.3rem; }
+  table.diff th, table.diff td { padding: 0.8rem 1rem; text-align: left; }
+  table.diff thead th { background: var(--orange-soft); color: var(--orange-deep); font-weight: 900; }
+  table.diff tbody tr + tr td, table.diff tbody tr + tr th { border-top: 2px solid var(--line); }
+
+  .closing { text-align: center; font-size: 1.3rem; color: var(--ink-soft); margin-top: 2.4rem; }
+
+  button:focus-visible, a:focus-visible { outline: 4px solid var(--orange); outline-offset: 3px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+  @media (max-width: 480px) {
+    .btn-row { flex-direction: column; }
+    .btn-row .btn { width: 100%; }
+    .new-set-row .btn { width: 100%; }
+    .grid { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); }
+    .lang-bar { flex-wrap: nowrap; }
+    .lang-btn { flex: 1 1 30%; padding: 0.55rem 0.4rem; }
+    table.diff { font-size: 1.18rem; }
+    .progress-text { font-size: 1.25rem; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="lang-bar" id="langBar" role="group" aria-label="Language">
+    <button class="lang-btn active" data-lang="ko">한국어</button>
+    <button class="lang-btn" data-lang="en">English</button>
+    <button class="lang-btn" data-lang="ja">日本語</button>
+  </div>
+
+  <header>
+    <span class="day-badge" id="badge"></span>
+    <h1 id="title"></h1>
+    <p class="lead" id="lead"></p>
+  </header>
+
+  <main>
+    <section class="game-shell" aria-label="Game">
+      <div class="progress-row">
+        <div class="progress-text" id="progressText"></div>
+        <div class="dots" id="dots" aria-hidden="true"></div>
+      </div>
+      <div id="gameArea"></div>
+    </section>
+    <div class="new-set-row">
+      <button class="btn btn-ghost" id="newSetBtn" data-act="new-set"></button>
+    </div>
+
+    <section id="howSection">
+      <h2 class="section-title" id="howTitle"></h2>
+      <ol class="steps" id="stepsList"></ol>
+    </section>
+
+    <section id="diffSection">
+      <h2 class="section-title" id="diffTitle"></h2>
+      <div class="diff-wrap">
+        <table class="diff">
+          <thead><tr id="diffHead"></tr></thead>
+          <tbody id="diffBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="tipsSection">
+      <h2 class="section-title" id="tipsTitle"></h2>
+      <ul class="tips" id="tipsList"></ul>
+    </section>
+
+    <p class="closing" id="closing"></p>
+  </main>
+</div>
+
+<script>
+"use strict";
+
+/* ---------- item pool: 18 household items (id + emoji + names in 3 languages) ---------- */
+const ITEMS = [
+  { id: "h01", emoji: "🔑", ko: "열쇠", en: "Key", ja: "鍵" },
+  { id: "h02", emoji: "👓", ko: "안경", en: "Glasses", ja: "眼鏡" },
+  { id: "h03", emoji: "👛", ko: "지갑", en: "Wallet", ja: "財布" },
+  { id: "h04", emoji: "📱", ko: "휴대폰", en: "Mobile phone", ja: "携帯電話" },
+  { id: "h05", emoji: "☂️", ko: "우산", en: "Umbrella", ja: "傘" },
+  { id: "h06", emoji: "👜", ko: "가방", en: "Bag", ja: "かばん" },
+  { id: "h07", emoji: "👞", ko: "신발", en: "Shoes", ja: "靴" },
+  { id: "h08", emoji: "🪥", ko: "칫솔", en: "Toothbrush", ja: "歯ブラシ" },
+  { id: "h09", emoji: "🧦", ko: "양말", en: "Socks", ja: "靴下" },
+  { id: "h10", emoji: "⌚", ko: "시계", en: "Watch", ja: "腕時計" },
+  { id: "h11", emoji: "📅", ko: "달력", en: "Calendar", ja: "カレンダー" },
+  { id: "h12", emoji: "🌡️", ko: "체온계", en: "Thermometer", ja: "体温計" },
+  { id: "h13", emoji: "🫖", ko: "주전자", en: "Teapot", ja: "急須" },
+  { id: "h14", emoji: "📻", ko: "라디오", en: "Radio", ja: "ラジオ" },
+  { id: "h15", emoji: "📺", ko: "텔레비전", en: "Television", ja: "テレビ" },
+  { id: "h16", emoji: "🍲", ko: "냄비", en: "Cooking pot", ja: "鍋" },
+  { id: "h17", emoji: "🧹", ko: "빗자루", en: "Broom", ja: "ほうき" },
+  { id: "h18", emoji: "🧢", ko: "모자", en: "Hat", ja: "帽子" }
+];
+/* ---------- custom-drawn item pictures (SVG), drawn from photos of the real old objects ---------- */
+const ICONS = {};
+function iconHtml(it) {
+  if (ICONS[it.id]) return "<span class=\"item-icon\" aria-hidden=\"true\">" + ICONS[it.id] + "</span>";
+  return "<span class=\"emoji\" aria-hidden=\"true\">" + it.emoji + "</span>";
+}
+const ITEM_BY_ID = {};
+ITEMS.forEach(function (it) { ITEM_BY_ID[it.id] = it; });
+
+/* ---------- strings ---------- */
+const STRINGS = {
+  ko: {
+    badge: "오늘의 두뇌운동 · Day 14",
+    title: "집안 물건 카드 짝 맞추기",
+    lead: "오늘은 집안 물건을 뒤집어 짝을 찾아요. 열쇠, 안경, 주전자… 어디에 숨어 있을까요? 천천히 두 장씩 뒤집어 보세요.",
+    progress: "{n}번째 게임 · 모두 5개",
+    totalProgress: "전체 결과",
+    playTitle: "카드를 뒤집어 짝을 찾아 보세요",
+    playDesc: "모두 {n}쌍이 숨어 있어요. 두 장씩 뒤집어 같은 물건을 찾아요.",
+    foundCount: "찾은 짝 <b>{found}</b> / {n}쌍",
+    flipsCount: "지금까지 <b>{flips}</b>번 뒤집었어요",
+    scoreText: "{total}쌍을 모두 찾았어요",
+    flipsLine: "뒤집은 횟수 {flips}번",
+    praisePerfect: "완벽해요! 거의 틀리지 않고 짝을 다 찾았어요.",
+    praiseGreat: "아주 잘하셨어요! 짝을 척척 찾았어요.",
+    praiseGood: "잘하셨어요! 천천히 하면 더 잘할 수 있어요.",
+    praiseLow: "괜찮아요. 틀려도 괜찮아요. 천천히 다시 하면 돼요.",
+    tagFound: "찾았어요",
+    nextBtn: "다음 게임 하기",
+    retryBtn: "이 게임 한 번 더",
+    finalBtn: "전체 결과 보기",
+    totalTitle: "오늘의 결과",
+    totalLine: "{i}번째 게임 ({n}쌍) — {got}쌍 찾음",
+    totalScore: "모두 25쌍을 찾았어요",
+    totalFlipsLine: "뒤집은 횟수 모두 {flips}번",
+    restartTodayBtn: "오늘 물건으로 처음부터",
+    newSetBtn: "새로운 것으로 다시 하기",
+    howTitle: "게임 방법",
+    steps: [
+      "뒤집어진 <strong>카드 두 장</strong>을 눌러 뒤집어 보세요. 시간 제한은 없으니 천천히 하세요.",
+      "두 카드의 그림이 <strong>같으면 짝</strong>이에요. 찾은 짝은 그대로 열려 있어요.",
+      "다르면 다시 뒤집어져요. <strong>어디에 뭐가 있었는지</strong> 기억해 두면 다음에 찾을 수 있어요."
+    ],
+    diffTitle: "난이도 안내",
+    diffHead: ["게임", "찾을 짝", "난이도"],
+    diffRows: [
+      ["1번째 게임", "3쌍", "아주 쉬워요"],
+      ["2번째 게임", "4쌍", "쉬워요"],
+      ["3번째 게임", "5쌍", "보통이에요"],
+      ["4번째 게임", "6쌍", "조금 어려워요"],
+      ["5번째 게임", "7쌍", "어려워요"]
+    ],
+    tipsTitle: "잘하는 요령",
+    tips: [
+      "<strong>자리 기억하기</strong> — 뒤집은 카드가 어디에 있었는지, 물건과 함께 자리를 기억해 두세요.",
+      "<strong>소리 내어 읽기</strong> — 카드를 뒤집을 때 물건 이름을 소리 내어 읽으면 더 잘 외워져요.",
+      "<strong>끼리끼리 묶기</strong> — 주방 물건끼리, 밖에 나갈 때 쓰는 물건끼리 묶어 생각해 보세요.",
+      "<strong>틀려도 괜찮아요</strong> — 짝이 안 맞아도 괜찮아요. 뒤집은 카드를 기억하는 것 자체가 좋은 연습이에요."
+    ],
+    closing: "오늘도 두뇌 운동 한 판, 수고하셨어요."
+  },
+  en: {
+    badge: "Today's Brain Exercise · Day 14",
+    title: "Household Item Card Matching",
+    lead: "Today, flip the cards and find matching household items. Keys, glasses, a teapot… where are they hiding? Flip two cards at a time, slowly.",
+    progress: "Game {n} of 5",
+    totalProgress: "Total result",
+    playTitle: "Flip the cards and find the pairs",
+    playDesc: "There are {n} pairs hiding here. Flip two cards and find the same item.",
+    foundCount: "Pairs found <b>{found}</b> / {n}",
+    flipsCount: "You've flipped <b>{flips}</b> cards so far",
+    scoreText: "You found all {total} pairs",
+    flipsLine: "Cards flipped: {flips}",
+    praisePerfect: "Perfect! You found all the pairs with hardly a miss.",
+    praiseGreat: "Great job! You found the pairs one after another.",
+    praiseGood: "Well done! Take it slowly and you'll do even better.",
+    praiseLow: "That's okay. Mistakes are fine — just try again slowly.",
+    tagFound: "Found!",
+    nextBtn: "Next game",
+    retryBtn: "Play this game again",
+    finalBtn: "See the total result",
+    totalTitle: "Today's result",
+    totalLine: "Game {i} ({n} pairs) — found {got}",
+    totalScore: "You found all 25 pairs",
+    totalFlipsLine: "Cards flipped in total: {flips}",
+    restartTodayBtn: "Start over with today's items",
+    newSetBtn: "Play with new ones",
+    howTitle: "How to play",
+    steps: [
+      "Tap <strong>two face-down cards</strong> to flip them over. There is no time limit — take your time.",
+      "If the two pictures are <strong>the same, it's a pair</strong>. Found pairs stay face up.",
+      "If they don't match, they flip back over. Remember <strong>where each item was</strong> so you can find it next time."
+    ],
+    diffTitle: "Difficulty guide",
+    diffHead: ["Game", "Pairs to find", "Level"],
+    diffRows: [
+      ["Game 1", "3 pairs", "Very easy"],
+      ["Game 2", "4 pairs", "Easy"],
+      ["Game 3", "5 pairs", "Medium"],
+      ["Game 4", "6 pairs", "A bit hard"],
+      ["Game 5", "7 pairs", "Hard"]
+    ],
+    tipsTitle: "Tips",
+    tips: [
+      "<strong>Remember the place</strong> — Remember where each flipped card was, together with the item on it.",
+      "<strong>Read out loud</strong> — Say the item name out loud when you flip a card — it helps you remember.",
+      "<strong>Group them</strong> — Kitchen things together, things you take outside together — grouping helps.",
+      "<strong>Mistakes are fine</strong> — A pair that doesn't match is fine. Remembering the cards you flipped is good practice in itself."
+    ],
+    closing: "Great work — that's today's brain exercise done."
+  },
+  ja: {
+    badge: "今日の脳トレ · Day 14",
+    title: "家の中の物のカード合わせ",
+    lead: "今日は家の中の物のカードをめくって、ペアを探しましょう。鍵、眼鏡、急須……どこに隠れているでしょう。ゆっくり2枚ずつめくってください。",
+    progress: "{n}つ目のゲーム · 全部で5つ",
+    totalProgress: "全体の結果",
+    playTitle: "カードをめくってペアを探しましょう",
+    playDesc: "全部で{n}組が隠れています。2枚ずつめくって、同じ物を探しましょう。",
+    foundCount: "見つけたペア <b>{found}</b> / {n}組",
+    flipsCount: "今まで <b>{flips}</b> 回めくりました",
+    scoreText: "{total}組を全部見つけました",
+    flipsLine: "めくった回数 {flips}回",
+    praisePerfect: "完璧です！ほとんどまちがえずにペアを全部見つけました。",
+    praiseGreat: "とてもよくできました！ペアを次々と見つけました。",
+    praiseGood: "よくできました！ゆっくりやれば、もっとできます。",
+    praiseLow: "大丈夫です。まちがえても大丈夫。ゆっくりもう一度やってみましょう。",
+    tagFound: "見つけた",
+    nextBtn: "次のゲームへ",
+    retryBtn: "このゲームをもう一度",
+    finalBtn: "全体の結果を見る",
+    totalTitle: "今日の結果",
+    totalLine: "{i}つ目のゲーム（{n}組）— {got}組見つけました",
+    totalScore: "全部で25組を見つけました",
+    totalFlipsLine: "めくった回数は全部で {flips}回",
+    restartTodayBtn: "今日の物で最初から",
+    newSetBtn: "新しいものではじめる",
+    howTitle: "遊び方",
+    steps: [
+      "うら返しの<strong>カードを2枚</strong>押してめくりましょう。時間制限はないので、あわてなくて大丈夫です。",
+      "2枚の絵が<strong>同じならペア</strong>です。見つけたペアは開いたままになります。",
+      "ちがうと、またうら返しになります。<strong>どこに何があったか</strong>覚えておくと、次に見つけられます。"
+    ],
+    diffTitle: "むずかしさの案内",
+    diffHead: ["ゲーム", "探すペア", "むずかしさ"],
+    diffRows: [
+      ["1つ目のゲーム", "3組", "とてもやさしい"],
+      ["2つ目のゲーム", "4組", "やさしい"],
+      ["3つ目のゲーム", "5組", "ふつう"],
+      ["4つ目のゲーム", "6組", "すこしむずかしい"],
+      ["5つ目のゲーム", "7組", "むずかしい"]
+    ],
+    tipsTitle: "上手にやるコツ",
+    tips: [
+      "<strong>場所を覚える</strong> — めくったカードがどこにあったか、物と一緒に場所を覚えましょう。",
+      "<strong>声に出して読む</strong> — カードをめくるとき、物の名前を声に出して読むと覚えやすくなります。",
+      "<strong>仲間ごとにまとめる</strong> — 台所の物は台所の物、外へ持っていく物は外へ持っていく物とまとめましょう。",
+      "<strong>まちがえても大丈夫</strong> — ペアにならなくても大丈夫。めくったカードを覚えること自体が良い練習です。"
+    ],
+    closing: "今日も脳トレを一回分、おつかれさまでした。"
+  }
+};
+
+/* ---------- seeded random (string seed -> hash -> mulberry32) ---------- */
+function hashSeed(str) {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function shuffled(arr, rand) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    const tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+  }
+  return a;
+}
+function todayStr() {
+  const d = new Date();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return d.getFullYear() + "-" + mm + "-" + dd;
+}
+function dateSeedStr() { return "day14-" + todayStr(); }
+
+/* Draw one set of 5 matching games from a seed string.
+   Per game: shuffle the 18-item pool, take the first N items, deal two
+   copies of each in a shuffled deck. N grows 3 -> 7 (25 pairs in total). */
+function buildSet(seedStr) {
+  const rand = mulberry32(hashSeed(seedStr));
+  const games = [];
+  for (let g = 0; g < 5; g++) {
+    const n = g + 3;
+    const order = shuffled(ITEMS.map(function (it) { return it.id; }), rand);
+    const chosen = order.slice(0, n);
+    const deck = shuffled(chosen.concat(chosen), rand);
+    games.push({ n: n, chosen: chosen, deck: deck });
+  }
+  return games;
+}
+
+/* ---------- state ---------- */
+let lang = "ko";
+let setSeed = dateSeedStr();
+let games = buildSet(setSeed);
+let cur = 0;                 // current game index 0..4
+let phase = "play";          // play | result | total
+let flipped = [];            // deck indices currently face up (0..2)
+let matched = new Set();     // item ids whose pair has been found
+let flips = 0;               // cards turned over in the current game
+let lock = false;            // waiting for a mismatched pair to flip back
+let scores = [null, null, null, null, null]; // {total, got, flips} per game
+
+function S() { return STRINGS[lang]; }
+function el(id) { return document.getElementById(id); }
+function fmt(tpl, map) {
+  return tpl.replace(/\{(\w+)\}/g, function (_, k) { return map[k]; });
+}
+function itemName(it) { return it[lang]; }
+
+/* ---------- static texts (explicit function — no MutationObserver) ---------- */
+function applyStaticTexts() {
+  const L = S();
+  el("badge").textContent = L.badge;
+  el("title").textContent = L.title;
+  el("lead").textContent = L.lead;
+  el("newSetBtn").textContent = L.newSetBtn;
+  el("howTitle").textContent = L.howTitle;
+  el("howSection").setAttribute("aria-label", L.howTitle);
+  el("stepsList").innerHTML = L.steps.map(function (s, i) {
+    return "<li><span class=\"num\">" + (i + 1) + "</span><p>" + s + "</p></li>";
+  }).join("");
+  el("diffTitle").textContent = L.diffTitle;
+  el("diffSection").setAttribute("aria-label", L.diffTitle);
+  el("diffHead").innerHTML = L.diffHead.map(function (h) { return "<th>" + h + "</th>"; }).join("");
+  el("diffBody").innerHTML = L.diffRows.map(function (r) {
+    return "<tr><td>" + r[0] + "</td><td>" + r[1] + "</td><td>" + r[2] + "</td></tr>";
+  }).join("");
+  el("tipsTitle").textContent = L.tipsTitle;
+  el("tipsSection").setAttribute("aria-label", L.tipsTitle);
+  el("tipsList").innerHTML = L.tips.map(function (s) { return "<li><p>" + s + "</p></li>"; }).join("");
+  el("closing").textContent = L.closing;
+  document.querySelectorAll(".lang-btn").forEach(function (b) {
+    b.classList.toggle("active", b.getAttribute("data-lang") === lang);
+  });
+  document.documentElement.lang = lang;
+  renderProgress();
+  renderGame();
+}
+
+/* ---------- rendering ---------- */
+function renderProgress() {
+  const L = S();
+  if (phase === "total") {
+    el("progressText").textContent = L.totalProgress;
+  } else {
+    el("progressText").textContent = fmt(L.progress, { n: cur + 1 });
+  }
+  let dots = "";
+  for (let i = 0; i < 5; i++) {
+    let cls = "dot";
+    if (phase === "total" || scores[i] !== null) cls += " done";
+    else if (i === cur) cls += " now";
+    dots += "<span class=\"" + cls + "\"></span>";
+  }
+  el("dots").innerHTML = dots;
+}
+
+function cardHtml(it) {
+  return "<div class=\"food-card\">" + iconHtml(it) +
+    "<span class=\"name\">" + itemName(it) + "</span></div>";
+}
+
+function renderGame() {
+  const L = S();
+  const area = el("gameArea");
+  if (phase === "total") { area.innerHTML = totalHtml(); return; }
+  const g = games[cur];
+  let html = "";
+  if (phase === "play") {
+    html += "<h3 class=\"phase-title\">" + L.playTitle + "</h3>";
+    html += "<p class=\"phase-desc\">" + fmt(L.playDesc, { n: g.n }) + "</p>";
+    html += "<div class=\"grid\">" + g.deck.map(function (id, idx) {
+      const it = ITEM_BY_ID[id];
+      const isMatched = matched.has(id);
+      const isFlipped = flipped.indexOf(idx) !== -1;
+      if (isMatched) {
+        return "<button class=\"pick-btn got\" disabled>" +
+          iconHtml(it) +
+          "<span class=\"name\">" + itemName(it) + "</span>" +
+          "<span class=\"tag\">" + L.tagFound + "</span></button>";
+      }
+      if (isFlipped) {
+        return "<button class=\"pick-btn selected\" data-act=\"flip\" data-idx=\"" + idx + "\">" +
+          iconHtml(it) +
+          "<span class=\"name\">" + itemName(it) + "</span></button>";
+      }
+      return "<button class=\"pick-btn face-down\" data-act=\"flip\" data-idx=\"" + idx + "\" aria-label=\"" + L.playTitle + "\">" +
+        "<span class=\"q\" aria-hidden=\"true\">?</span>" +
+        "<span class=\"q-name\">" + (idx + 1) + "</span></button>";
+    }).join("") + "</div>";
+    html += "<p class=\"picked-count\">" + fmt(L.foundCount, { found: matched.size, n: g.n }) + "</p>";
+    html += "<p class=\"picked-count\">" + fmt(L.flipsCount, { flips: flips }) + "</p>";
+  } else { // result: all pairs found
+    const sc = scores[cur];
+    html += "<p class=\"score-line\">" + fmt(L.scoreText, { total: sc.total }) + "</p>";
+    html += "<p class=\"praise\">" + praiseForFlips(sc.flips, sc.total) + "</p>";
+    html += "<p class=\"missed-line\">" + fmt(L.flipsLine, { flips: sc.flips }) + "</p>";
+    html += "<div class=\"grid\">" + g.chosen.map(function (id) {
+      const it = ITEM_BY_ID[id];
+      return "<button class=\"pick-btn got\" disabled>" +
+        iconHtml(it) +
+        "<span class=\"name\">" + itemName(it) + "</span>" +
+        "<span class=\"tag\">" + L.tagFound + "</span></button>";
+    }).join("") + "</div>";
+    html += "<div class=\"btn-row\">";
+    if (cur < 4) html += "<button class=\"btn btn-primary\" data-act=\"next\">" + L.nextBtn + "</button>";
+    else html += "<button class=\"btn btn-primary\" data-act=\"final\">" + L.finalBtn + "</button>";
+    html += "<button class=\"btn btn-ghost\" data-act=\"retry-game\">" + L.retryBtn + "</button></div>";
+  }
+  area.innerHTML = html;
+}
+
+function praiseForFlips(flips, pairs) {
+  const L = S();
+  const best = pairs * 2; // every flip a hit
+  if (flips <= best + 2) return L.praisePerfect;
+  if (flips <= best + pairs) return L.praiseGreat;
+  if (flips <= best + pairs * 2) return L.praiseGood;
+  return L.praiseLow;
+}
+
+function totalHtml() {
+  const L = S();
+  let gotSum = 0;
+  let flipSum = 0;
+  let html = "<h3 class=\"phase-title\">" + L.totalTitle + "</h3>";
+  html += "<ul class=\"total-list\">";
+  scores.forEach(function (sc, i) {
+    gotSum += sc ? sc.got : 0;
+    flipSum += sc ? sc.flips : 0;
+    html += "<li>" + fmt(L.totalLine, { i: i + 1, n: games[i].n, got: sc ? sc.got : 0 }) + "</li>";
+  });
+  html += "</ul>";
+  html += "<p class=\"total-score\">" + fmt(L.totalScore, { got: gotSum }) + "</p>";
+  html += "<p class=\"praise\">" + praiseForFlips(flipSum, 25) + "</p>";
+  html += "<p class=\"missed-line\">" + fmt(L.totalFlipsLine, { flips: flipSum }) + "</p>";
+  html += "<div class=\"btn-row\"><button class=\"btn btn-primary\" data-act=\"restart-today\">" + L.restartTodayBtn + "</button></div>";
+  return html;
+}
+
+function renderAll() { renderProgress(); renderGame(); }
+
+function resetGameState() {
+  flipped = [];
+  matched = new Set();
+  flips = 0;
+  lock = false;
+}
+
+function startSet(seedStr) {
+  setSeed = seedStr;
+  games = buildSet(seedStr);
+  cur = 0;
+  phase = "play";
+  resetGameState();
+  scores = [null, null, null, null, null];
+  renderAll();
+}
+
+/* ---------- events (explicit handlers only) ---------- */
+document.addEventListener("click", function (e) {
+  const langBtn = e.target.closest("button[data-lang]");
+  if (langBtn) {
+    const next = langBtn.getAttribute("data-lang");
+    if (next !== lang) { lang = next; applyStaticTexts(); } // flipped/matched state is kept
+    return;
+  }
+  const btn = e.target.closest("button[data-act]");
+  if (!btn) return;
+  const act = btn.getAttribute("data-act");
+  const g = games[cur];
+  if (act === "flip") {
+    if (phase !== "play" || lock) return;
+    const idx = parseInt(btn.getAttribute("data-idx"), 10);
+    const id = g.deck[idx];
+    if (matched.has(id) || flipped.indexOf(idx) !== -1) return;
+    flipped.push(idx);
+    flips += 1;
+    if (flipped.length === 2) {
+      const a = g.deck[flipped[0]];
+      const b = g.deck[flipped[1]];
+      if (a === b) {
+        matched.add(a);
+        flipped = [];
+        if (matched.size === g.n) {
+          scores[cur] = { total: g.n, got: g.n, flips: flips };
+          phase = "result";
+        }
+        renderAll();
+      } else {
+        lock = true;
+        renderGame();
+        setTimeout(function () {
+          flipped = [];
+          lock = false;
+          renderGame();
+        }, 900);
+      }
+    } else {
+      renderGame();
+    }
+  } else if (act === "retry-game") {
+    resetGameState(); scores[cur] = null; phase = "play";
+    renderAll();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } else if (act === "next") {
+    cur += 1; resetGameState(); phase = "play";
+    renderAll();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } else if (act === "final") {
+    phase = "total";
+    renderAll();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } else if (act === "restart-today") {
+    startSet(dateSeedStr());
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } else if (act === "new-set") {
+    startSet(dateSeedStr() + "-alt-" + Date.now());
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+});
+
+/* ---------- init ---------- */
+applyStaticTexts();
+</script>
+</body>
+</html>
