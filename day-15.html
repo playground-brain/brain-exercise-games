@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 15 탈것 이름 기억하기 | 오늘의 두뇌운동</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fff6e9;
+    --bg-soft: #ffedd3;
+    --card: #fffdf8;
+    --ink: #4a2b12;
+    --ink-soft: #7a5230;
+    --line: #f0cf9f;
+    --orange: #d95f06;
+    --orange-deep: #b34a02;
+    --orange-soft: #ffe3bd;
+    --selected-bg: #ffd9a3;
+    --selected-line: #d95f06;
+    --good: #2e7d32;
+    --good-bg: #e2f2df;
+    --missed-bg: #fff0d6;
+    --wrong: #b3261e;
+    --wrong-bg: #fbe3e0;
+    --shadow: 0 6px 20px rgba(146, 84, 20, 0.14);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #251305;
+      --bg-soft: #3a2110;
+      --card: #38220f;
+      --ink: #fdeed3;
+      --ink-soft: #dcbd93;
+      --line: #6e4a26;
+      --orange: #f08a2e;
+      --orange-deep: #ffb066;
+      --orange-soft: #54340f;
+      --selected-bg: #7a4d16;
+      --selected-line: #f08a2e;
+      --good: #8fd694;
+      --good-bg: #1e3d1c;
+      --missed-bg: #4d3608;
+      --wrong: #ff9d94;
+      --wrong-bg: #4d1a15;
+      --shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Noto Sans KR", sans-serif;
+    font-size: 1.25rem;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+
+  /* language buttons */
+  .lang-bar { display: flex; justify-content: center; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 1.4rem; }
+  .lang-btn {
+    border-radius: 999px; border: 3px solid var(--line); background: var(--card);
+    color: var(--ink-soft); min-height: 56px; font-size: 1.25rem; font-weight: 900;
+    padding: 0.55rem 1.4rem; cursor: pointer; font-family: inherit;
+  }
+  .lang-btn.active { background: var(--orange); border-color: var(--orange); color: #fff; }
+
+  /* header */
+  header { text-align: center; margin-bottom: 1.6rem; }
+  .day-badge {
+    display: inline-block; border-radius: 999px; background: var(--orange-soft);
+    color: var(--orange-deep); font-size: 1.15rem; font-weight: 700; padding: 0.35rem 1.1rem;
+  }
+  h1 {
+    font-family: "Jua", sans-serif; font-size: clamp(2.4rem, 9vw, 3.6rem);
+    line-height: 1.2; margin: 0.9rem 0 0.6rem; font-weight: 400;
+  }
+  .lead { font-size: 1.35rem; color: var(--ink-soft); max-width: 34rem; margin: 0 auto; }
+
+  /* section titles */
+  h2.section-title { font-family: "Jua", sans-serif; font-weight: 400; font-size: 1.9rem; text-align: center; margin: 2.4rem 0 1rem; }
+
+  /* game shell */
+  .game-shell {
+    background: var(--card); border: 2px solid var(--line); border-radius: 24px;
+    box-shadow: var(--shadow); padding: 1.5rem 1.25rem 1.75rem;
+  }
+  .progress-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.2rem; }
+  .progress-text { font-size: 1.4rem; font-weight: 900; color: var(--orange-deep); }
+  .dots { display: flex; gap: 0.5rem; }
+  .dot { width: 20px; height: 20px; border-radius: 50%; border: 3px solid var(--orange); background: transparent; }
+  .dot.done { background: var(--orange); }
+  .dot.now { background: var(--orange-soft); box-shadow: 0 0 0 3px var(--bg), 0 0 0 6px var(--orange); }
+
+  .phase-title { font-family: "Jua", sans-serif; font-weight: 400; font-size: 1.9rem; text-align: center; margin: 0.4rem 0 0.3rem; line-height: 1.3; }
+  .phase-desc { text-align: center; color: var(--ink-soft); font-size: 1.3rem; margin: 0 0 1.2rem; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 0.8rem; margin-bottom: 1.3rem; }
+  .food-card {
+    background: var(--bg-soft); border: 2px solid var(--line); border-radius: 18px;
+    text-align: center; padding: 1rem 0.4rem 0.9rem;
+  }
+  .food-card .emoji { font-size: 3.4rem; line-height: 1.15; display: block; }
+  .food-card .item-icon { display: block; line-height: 0; }
+  .food-card .item-icon svg { width: 84px; height: 84px; }
+  .pick-btn .item-icon { display: block; line-height: 0; }
+  .pick-btn .item-icon svg { width: 76px; height: 76px; }
+  .food-card .name { font-size: 1.5rem; font-weight: 900; display: block; margin-top: 0.3rem; }
+
+  .pick-btn {
+    background: var(--card); border: 3px solid var(--line); border-radius: 18px;
+    min-height: 118px; text-align: center; padding: 0.8rem 0.4rem; cursor: pointer;
+    font-family: inherit; color: var(--ink); width: 100%;
+  }
+  .pick-btn .emoji { font-size: 3rem; line-height: 1.15; display: block; }
+  .pick-btn .name { font-size: 1.45rem; font-weight: 900; display: block; margin-top: 0.25rem; }
+  .pick-btn.selected { background: var(--selected-bg); border-color: var(--selected-line); box-shadow: inset 0 0 0 2px var(--selected-line); }
+  .pick-btn .tag { display: inline-block; margin-top: 0.45rem; font-size: 1.05rem; font-weight: 900; border-radius: 999px; padding: 0.1rem 0.7rem; }
+  .pick-btn.got { background: var(--good-bg); border-color: var(--good); cursor: default; }
+  .pick-btn.got .tag { background: var(--good); color: #fff; }
+  .pick-btn.missed { background: var(--missed-bg); border-color: var(--orange); border-style: dashed; cursor: default; }
+  .pick-btn.missed .tag { background: var(--orange-soft); color: var(--orange-deep); }
+  .pick-btn.wrongpick { background: var(--wrong-bg); border-color: var(--wrong); cursor: default; }
+  .pick-btn.wrongpick .tag { background: var(--wrong); color: #fff; }
+  .pick-btn.plain { opacity: 0.75; cursor: default; }
+
+  .picked-count { text-align: center; font-size: 1.3rem; margin: 0 0 1rem; }
+  .picked-count b { font-size: 1.55rem; color: var(--orange-deep); }
+  .warn { text-align: center; color: var(--wrong); font-weight: 700; font-size: 1.3rem; margin: 0 0 1rem; }
+
+  .score-line { font-family: "Jua", sans-serif; font-size: 2.1rem; text-align: center; margin: 0.6rem 0 0.3rem; line-height: 1.3; }
+  .praise { text-align: center; font-size: 1.35rem; color: var(--ink-soft); margin: 0 0 1.2rem; }
+  .missed-line { text-align: center; font-size: 1.3rem; margin: 0 0 1.2rem; }
+  .missed-line b { color: var(--orange-deep); }
+
+  .btn-row { display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap; margin-top: 0.4rem; }
+  .btn {
+    border-radius: 999px; border: 3px solid var(--orange); font-size: 1.4rem; font-weight: 900;
+    min-height: 64px; padding: 0.8rem 2rem; cursor: pointer; font-family: inherit;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--orange); color: #fff; }
+  .btn-ghost { background: transparent; color: var(--orange-deep); }
+  .new-set-row { text-align: center; margin-top: 1.1rem; }
+
+  .total-list { list-style: none; margin: 0 0 1.2rem; padding: 0; }
+  .total-list li { font-size: 1.35rem; padding: 0.55rem 0.2rem; border-bottom: 2px dashed var(--line); text-align: center; }
+  .total-list li:last-child { border-bottom: none; }
+  .total-score { font-family: "Jua", sans-serif; font-size: 2rem; text-align: center; margin: 0.4rem 0 0.3rem; line-height: 1.3; }
+
+  /* steps & tips cards */
+  .steps, .tips { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.8rem; }
+  .steps li, .tips li {
+    background: var(--card); border: 2px solid var(--line); border-radius: 18px;
+    font-size: 1.35rem; padding: 1rem 1.1rem; display: flex; gap: 1rem; align-items: flex-start;
+  }
+  .steps .num {
+    flex: 0 0 auto; width: 52px; height: 52px; border-radius: 50%; background: var(--orange);
+    color: #fff; font-family: "Jua", sans-serif; font-size: 1.6rem;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .steps li p, .tips li p { margin: 0.35rem 0 0; }
+  .steps strong, .tips strong { color: var(--orange-deep); }
+
+  /* difficulty table */
+  .diff-wrap { background: var(--card); border: 2px solid var(--line); border-radius: 18px; overflow: hidden; }
+  table.diff { width: 100%; border-collapse: collapse; font-size: 1.3rem; }
+  table.diff th, table.diff td { padding: 0.8rem 1rem; text-align: left; }
+  table.diff thead th { background: var(--orange-soft); color: var(--orange-deep); font-weight: 900; }
+  table.diff tbody tr + tr td, table.diff tbody tr + tr th { border-top: 2px solid var(--line); }
+
+  .closing { text-align: center; font-size: 1.3rem; color: var(--ink-soft); margin-top: 2.4rem; }
+
+  button:focus-visible, a:focus-visible { outline: 4px solid var(--orange); outline-offset: 3px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+  @media (max-width: 480px) {
+    .btn-row { flex-direction: column; }
+    .btn-row .btn { width: 100%; }
+    .new-set-row .btn { width: 100%; }
+    .grid { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); }
+    .lang-bar { flex-wrap: nowrap; }
+    .lang-btn { flex: 1 1 30%; padding: 0.55rem 0.4rem; }
+    table.diff { font-size: 1.18rem; }
+    .progress-text { font-size: 1.25rem; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="lang-bar" id="langBar" role="group" aria-label="Language">
+    <button class="lang-btn active" data-lang="ko">한국어</button>
+    <button class="lang-btn" data-lang="en">English</button>
+    <button class="lang-btn" data-lang="ja">日本語</button>
+  </div>
+
+  <header>
+    <span class="day-badge" id="badge"></span>
+    <h1 id="title"></h1>
+    <p class="lead" id="lead"></p>
+  </header>
+
+  <main>
+    <section class="game-shell" aria-label="Game">
+      <div class="progress-row">
+        <div class="progress-text" id="progressText"></div>
+        <div class="dots" id="dots" aria-hidden="true"></div>
+      </div>
+      <div id="gameArea"></div>
+    </section>
+    <div class="new-set-row">
+      <button class="btn btn-ghost" id="newSetBtn" data-act="new-set"></button>
+    </div>
+
+    <section id="howSection">
+      <h2 class="section-title" id="howTitle"></h2>
+      <ol class="steps" id="stepsList"></ol>
+    </section>
+
+    <section id="diffSection">
+      <h2 class="section-title" id="diffTitle"></h2>
+      <div class="diff-wrap">
+        <table class="diff">
+          <thead><tr id="diffHead"></tr></thead>
+          <tbody id="diffBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="tipsSection">
+      <h2 class="section-title" id="tipsTitle"></h2>
+      <ul class="tips" id="tipsList"></ul>
+    </section>
+
+    <p class="closing" id="closing"></p>
+  </main>
+</div>
+
+<script>
+"use strict";
+
+/* ---------- item pool: 18 vehicles (id + emoji + names in 3 languages) ---------- */
+const ITEMS = [
+  { id: "v01", emoji: "🚗", ko: "자동차", en: "Car", ja: "車" },
+  { id: "v02", emoji: "🚌", ko: "버스", en: "Bus", ja: "バス" },
+  { id: "v03", emoji: "🚇", ko: "지하철", en: "Subway", ja: "地下鉄" },
+  { id: "v04", emoji: "🚆", ko: "기차", en: "Train", ja: "電車" },
+  { id: "v05", emoji: "✈️", ko: "비행기", en: "Airplane", ja: "飛行機" },
+  { id: "v06", emoji: "🚢", ko: "배", en: "Ship", ja: "船" },
+  { id: "v07", emoji: "🚲", ko: "자전거", en: "Bicycle", ja: "自転車" },
+  { id: "v08", emoji: "🏍️", ko: "오토바이", en: "Motorcycle", ja: "オートバイ" },
+  { id: "v09", emoji: "🚚", ko: "트럭", en: "Truck", ja: "トラック" },
+  { id: "v10", emoji: "🚕", ko: "택시", en: "Taxi", ja: "タクシー" },
+  { id: "v11", emoji: "🚒", ko: "소방차", en: "Fire truck", ja: "消防車" },
+  { id: "v12", emoji: "🚑", ko: "구급차", en: "Ambulance", ja: "救急車" },
+  { id: "v13", emoji: "🚓", ko: "경찰차", en: "Police car", ja: "パトカー" },
+  { id: "v14", emoji: "🛵", ko: "스쿠터", en: "Scooter", ja: "スクーター" },
+  { id: "v15", emoji: "🛴", ko: "킥보드", en: "Kick scooter", ja: "キックボード" },
+  { id: "v16", emoji: "🚊", ko: "트램", en: "Tram", ja: "トラム" },
+  { id: "v17", emoji: "🚁", ko: "헬리콥터", en: "Helicopter", ja: "ヘリコプター" },
+  { id: "v18", emoji: "🚡", ko: "케이블카", en: "Cable car", ja: "ケーブルカー" }
+];
+/* ---------- custom-drawn item pictures (SVG), drawn from photos of the real old objects ---------- */
+const ICONS = {};
+function iconHtml(it) {
+  if (ICONS[it.id]) return "<span class=\"item-icon\" aria-hidden=\"true\">" + ICONS[it.id] + "</span>";
+  return "<span class=\"emoji\" aria-hidden=\"true\">" + it.emoji + "</span>";
+}
+const ITEM_BY_ID = {};
+ITEMS.forEach(function (it) { ITEM_BY_ID[it.id] = it; });
+
+/* ---------- strings ---------- */
+const STRINGS = {
+  ko: {
+    badge: "오늘의 두뇌운동 · Day 15",
+    title: "탈것 이름 기억하기",
+    lead: "오늘은 자동차부터 케이블카까지, 탈것 이름을 외워 보세요. 어디로 가는지, 누가 타는지 떠올리며 천천히 읽으면 더 잘 외워져요.",
+    progress: "{n}번째 게임 · 모두 5개",
+    totalProgress: "전체 결과",
+    memorizeTitle: "이 탈것을 외워 보세요",
+    memorizeDesc: "모두 {n}대예요. 천천히, 소리 내어 읽어 보세요.",
+    memorizedBtn: "다 외웠어요",
+    pickTitle: "아까 본 탈것을 모두 눌러 주세요",
+    pickDesc: "모두 {n}대를 골라야 해요.",
+    pickedCount: "지금까지 <b>{n}</b>대 골랐어요",
+    checkBtn: "확인하기",
+    lookAgainBtn: "한 번 더 보기",
+    warnEmpty: "먼저 탈것을 하나라도 골라 주세요.",
+    scoreText: "{total}대 중 {got}대를 맞혔어요",
+    praisePerfect: "완벽해요! 탈것을 하나도 빠뜨리지 않았어요.",
+    praiseGreat: "아주 잘하셨어요! 거의 다 맞혔어요.",
+    praiseGood: "잘하셨어요! 천천히 하면 더 잘할 수 있어요.",
+    praiseLow: "괜찮아요. 틀려도 괜찮아요. 천천히 다시 하면 돼요.",
+    tagGot: "맞혔어요",
+    tagMissed: "이것도 있었어요",
+    tagWrong: "이건 없었어요",
+    missedLine: "놓친 탈것: <b>{names}</b>",
+    nextBtn: "다음 게임 하기",
+    retryBtn: "이 게임 한 번 더",
+    finalBtn: "전체 결과 보기",
+    totalTitle: "오늘의 결과",
+    totalLine: "{i}번째 게임 ({n}대) — {got}대 맞힘",
+    totalScore: "모두 25대 중 {got}대를 맞혔어요",
+    restartTodayBtn: "오늘 탈것으로 처음부터",
+    newSetBtn: "새로운 것으로 다시 하기",
+    howTitle: "게임 방법",
+    steps: [
+      "화면에 나오는 <strong>탈것</strong>을 천천히, 소리 내어 읽으며 외워 보세요.",
+      "다 외웠으면 <strong>다 외웠어요</strong> 버튼을 눌러요. 시간 제한은 없으니 천천히 하세요.",
+      "아까 본 탈것을 <strong>모두 눌러</strong> 주세요. 맞혔는지 바로 알려 드려요."
+    ],
+    diffTitle: "난이도 안내",
+    diffHead: ["게임", "외울 탈것", "난이도"],
+    diffRows: [
+      ["1번째 게임", "3대", "아주 쉬워요"],
+      ["2번째 게임", "4대", "쉬워요"],
+      ["3번째 게임", "5대", "보통이에요"],
+      ["4번째 게임", "6대", "조금 어려워요"],
+      ["5번째 게임", "7대", "어려워요"]
+    ],
+    tipsTitle: "잘하는 요령",
+    tips: [
+      "<strong>소리 내어 읽기</strong> — 탈것 이름을 소리 내어 읽으면 눈과 귀를 함께 써서 더 잘 외워져요.",
+      "<strong>모습 떠올리기</strong> — 버스는 길고, 비행기는 하늘을 날지요. 모습을 떠올리면 이름이 따라와요.",
+      "<strong>끼리끼리 묶기</strong> — 땅 위를 달리는 탈것끼리, 하늘·물을 다니는 탈것끼리 묶어서 외우면 쉬워요.",
+      "<strong>틀려도 괜찮아요</strong> — 틀린 탈것은 한 번 더 소리 내어 읽어 보세요. 그것도 좋은 연습이에요."
+    ],
+    closing: "오늘도 두뇌 운동 한 판, 수고하셨어요."
+  },
+  en: {
+    badge: "Today's Brain Exercise · Day 15",
+    title: "Remembering Vehicle Names",
+    lead: "Today, memorize vehicle names — from cars to cable cars. Picture where each one goes and who rides it as you read slowly — it helps the names stick.",
+    progress: "Game {n} of 5",
+    totalProgress: "Total result",
+    memorizeTitle: "Memorize these vehicles",
+    memorizeDesc: "There are {n} vehicles. Read them slowly, out loud.",
+    memorizedBtn: "I memorized them",
+    pickTitle: "Tap all the vehicles you saw",
+    pickDesc: "Pick all {n} vehicles.",
+    pickedCount: "You've picked <b>{n}</b> so far",
+    checkBtn: "Check",
+    lookAgainBtn: "Look again",
+    warnEmpty: "Please pick at least one vehicle first.",
+    scoreText: "You got {got} of {total} vehicles",
+    praisePerfect: "Perfect! You didn't miss a single vehicle.",
+    praiseGreat: "Great job! You got almost all of them.",
+    praiseGood: "Well done! Take it slowly and you'll do even better.",
+    praiseLow: "That's okay. Mistakes are fine — just try again slowly.",
+    tagGot: "Got it",
+    tagMissed: "This was there too",
+    tagWrong: "This wasn't there",
+    missedLine: "Vehicles you missed: <b>{names}</b>",
+    nextBtn: "Next game",
+    retryBtn: "Play this game again",
+    finalBtn: "See the total result",
+    totalTitle: "Today's result",
+    totalLine: "Game {i} ({n} vehicles) — got {got}",
+    totalScore: "You got {got} of 25 vehicles in total",
+    restartTodayBtn: "Start over with today's vehicles",
+    newSetBtn: "Play with new ones",
+    howTitle: "How to play",
+    steps: [
+      "Read the <strong>vehicles</strong> on the screen slowly, out loud, and memorize them.",
+      "When you're ready, press <strong>I memorized them</strong>. There is no time limit — take your time.",
+      "Tap <strong>all the vehicles you saw</strong>. You'll see right away how you did."
+    ],
+    diffTitle: "Difficulty guide",
+    diffHead: ["Game", "Vehicles to remember", "Level"],
+    diffRows: [
+      ["Game 1", "3 vehicles", "Very easy"],
+      ["Game 2", "4 vehicles", "Easy"],
+      ["Game 3", "5 vehicles", "Medium"],
+      ["Game 4", "6 vehicles", "A bit hard"],
+      ["Game 5", "7 vehicles", "Hard"]
+    ],
+    tipsTitle: "Tips",
+    tips: [
+      "<strong>Read out loud</strong> — Saying the vehicle names out loud uses your eyes and ears together, so they stick better.",
+      "<strong>Picture each vehicle</strong> — A bus is long, an airplane flies in the sky. Picturing them brings the name along.",
+      "<strong>Group them</strong> — Vehicles that run on land together, ones that fly or sail together — grouping makes memorizing easier.",
+      "<strong>Mistakes are fine</strong> — Read a missed vehicle out loud once more. That's good practice too."
+    ],
+    closing: "Great work — that's today's brain exercise done."
+  },
+  ja: {
+    badge: "今日の脳トレ · Day 15",
+    title: "乗り物の名前を覚える",
+    lead: "今日は車からケーブルカーまで、乗り物の名前を覚えましょう。どこへ行くのか、だれが乗るのかを思い浮かべながらゆっくり読むと、覚えやすくなります。",
+    progress: "{n}つ目のゲーム · 全部で5つ",
+    totalProgress: "全体の結果",
+    memorizeTitle: "この乗り物を覚えましょう",
+    memorizeDesc: "全部で{n}台です。ゆっくり、声に出して読みましょう。",
+    memorizedBtn: "覚えました",
+    pickTitle: "さっき見た乗り物を全部押してください",
+    pickDesc: "全部で{n}台を選んでください。",
+    pickedCount: "今まで <b>{n}</b> 台選びました",
+    checkBtn: "確かめる",
+    lookAgainBtn: "もう一度見る",
+    warnEmpty: "まず乗り物を1つでも選んでください。",
+    scoreText: "{total}台中 {got}台を当てました",
+    praisePerfect: "完璧です！1台ももらさず覚えました。",
+    praiseGreat: "とてもよくできました！ほとんど当たりました。",
+    praiseGood: "よくできました！ゆっくりやれば、もっとできます。",
+    praiseLow: "大丈夫です。まちがえても大丈夫。ゆっくりもう一度やってみましょう。",
+    tagGot: "当たり",
+    tagMissed: "これもありました",
+    tagWrong: "これはありませんでした",
+    missedLine: "もれた乗り物: <b>{names}</b>",
+    nextBtn: "次のゲームへ",
+    retryBtn: "このゲームをもう一度",
+    finalBtn: "全体の結果を見る",
+    totalTitle: "今日の結果",
+    totalLine: "{i}つ目のゲーム（{n}台）— {got}台当てました",
+    totalScore: "全部で25台中 {got}台を当てました",
+    restartTodayBtn: "今日の乗り物で最初から",
+    newSetBtn: "新しいものではじめる",
+    howTitle: "遊び方",
+    steps: [
+      "画面に出る<strong>乗り物</strong>を、ゆっくり声に出して読みながら覚えましょう。",
+      "覚えたら<strong>覚えました</strong>ボタンを押します。時間制限はないので、あわてなくて大丈夫です。",
+      "さっき見た乗り物を<strong>全部押して</strong>ください。結果はすぐ分かります。"
+    ],
+    diffTitle: "むずかしさの案内",
+    diffHead: ["ゲーム", "覚える乗り物", "むずかしさ"],
+    diffRows: [
+      ["1つ目のゲーム", "3台", "とてもやさしい"],
+      ["2つ目のゲーム", "4台", "やさしい"],
+      ["3つ目のゲーム", "5台", "ふつう"],
+      ["4つ目のゲーム", "6台", "すこしむずかしい"],
+      ["5つ目のゲーム", "7台", "むずかしい"]
+    ],
+    tipsTitle: "上手にやるコツ",
+    tips: [
+      "<strong>声に出して読む</strong> — 乗り物の名前を声に出すと、目と耳を一緒に使うので覚えやすくなります。",
+      "<strong>姿を思い浮かべる</strong> — バスは長くて、飛行機は空を飛びますね。姿を思い浮かべると名前もついてきます。",
+      "<strong>仲間ごとにまとめる</strong> — 陸を走る乗り物は陸を走る乗り物、空や水を行く乗り物は空や水を行く乗り物とまとめると覚えやすいです。",
+      "<strong>まちがえても大丈夫</strong> — まちがえた乗り物は、もう一度声に出して読んでみましょう。それも良い練習です。"
+    ],
+    closing: "今日も脳トレを一回分、おつかれさまでした。"
+  }
+};
+
+/* ---------- seeded random (string seed -> hash -> mulberry32) ---------- */
+function hashSeed(str) {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function shuffled(arr, rand) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    const tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+  }
+  return a;
+}
+function todayStr() {
+  const d = new Date();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return d.getFullYear() + "-" + mm + "-" + dd;
+}
+function dateSeedStr() { return "day15-" + todayStr(); }
+
+/* Draw one set of 5 games from a seed string.
+   Per game: shuffle the 18-item pool, first N are answers, next 5 are distractors. */
+function buildSet(seedStr) {
+  const rand = mulberry32(hashSeed(seedStr));
+  const games = [];
+  for (let g = 0; g < 5; g++) {
+    const n = g + 3;
+    const order = shuffled(ITEMS.map(function (it) { return it.id; }), rand);
+    const answers = order.slice(0, n);
+    const distractors = order.slice(n, n + 5);
+    const picks = shuffled(answers.concat(distractors), rand);
+    games.push({ n: n, answers: answers, picks: picks });
+  }
+  return games;
+}
+
+/* ---------- state ---------- */
+let lang = "ko";
+let setSeed = dateSeedStr();
+let games = buildSet(setSeed);
+let cur = 0;                 // current game index 0..4
+let phase = "mem";           // mem | pick | result | total
+let selected = new Set();    // item ids picked in the current game
+let warnShown = false;
+let scores = [null, null, null, null, null]; // {total, got} per game
+
+function S() { return STRINGS[lang]; }
+function el(id) { return document.getElementById(id); }
+function fmt(tpl, map) {
+  return tpl.replace(/\{(\w+)\}/g, function (_, k) { return map[k]; });
+}
+function itemName(it) { return it[lang]; }
+
+/* ---------- static texts (explicit function — no MutationObserver) ---------- */
+function applyStaticTexts() {
+  const L = S();
+  el("badge").textContent = L.badge;
+  el("title").textContent = L.title;
+  el("lead").textContent = L.lead;
+  el("newSetBtn").textContent = L.newSetBtn;
+  el("howTitle").textContent = L.howTitle;
+  el("howSection").setAttribute("aria-label", L.howTitle);
+  el("stepsList").innerHTML = L.steps.map(function (s, i) {
+    return "<li><span class=\"num\">" + (i + 1) + "</span><p>" + s + "</p></li>";
+  }).join("");
+  el("diffTitle").textContent = L.diffTitle;
+  el("diffSection").setAttribute("aria-label", L.diffTitle);
+  el("diffHead").innerHTML = L.diffHead.map(function (h) { return "<th>" + h + "</th>"; }).join("");
+  el("diffBody").innerHTML = L.diffRows.map(function (r) {
+    return "<tr><td>" + r[0] + "</td><td>" + r[1] + "</td><td>" + r[2] + "</td></tr>";
+  }).join("");
+  el("tipsTitle").textContent = L.tipsTitle;
+  el("tipsSection").setAttribute("aria-label", L.tipsTitle);
+  el("tipsList").innerHTML = L.tips.map(function (s) { return "<li><p>" + s + "</p></li>"; }).join("");
+  el("closing").textContent = L.closing;
+  document.querySelectorAll(".lang-btn").forEach(function (b) {
+    b.classList.toggle("active", b.getAttribute("data-lang") === lang);
+  });
+  document.documentElement.lang = lang;
+  renderProgress();
+  renderGame();
+}
+
+/* ---------- rendering ---------- */
+function renderProgress() {
+  const L = S();
+  if (phase === "total") {
+    el("progressText").textContent = L.totalProgress;
+  } else {
+    el("progressText").textContent = fmt(L.progress, { n: cur + 1 });
+  }
+  let dots = "";
+  for (let i = 0; i < 5; i++) {
+    let cls = "dot";
+    if (phase === "total" || scores[i] !== null) cls += " done";
+    else if (i === cur) cls += " now";
+    dots += "<span class=\"" + cls + "\"></span>";
+  }
+  el("dots").innerHTML = dots;
+}
+
+function cardHtml(it) {
+  return "<div class=\"food-card\">" + iconHtml(it) +
+    "<span class=\"name\">" + itemName(it) + "</span></div>";
+}
+
+function renderGame() {
+  const L = S();
+  const area = el("gameArea");
+  if (phase === "total") { area.innerHTML = totalHtml(); return; }
+  const g = games[cur];
+  let html = "";
+  if (phase === "mem") {
+    html += "<h3 class=\"phase-title\">" + L.memorizeTitle + "</h3>";
+    html += "<p class=\"phase-desc\">" + fmt(L.memorizeDesc, { n: g.n }) + "</p>";
+    html += "<div class=\"grid\">" + g.answers.map(function (id) { return cardHtml(ITEM_BY_ID[id]); }).join("") + "</div>";
+    html += "<div class=\"btn-row\"><button class=\"btn btn-primary\" data-act=\"mem-done\">" + L.memorizedBtn + "</button></div>";
+  } else if (phase === "pick") {
+    html += "<h3 class=\"phase-title\">" + L.pickTitle + "</h3>";
+    html += "<p class=\"phase-desc\">" + fmt(L.pickDesc, { n: g.n }) + "</p>";
+    html += "<div class=\"grid\">" + g.picks.map(function (id) {
+      const it = ITEM_BY_ID[id];
+      const sel = selected.has(id) ? " selected" : "";
+      return "<button class=\"pick-btn" + sel + "\" data-act=\"toggle\" data-id=\"" + id + "\">" +
+        iconHtml(it) +
+        "<span class=\"name\">" + itemName(it) + "</span></button>";
+    }).join("") + "</div>";
+    html += "<p class=\"picked-count\">" + fmt(L.pickedCount, { n: selected.size }) + "</p>";
+    if (warnShown) html += "<p class=\"warn\">" + L.warnEmpty + "</p>";
+    html += "<div class=\"btn-row\">" +
+      "<button class=\"btn btn-primary\" data-act=\"check\">" + L.checkBtn + "</button>" +
+      "<button class=\"btn btn-ghost\" data-act=\"look-again\">" + L.lookAgainBtn + "</button></div>";
+  } else { // result
+    const sc = scores[cur];
+    html += "<p class=\"score-line\">" + fmt(L.scoreText, { total: sc.total, got: sc.got }) + "</p>";
+    html += "<p class=\"praise\">" + praiseFor(sc.got, sc.total) + "</p>";
+    html += "<div class=\"grid\">" + g.picks.map(function (id) {
+      const it = ITEM_BY_ID[id];
+      const isAnswer = g.answers.indexOf(id) !== -1;
+      const isPicked = selected.has(id);
+      let cls = "pick-btn plain", tag = "";
+      if (isAnswer && isPicked) { cls = "pick-btn got"; tag = "<span class=\"tag\">" + L.tagGot + "</span>"; }
+      else if (isAnswer && !isPicked) { cls = "pick-btn missed"; tag = "<span class=\"tag\">" + L.tagMissed + "</span>"; }
+      else if (!isAnswer && isPicked) { cls = "pick-btn wrongpick"; tag = "<span class=\"tag\">" + L.tagWrong + "</span>"; }
+      return "<button class=\"" + cls + "\" disabled>" +
+        iconHtml(it) +
+        "<span class=\"name\">" + itemName(it) + "</span>" + tag + "</button>";
+    }).join("") + "</div>";
+    const missed = g.answers.filter(function (id) { return !selected.has(id); });
+    if (missed.length > 0) {
+      html += "<p class=\"missed-line\">" + fmt(L.missedLine, {
+        names: missed.map(function (id) { return itemName(ITEM_BY_ID[id]); }).join(", ")
+      }) + "</p>";
+    }
+    html += "<div class=\"btn-row\">";
+    if (cur < 4) html += "<button class=\"btn btn-primary\" data-act=\"next\">" + L.nextBtn + "</button>";
+    else html += "<button class=\"btn btn-primary\" data-act=\"final\">" + L.finalBtn + "</button>";
+    html += "<button class=\"btn btn-ghost\" data-act=\"retry-game\">" + L.retryBtn + "</button></div>";
+  }
+  area.innerHTML = html;
+}
+
+function praiseFor(got, total) {
+  const L = S();
+  const r = total === 0 ? 0 : got / total;
+  if (r >= 1) return L.praisePerfect;
+  if (r >= 0.75) return L.praiseGreat;
+  if (r >= 0.5) return L.praiseGood;
+  return L.praiseLow;
+}
+
+function totalHtml() {
+  const L = S();
+  let gotSum = 0;
+  let html = "<h3 class=\"phase-title\">" + L.totalTitle + "</h3>";
+  html += "<ul class=\"total-list\">";
+  scores.forEach(function (sc, i) {
+    gotSum += sc ? sc.got : 0;
+    html += "<li>" + fmt(L.totalLine, { i: i + 1, n: games[i].n, got: sc ? sc.got : 0 }) + "</li>";
+  });
+  html += "</ul>";
+  html += "<p class=\"total-score\">" + fmt(L.totalScore, { got: gotSum }) + "</p>";
+  html += "<p class=\"praise\">" + praiseFor(gotSum, 25) + "</p>";
+  html += "<div class=\"btn-row\"><button class=\"btn btn-primary\" data-act=\"restart-today\">" + L.restartTodayBtn + "</button></div>";
+  return html;
+}
+
+function renderAll() { renderProgress(); renderGame(); }
+
+function startSet(seedStr) {
+  setSeed = seedStr;
+  games = buildSet(seedStr);
+  cur = 0;
+  phase = "mem";
+  selected = new Set();
+  warnShown = false;
+  scores = [null, null, null, null, null];
+  renderAll();
+}
+
+/* ---------- events (explicit handlers only) ---------- */
+document.addEventListener("click", function (e) {
+  const langBtn = e.target.closest("button[data-lang]");
+  if (langBtn) {
+    const next = langBtn.getAttribute("data-lang");
+    if (next !== lang) { lang = next; applyStaticTexts(); } // selection & phase are kept
+    return;
+  }
+  const btn = e.target.closest("button[data-act]");
+  if (!btn) return;
+  const act = btn.getAttribute("data-act");
+  const g = games[cur];
+  if (act === "mem-done") {
+    phase = "pick"; warnShown = false; renderAll();
+  } else if (act === "toggle") {
+    const id = btn.getAttribute("data-id");
+    if (selected.has(id)) selected.delete(id); else selected.add(id);
+    warnShown = false;
+    renderGame();
+  } else if (act === "look-again") {
+    phase = "mem"; renderAll();
+  } else if (act === "check") {
+    if (selected.size === 0) { warnShown = true; renderGame(); return; }
+    let got = 0;
+    g.answers.forEach(function (id) { if (selected.has(id)) got++; });
+    scores[cur] = { total: g.n, got: got };
+    phase = "result";
+    renderAll();
+  } else if (act === "retry-game") {
+    selected = new Set(); warnShown = false; scores[cur] = null; phase = "mem";
+    renderAll();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } else if (act === "next") {
+    cur += 1; selected = new Set(); warnShown = false; phase = "mem";
+    renderAll();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } else if (act === "final") {
+    phase = "total";
+    renderAll();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } else if (act === "restart-today") {
+    startSet(dateSeedStr());
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } else if (act === "new-set") {
+    startSet(dateSeedStr() + "-alt-" + Date.now());
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+});
+
+/* ---------- init ---------- */
+applyStaticTexts();
+</script>
+</body>
+</html>
