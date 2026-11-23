@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 20 틀린 그림 찾기 | 오늘의 두뇌운동</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fff6e9;
+    --bg-soft: #ffedd3;
+    --card: #fffdf8;
+    --ink: #4a2b12;
+    --ink-soft: #7a5230;
+    --line: #f0cf9f;
+    --orange: #d95f06;
+    --orange-deep: #b34a02;
+    --orange-soft: #ffe3bd;
+    --selected-bg: #ffd9a3;
+    --selected-line: #d95f06;
+    --good: #2e7d32;
+    --good-bg: #e2f2df;
+    --missed-bg: #fff0d6;
+    --wrong: #b3261e;
+    --wrong-bg: #fbe3e0;
+    --shadow: 0 6px 20px rgba(146, 84, 20, 0.14);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #251305;
+      --bg-soft: #3a2110;
+      --card: #38220f;
+      --ink: #fdeed3;
+      --ink-soft: #dcbd93;
+      --line: #6e4a26;
+      --orange: #f08a2e;
+      --orange-deep: #ffb066;
+      --orange-soft: #54340f;
+      --selected-bg: #7a4d16;
+      --selected-line: #f08a2e;
+      --good: #8fd694;
+      --good-bg: #1e3d1c;
+      --missed-bg: #4d3608;
+      --wrong: #ff9d94;
+      --wrong-bg: #4d1a15;
+      --shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Noto Sans KR", sans-serif;
+    font-size: 1.25rem;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+
+  /* language buttons */
+  .lang-bar { display: flex; justify-content: center; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 1.4rem; }
+  .lang-btn {
+    border-radius: 999px; border: 3px solid var(--line); background: var(--card);
+    color: var(--ink-soft); min-height: 56px; font-size: 1.25rem; font-weight: 900;
+    padding: 0.55rem 1.4rem; cursor: pointer; font-family: inherit;
+  }
+  .lang-btn.active { background: var(--orange); border-color: var(--orange); color: #fff; }
+
+  /* header */
+  header { text-align: center; margin-bottom: 1.6rem; }
+  .day-badge {
+    display: inline-block; border-radius: 999px; background: var(--orange-soft);
+    color: var(--orange-deep); font-size: 1.15rem; font-weight: 700; padding: 0.35rem 1.1rem;
+  }
+  h1 {
+    font-family: "Jua", sans-serif; font-size: clamp(2.4rem, 9vw, 3.6rem);
+    line-height: 1.2; margin: 0.9rem 0 0.6rem; font-weight: 400;
+  }
+  .lead { font-size: 1.35rem; color: var(--ink-soft); max-width: 34rem; margin: 0 auto; }
+
+  /* section titles */
+  h2.section-title { font-family: "Jua", sans-serif; font-weight: 400; font-size: 1.9rem; text-align: center; margin: 2.4rem 0 1rem; }
+
+  /* game shell */
+  .game-shell {
+    background: var(--card); border: 2px solid var(--line); border-radius: 24px;
+    box-shadow: var(--shadow); padding: 1.5rem 1.25rem 1.75rem;
+  }
+  .progress-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.2rem; }
+  .progress-text { font-size: 1.4rem; font-weight: 900; color: var(--orange-deep); }
+  .dots { display: flex; gap: 0.5rem; }
+  .dot { width: 20px; height: 20px; border-radius: 50%; border: 3px solid var(--orange); background: transparent; }
+  .dot.done { background: var(--orange); }
+  .dot.now { background: var(--orange-soft); box-shadow: 0 0 0 3px var(--bg), 0 0 0 6px var(--orange); }
+
+  .phase-title { font-family: "Jua", sans-serif; font-weight: 400; font-size: 1.9rem; text-align: center; margin: 0.4rem 0 0.3rem; line-height: 1.3; }
+  .phase-desc { text-align: center; color: var(--ink-soft); font-size: 1.3rem; margin: 0 0 1.2rem; }
+
+  /* spot-the-difference panels */
+  .panels { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; margin-bottom: 1.1rem; }
+  .panel { text-align: center; }
+  .panel-label { font-size: 1.25rem; font-weight: 900; color: var(--ink-soft); margin-bottom: 0.4rem; }
+  .panel-svg { width: 100%; height: auto; display: block; border: 3px solid var(--line); border-radius: 18px; background: var(--card); }
+  .panel-svg circle.hot { cursor: pointer; }
+  .found-ring { fill: rgba(46, 125, 50, 0.18); stroke: var(--good); stroke-width: 5; }
+  .hint-ring { fill: rgba(217, 95, 6, 0.14); stroke: var(--orange); stroke-width: 5; animation: hintPulse 0.8s ease-in-out infinite alternate; }
+  .wrong-ring { fill: none; stroke: var(--wrong); stroke-width: 5; }
+  @keyframes hintPulse { from { opacity: 0.45; } to { opacity: 1; } }
+
+  .sound-row { text-align: center; margin-bottom: 0.9rem; }
+  .sound-btn {
+    background: transparent; border: 2px solid var(--line); border-radius: 999px;
+    padding: 0.35rem 1.1rem; font-size: 1.15rem; font-weight: 700;
+    color: var(--ink-soft); cursor: pointer; font-family: inherit;
+  }
+  .status-line { text-align: center; font-size: 1.4rem; font-weight: 700; color: var(--ink-soft); margin: 0 0 1.1rem; min-height: 2.2rem; }
+  .status-line.wrong { color: var(--wrong); }
+  .status-line b { color: var(--orange-deep); }
+
+  .score-line { font-family: "Jua", sans-serif; font-size: 2.1rem; text-align: center; margin: 0.6rem 0 0.3rem; line-height: 1.3; }
+  .praise { text-align: center; font-size: 1.35rem; color: var(--ink-soft); margin: 0 0 0.6rem; }
+  .attempts-line { text-align: center; font-size: 1.3rem; margin: 0 0 1.2rem; }
+  .attempts-line b { color: var(--orange-deep); }
+  .found-list { list-style: none; margin: 0 0 1.2rem; padding: 0; }
+  .found-list li { font-size: 1.3rem; padding: 0.45rem 0.2rem; border-bottom: 2px dashed var(--line); text-align: center; }
+  .found-list li:last-child { border-bottom: none; }
+  .found-list li::before { content: "\2713  "; color: var(--good); font-weight: 900; }
+  .found-list-title { text-align: center; font-size: 1.35rem; font-weight: 900; color: var(--orange-deep); margin: 0 0 0.4rem; }
+
+  .btn-row { display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap; margin-top: 0.4rem; }
+  .btn {
+    border-radius: 999px; border: 3px solid var(--orange); font-size: 1.4rem; font-weight: 900;
+    min-height: 64px; padding: 0.8rem 2rem; cursor: pointer; font-family: inherit;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--orange); color: #fff; }
+  .btn-ghost { background: transparent; color: var(--orange-deep); }
+  .new-set-row { text-align: center; margin-top: 1.1rem; }
+
+  .total-list { list-style: none; margin: 0 0 1.2rem; padding: 0; }
+  .total-list li { font-size: 1.35rem; padding: 0.55rem 0.2rem; border-bottom: 2px dashed var(--line); text-align: center; }
+  .total-list li:last-child { border-bottom: none; }
+  .total-score { font-family: "Jua", sans-serif; font-size: 2rem; text-align: center; margin: 0.4rem 0 0.3rem; line-height: 1.3; }
+
+  /* steps & tips cards */
+  .steps, .tips { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.8rem; }
+  .steps li, .tips li {
+    background: var(--card); border: 2px solid var(--line); border-radius: 18px;
+    font-size: 1.35rem; padding: 1rem 1.1rem; display: flex; gap: 1rem; align-items: flex-start;
+  }
+  .steps .num {
+    flex: 0 0 auto; width: 52px; height: 52px; border-radius: 50%; background: var(--orange);
+    color: #fff; font-family: "Jua", sans-serif; font-size: 1.6rem;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .steps li p, .tips li p { margin: 0.35rem 0 0; }
+  .steps strong, .tips strong { color: var(--orange-deep); }
+
+  /* difficulty table */
+  .diff-wrap { background: var(--card); border: 2px solid var(--line); border-radius: 18px; overflow: hidden; }
+  table.diff { width: 100%; border-collapse: collapse; font-size: 1.3rem; }
+  table.diff th, table.diff td { padding: 0.8rem 1rem; text-align: left; }
+  table.diff thead th { background: var(--orange-soft); color: var(--orange-deep); font-weight: 900; }
+  table.diff tbody tr + tr td, table.diff tbody tr + tr th { border-top: 2px solid var(--line); }
+
+  .closing { text-align: center; font-size: 1.3rem; color: var(--ink-soft); margin-top: 2.4rem; }
+
+  button:focus-visible, a:focus-visible { outline: 4px solid var(--orange); outline-offset: 3px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+  @media (max-width: 560px) {
+    .panels { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 480px) {
+    .btn-row { flex-direction: column; }
+    .btn-row .btn { width: 100%; }
+    .new-set-row .btn { width: 100%; }
+    .lang-bar { flex-wrap: nowrap; }
+    .lang-btn { flex: 1 1 30%; padding: 0.55rem 0.4rem; }
+    table.diff { font-size: 1.18rem; }
+    .progress-text { font-size: 1.25rem; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="lang-bar" id="langBar" role="group" aria-label="Language">
+    <button class="lang-btn active" data-lang="ko">한국어</button>
+    <button class="lang-btn" data-lang="en">English</button>
+    <button class="lang-btn" data-lang="ja">日本語</button>
+  </div>
+
+  <header>
+    <span class="day-badge" id="badge"></span>
+    <h1 id="title"></h1>
+    <p class="lead" id="lead"></p>
+  </header>
+
+  <main>
+    <section class="game-shell" aria-label="Game">
+      <div class="progress-row">
+        <div class="progress-text" id="progressText"></div>
+        <div class="dots" id="dots" aria-hidden="true"></div>
+      </div>
+      <div id="gameArea"></div>
+    </section>
+    <div class="new-set-row">
+      <button class="btn btn-ghost" id="newSetBtn" data-act="new-set"></button>
+    </div>
+
+    <section id="howSection">
+      <h2 class="section-title" id="howTitle"></h2>
+      <ol class="steps" id="stepsList"></ol>
+    </section>
+
+    <section id="diffSection">
+      <h2 class="section-title" id="diffTitle"></h2>
+      <div class="diff-wrap">
+        <table class="diff">
+          <thead><tr id="diffHead"></tr></thead>
+          <tbody id="diffBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="tipsSection">
+      <h2 class="section-title" id="tipsTitle"></h2>
+      <ul class="tips" id="tipsList"></ul>
+    </section>
+
+    <p class="closing" id="closing"></p>
+  </main>
+</div>
+
+<script>
+"use strict";
+
+/* ---------- seeded random (string seed -> hash -> mulberry32) ---------- */
+function hashSeed(str) {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function todayStr() {
+  const d = new Date();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return d.getFullYear() + "-" + mm + "-" + dd;
+}
+function dateSeedStr() { return "day20-" + todayStr(); }
+function shuffle(arr, rand) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    const t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+
+/* ---------- scenes: each has an SVG template (original version) + 8 candidate differences ----------
+   A difference is applied to ONE panel only (the "changed" panel, picked by seed).
+   Types: color change / hide / show / text change. Hotspot (x,y,r) is the same on both panels. */
+const SCENES = [
+  {
+    id: "park",
+    name: { ko: "공원", en: "Park", ja: "公園" },
+    svg: '<svg class="panel-svg" viewBox="0 0 640 420" role="img">' +
+      '<rect width="640" height="420" fill="#cfe8f5"/>' +
+      '<rect y="300" width="640" height="120" fill="#b7dd8e"/>' +
+      '<circle data-part="sun" cx="90" cy="70" r="42" fill="#f7b733"/>' +
+      '<ellipse data-part="cloud1" cx="250" cy="70" rx="55" ry="26" fill="#ffffff"/>' +
+      '<ellipse data-part="cloud2" cx="480" cy="55" rx="45" ry="22" fill="#ffffff"/>' +
+      '<g data-part="tree1"><rect x="120" y="190" width="22" height="110" fill="#8a5a2b"/><circle cx="131" cy="170" r="62" fill="#5da24a"/></g>' +
+      '<g data-part="fruit1" style="display:none"><circle cx="105" cy="150" r="9" fill="#d63c2f"/><circle cx="150" cy="140" r="9" fill="#d63c2f"/><circle cx="135" cy="185" r="9" fill="#d63c2f"/></g>' +
+      '<g data-part="tree2"><rect x="480" y="210" width="20" height="90" fill="#8a5a2b"/><circle cx="490" cy="195" r="48" fill="#6fb457"/></g>' +
+      '<g data-part="bench"><rect x="280" y="270" width="110" height="12" fill="#a06a35"/><rect x="280" y="300" width="110" height="14" fill="#a06a35"/><rect x="288" y="314" width="10" height="36" fill="#8a5a2b"/><rect x="372" y="314" width="10" height="36" fill="#8a5a2b"/></g>' +
+      '<path data-part="bird" d="M360 120 Q370 110 380 120 Q390 110 400 120" stroke="#4a2b12" stroke-width="4" fill="none" stroke-linecap="round"/>' +
+      '<g data-part="flower1"><line x1="220" y1="350" x2="220" y2="385" stroke="#5da24a" stroke-width="5"/><circle cx="220" cy="342" r="13" fill="#e86a92"/><circle cx="220" cy="342" r="5" fill="#f7b733"/></g>' +
+      '<g data-part="flower2"><line x1="300" y1="362" x2="300" y2="390" stroke="#5da24a" stroke-width="5"/><circle cx="300" cy="354" r="13" fill="#f2a541"/><circle cx="300" cy="354" r="5" fill="#f7b733"/></g>' +
+      '<g data-part="flower3"><line x1="420" y1="350" x2="420" y2="385" stroke="#5da24a" stroke-width="5"/><circle cx="420" cy="342" r="13" fill="#e86a92"/><circle cx="420" cy="342" r="5" fill="#f7b733"/></g>' +
+      '<g data-part="butterfly" style="display:none"><ellipse cx="512" cy="296" rx="12" ry="8" fill="#f2a541" transform="rotate(-30 512 296)"/><ellipse cx="528" cy="296" rx="12" ry="8" fill="#f2a541" transform="rotate(30 528 296)"/><circle cx="520" cy="300" r="5" fill="#4a2b12"/></g>' +
+      '<circle data-part="ball" cx="560" cy="360" r="22" fill="#e74c3c"/>' +
+      '</svg>',
+    diffs: [
+      { id: "sun-color", x: 90, y: 70, r: 34, name: { ko: "해 색깔", en: "Sun color", ja: "太陽の色" },
+        apply: function (svg, on) { svg.querySelector('[data-part="sun"]').setAttribute("fill", on ? "#f28c28" : "#f7b733"); } },
+      { id: "cloud2-hide", x: 480, y: 55, r: 32, name: { ko: "구름 하나", en: "A cloud", ja: "雲ひとつ" },
+        apply: function (svg, on) { svg.querySelector('[data-part="cloud2"]').style.display = on ? "none" : ""; } },
+      { id: "flower2-color", x: 300, y: 354, r: 30, name: { ko: "꽃 색깔", en: "Flower color", ja: "花の色" },
+        apply: function (svg, on) { svg.querySelector('[data-part="flower2"]').querySelectorAll("circle")[0].setAttribute("fill", on ? "#7a68c8" : "#f2a541"); } },
+      { id: "bird-hide", x: 380, y: 118, r: 30, name: { ko: "하늘의 새", en: "A bird in the sky", ja: "空の鳥" },
+        apply: function (svg, on) { svg.querySelector('[data-part="bird"]').style.display = on ? "none" : ""; } },
+      { id: "bench-color", x: 335, y: 285, r: 32, name: { ko: "벤치 색깔", en: "Bench color", ja: "ベンチの色" },
+        apply: function (svg, on) { const b = svg.querySelector('[data-part="bench"]'); b.querySelectorAll("rect")[0].setAttribute("fill", on ? "#3f7fb8" : "#a06a35"); b.querySelectorAll("rect")[1].setAttribute("fill", on ? "#3f7fb8" : "#a06a35"); } },
+      { id: "butterfly-show", x: 520, y: 298, r: 30, name: { ko: "나비", en: "A butterfly", ja: "ちょうちょ" },
+        apply: function (svg, on) { svg.querySelector('[data-part="butterfly"]').style.display = on ? "" : "none"; } },
+      { id: "fruit1-show", x: 131, y: 165, r: 34, name: { ko: "나무 열매", en: "Fruit on the tree", ja: "木の実" },
+        apply: function (svg, on) { svg.querySelector('[data-part="fruit1"]').style.display = on ? "" : "none"; } },
+      { id: "ball-hide", x: 560, y: 360, r: 30, name: { ko: "빨간 공", en: "A red ball", ja: "赤いボール" },
+        apply: function (svg, on) { svg.querySelector('[data-part="ball"]').style.display = on ? "none" : ""; } }
+    ]
+  },
+  {
+    id: "kitchen",
+    name: { ko: "주방", en: "Kitchen", ja: "台所" },
+    svg: '<svg class="panel-svg" viewBox="0 0 640 420" role="img">' +
+      '<rect width="640" height="420" fill="#ffe9c4"/>' +
+      '<rect y="330" width="640" height="90" fill="#e8b07e"/>' +
+      '<rect data-part="window" x="60" y="50" width="150" height="130" fill="#bfe3f0"/>' +
+      '<line x1="135" y1="50" x2="135" y2="180" stroke="#fffdf8" stroke-width="8"/>' +
+      '<line x1="60" y1="115" x2="210" y2="115" stroke="#fffdf8" stroke-width="8"/>' +
+      '<g data-part="clock"><circle cx="480" cy="90" r="42" fill="#fffdf8" stroke="#a06a35" stroke-width="5"/><line x1="480" y1="90" x2="480" y2="62" stroke="#4a2b12" stroke-width="5" stroke-linecap="round"/><line x1="480" y1="90" x2="502" y2="90" stroke="#4a2b12" stroke-width="5" stroke-linecap="round"/></g>' +
+      '<path data-part="steam" d="M300 215 Q310 200 300 185 M330 215 Q340 200 330 185" stroke="#ffffff" stroke-width="6" fill="none" stroke-linecap="round" style="display:none"/>' +
+      '<rect data-part="pot" x="260" y="240" width="120" height="70" rx="12" fill="#7a68c8"/>' +
+      '<ellipse cx="320" cy="240" rx="62" ry="12" fill="#9b8de0"/>' +
+      '<rect x="300" y="222" width="40" height="10" rx="5" fill="#5a4a9e"/>' +
+      '<ellipse data-part="kettle" cx="450" cy="275" rx="45" ry="35" fill="#e74c3c"/>' +
+      '<rect x="488" y="255" width="26" height="10" rx="5" fill="#c0392b"/>' +
+      '<rect data-part="cup1" x="180" y="300" width="40" height="36" rx="6" fill="#2f7fd0"/>' +
+      '<rect data-part="cup2" x="240" y="300" width="40" height="36" rx="6" fill="#2e9e4f"/>' +
+      '<ellipse cx="380" cy="325" rx="55" ry="16" fill="#a06a35"/>' +
+      '<circle data-part="apple1" cx="350" cy="310" r="14" fill="#d63c2f"/>' +
+      '<circle data-part="apple2" cx="380" cy="305" r="14" fill="#d63c2f"/>' +
+      '<circle data-part="apple3" cx="408" cy="312" r="14" fill="#d63c2f"/>' +
+      '<rect data-part="towel" x="520" y="180" width="40" height="70" rx="8" fill="#f2a541"/>' +
+      '<g data-part="spoon" style="display:none"><ellipse cx="150" cy="330" rx="8" ry="20" fill="#c0c0c0"/><rect x="146" y="345" width="8" height="30" fill="#c0c0c0"/></g>' +
+      '</svg>',
+    diffs: [
+      { id: "window-color", x: 135, y: 115, r: 34, name: { ko: "창문 색깔", en: "Window color", ja: "窓の色" },
+        apply: function (svg, on) { svg.querySelector('[data-part="window"]').setAttribute("fill", on ? "#f7a072" : "#bfe3f0"); } },
+      { id: "clock-hide", x: 480, y: 90, r: 34, name: { ko: "벽시계", en: "A wall clock", ja: "壁時計" },
+        apply: function (svg, on) { svg.querySelector('[data-part="clock"]').style.display = on ? "none" : ""; } },
+      { id: "pot-color", x: 320, y: 275, r: 32, name: { ko: "냄비 색깔", en: "Pot color", ja: "なべの色" },
+        apply: function (svg, on) { svg.querySelector('[data-part="pot"]').setAttribute("fill", on ? "#2e9e4f" : "#7a68c8"); } },
+      { id: "cup2-hide", x: 260, y: 318, r: 30, name: { ko: "초록 컵", en: "A green cup", ja: "緑のコップ" },
+        apply: function (svg, on) { svg.querySelector('[data-part="cup2"]').style.display = on ? "none" : ""; } },
+      { id: "apple2-color", x: 380, y: 305, r: 30, name: { ko: "사과 색깔", en: "Apple color", ja: "りんごの色" },
+        apply: function (svg, on) { svg.querySelector('[data-part="apple2"]').setAttribute("fill", on ? "#f2b705" : "#d63c2f"); } },
+      { id: "towel-color", x: 540, y: 215, r: 32, name: { ko: "행주 색깔", en: "Towel color", ja: "ふきんの色" },
+        apply: function (svg, on) { svg.querySelector('[data-part="towel"]').setAttribute("fill", on ? "#3f7fb8" : "#f2a541"); } },
+      { id: "steam-show", x: 320, y: 200, r: 30, name: { ko: "냄비 김", en: "Steam from the pot", ja: "なべの湯気" },
+        apply: function (svg, on) { svg.querySelector('[data-part="steam"]').style.display = on ? "" : "none"; } },
+      { id: "spoon-show", x: 150, y: 338, r: 30, name: { ko: "숟가락", en: "A spoon", ja: "スプーン" },
+        apply: function (svg, on) { svg.querySelector('[data-part="spoon"]').style.display = on ? "" : "none"; } }
+    ]
+  },
+  {
+    id: "living",
+    name: { ko: "거실", en: "Living room", ja: "居間" },
+    svg: '<svg class="panel-svg" viewBox="0 0 640 420" role="img">' +
+      '<rect width="640" height="420" fill="#ffe9c4"/>' +
+      '<rect y="320" width="640" height="100" fill="#d9a066"/>' +
+      '<rect data-part="pic1" x="90" y="70" width="90" height="70" rx="8" fill="#f2a541"/>' +
+      '<rect data-part="pic2" x="200" y="70" width="90" height="70" rx="8" fill="#6fb457"/>' +
+      '<g data-part="sofa"><rect x="90" y="210" width="220" height="50" rx="16" fill="#c96f4a"/><rect x="90" y="250" width="220" height="80" rx="16" fill="#c96f4a"/><rect x="105" y="265" width="85" height="45" rx="10" fill="#d98a68"/><rect x="210" y="265" width="85" height="45" rx="10" fill="#d98a68"/></g>' +
+      '<rect x="420" y="120" width="150" height="100" rx="10" fill="#3a3a3a"/>' +
+      '<rect data-part="tv" x="435" y="135" width="120" height="70" rx="6" fill="#7ec8e3"/>' +
+      '<rect x="300" y="320" width="140" height="12" rx="6" fill="#a06a35"/>' +
+      '<rect x="310" y="332" width="10" height="48" fill="#8a5a2b"/>' +
+      '<rect x="420" y="332" width="10" height="48" fill="#8a5a2b"/>' +
+      '<g data-part="vase"><rect x="360" y="285" width="22" height="35" rx="6" fill="#3f7fb8"/><circle data-part="vaseflower" cx="371" cy="275" r="10" fill="#e86a92"/></g>' +
+      '<rect x="420" y="280" width="150" height="10" fill="#a06a35"/>' +
+      '<rect data-part="book1" x="430" y="245" width="22" height="35" fill="#e74c3c"/>' +
+      '<rect data-part="book2" x="455" y="240" width="22" height="40" fill="#2e9e4f"/>' +
+      '<rect data-part="book3" x="480" y="248" width="22" height="32" fill="#f2a541"/>' +
+      '<g data-part="lamp"><rect x="545" y="300" width="8" height="60" fill="#8a5a2b"/><path data-part="lampshade" d="M520 300 L570 300 L560 255 L530 255 Z" fill="#f7b733"/></g>' +
+      '<ellipse data-part="rug" cx="320" cy="385" rx="120" ry="22" fill="#e86a92"/>' +
+      '<g data-part="cat"><ellipse cx="180" cy="380" rx="34" ry="16" fill="#8a8a8a"/><circle cx="152" cy="372" r="14" fill="#8a8a8a"/><path d="M144 362 L148 350 L154 360 Z M158 360 L164 349 L166 361 Z" fill="#8a8a8a"/></g>' +
+      '</svg>',
+    diffs: [
+      { id: "tv-color", x: 495, y: 170, r: 32, name: { ko: "TV 화면 색깔", en: "TV screen color", ja: "テレビ画面の色" },
+        apply: function (svg, on) { svg.querySelector('[data-part="tv"]').setAttribute("fill", on ? "#f2a541" : "#7ec8e3"); } },
+      { id: "pic2-hide", x: 245, y: 105, r: 32, name: { ko: "액자 하나", en: "A picture frame", ja: "額縁ひとつ" },
+        apply: function (svg, on) { svg.querySelector('[data-part="pic2"]').style.display = on ? "none" : ""; } },
+      { id: "sofa-color", x: 200, y: 270, r: 34, name: { ko: "소파 색깔", en: "Sofa color", ja: "ソファの色" },
+        apply: function (svg, on) { const rs = svg.querySelector('[data-part="sofa"]').querySelectorAll("rect"); rs[0].setAttribute("fill", on ? "#3f7fb8" : "#c96f4a"); rs[1].setAttribute("fill", on ? "#3f7fb8" : "#c96f4a"); rs[2].setAttribute("fill", on ? "#6fa8d8" : "#d98a68"); rs[3].setAttribute("fill", on ? "#6fa8d8" : "#d98a68"); } },
+      { id: "vaseflower-hide", x: 371, y: 275, r: 28, name: { ko: "꽃병의 꽃", en: "A flower in the vase", ja: "花びんの花" },
+        apply: function (svg, on) { svg.querySelector('[data-part="vaseflower"]').style.display = on ? "none" : ""; } },
+      { id: "book2-color", x: 466, y: 260, r: 30, name: { ko: "책 한 권 색깔", en: "A book's color", ja: "本一冊の色" },
+        apply: function (svg, on) { svg.querySelector('[data-part="book2"]').setAttribute("fill", on ? "#7a68c8" : "#2e9e4f"); } },
+      { id: "lampshade-color", x: 545, y: 278, r: 30, name: { ko: "전등갓 색깔", en: "Lamp shade color", ja: "ランプの色" },
+        apply: function (svg, on) { svg.querySelector('[data-part="lampshade"]').setAttribute("fill", on ? "#e86a92" : "#f7b733"); } },
+      { id: "cat-hide", x: 180, y: 378, r: 32, name: { ko: "고양이", en: "A cat", ja: "猫" },
+        apply: function (svg, on) { svg.querySelector('[data-part="cat"]').style.display = on ? "none" : ""; } },
+      { id: "rug-color", x: 320, y: 385, r: 32, name: { ko: "양탄자 색깔", en: "Rug color", ja: "じゅうたんの色" },
+        apply: function (svg, on) { svg.querySelector('[data-part="rug"]').setAttribute("fill", on ? "#6fb457" : "#e86a92"); } }
+    ]
+  },
+  {
+    id: "garden",
+    name: { ko: "정원", en: "Garden", ja: "庭" },
+    svg: '<svg class="panel-svg" viewBox="0 0 640 420" role="img">' +
+      '<rect width="640" height="420" fill="#cfe8f5"/>' +
+      '<rect y="280" width="640" height="140" fill="#a8d08a"/>' +
+      '<circle data-part="sun" cx="80" cy="70" r="40" fill="#f7b733"/>' +
+      '<ellipse data-part="cloud" cx="300" cy="60" rx="50" ry="24" fill="#ffffff" style="display:none"/>' +
+      '<g data-part="sun1"><line x1="150" y1="215" x2="150" y2="300" stroke="#5da24a" stroke-width="6"/><circle cx="150" cy="200" r="30" fill="#f7b733"/><circle cx="150" cy="200" r="15" fill="#8a5a2b"/></g>' +
+      '<g data-part="sun2"><line x1="300" y1="235" x2="300" y2="310" stroke="#5da24a" stroke-width="6"/><circle data-part="sun2petal" cx="300" cy="220" r="30" fill="#f7b733"/><circle cx="300" cy="220" r="15" fill="#8a5a2b"/></g>' +
+      '<g data-part="sun3"><line x1="450" y1="215" x2="450" y2="300" stroke="#5da24a" stroke-width="6"/><circle cx="450" cy="200" r="30" fill="#f7b733"/><circle cx="450" cy="200" r="15" fill="#8a5a2b"/></g>' +
+      '<g data-part="bfly1"><ellipse cx="212" cy="116" rx="12" ry="8" fill="#e86a92" transform="rotate(-30 212 116)"/><ellipse cx="228" cy="116" rx="12" ry="8" fill="#e86a92" transform="rotate(30 228 116)"/><circle cx="220" cy="120" r="5" fill="#4a2b12"/></g>' +
+      '<g data-part="bfly2"><ellipse cx="392" cy="96" rx="12" ry="8" fill="#7a68c8" transform="rotate(-30 392 96)"/><ellipse cx="408" cy="96" rx="12" ry="8" fill="#7a68c8" transform="rotate(30 408 96)"/><circle cx="400" cy="100" r="5" fill="#4a2b12"/></g>' +
+      '<g data-part="fence"><rect x="120" y="300" width="400" height="10" fill="#a06a35"/><rect x="120" y="340" width="400" height="10" fill="#a06a35"/><rect x="140" y="290" width="16" height="70" fill="#c08a4e"/><rect x="200" y="290" width="16" height="70" fill="#c08a4e"/><rect x="260" y="290" width="16" height="70" fill="#c08a4e"/><rect data-part="plank" x="320" y="290" width="16" height="70" fill="#c08a4e"/><rect x="380" y="290" width="16" height="70" fill="#c08a4e"/><rect x="440" y="290" width="16" height="70" fill="#c08a4e"/></g>' +
+      '<path data-part="carrot1" d="M180 360 L170 385 L190 385 Z" fill="#f28c28"/>' +
+      '<path data-part="carrot2" d="M260 362 L250 387 L270 387 Z" fill="#f28c28"/>' +
+      '<path data-part="carrot3" d="M340 360 L330 385 L350 385 Z" fill="#f28c28"/>' +
+      '<g data-part="can"><rect x="500" y="310" width="60" height="45" rx="8" fill="#3f7fb8"/><rect x="560" y="322" width="34" height="10" rx="5" fill="#2f6a9e" transform="rotate(-25 560 322)"/></g>' +
+      '<rect data-part="bucket" x="470" y="360" width="40" height="32" rx="6" fill="#e74c3c"/>' +
+      '<g data-part="shovel" style="display:none"><line x1="528" y1="348" x2="540" y2="378" stroke="#8a5a2b" stroke-width="7" stroke-linecap="round"/><path d="M534 378 L548 380 L541 398 Z" fill="#c0c0c0"/></g>' +
+      '</svg>',
+    diffs: [
+      { id: "sun-color", x: 80, y: 70, r: 34, name: { ko: "해 색깔", en: "Sun color", ja: "太陽の色" },
+        apply: function (svg, on) { svg.querySelector('[data-part="sun"]').setAttribute("fill", on ? "#f28c28" : "#f7b733"); } },
+      { id: "sun2petal-color", x: 300, y: 220, r: 32, name: { ko: "해바라기 색깔", en: "Sunflower color", ja: "ひまわりの色" },
+        apply: function (svg, on) { svg.querySelector('[data-part="sun2petal"]').setAttribute("fill", on ? "#e86a92" : "#f7b733"); } },
+      { id: "bfly2-hide", x: 400, y: 100, r: 30, name: { ko: "보라 나비", en: "A purple butterfly", ja: "紫のちょうちょ" },
+        apply: function (svg, on) { svg.querySelector('[data-part="bfly2"]').style.display = on ? "none" : ""; } },
+      { id: "can-color", x: 530, y: 332, r: 32, name: { ko: "물뿌리개 색깔", en: "Watering can color", ja: "じょうろの色" },
+        apply: function (svg, on) { svg.querySelector('[data-part="can"]').querySelectorAll("rect")[0].setAttribute("fill", on ? "#2e9e4f" : "#3f7fb8"); } },
+      { id: "carrot2-hide", x: 260, y: 372, r: 30, name: { ko: "당근 하나", en: "A carrot", ja: "にんじんひとつ" },
+        apply: function (svg, on) { svg.querySelector('[data-part="carrot2"]').style.display = on ? "none" : ""; } },
+      { id: "plank-color", x: 328, y: 325, r: 30, name: { ko: "울타리 한 칸 색깔", en: "A fence plank's color", ja: "柵の一枚の色" },
+        apply: function (svg, on) { svg.querySelector('[data-part="plank"]').setAttribute("fill", on ? "#e86a92" : "#c08a4e"); } },
+      { id: "shovel-show", x: 538, y: 372, r: 30, name: { ko: "작은 삽", en: "A small shovel", ja: "小さなシャベル" },
+        apply: function (svg, on) { svg.querySelector('[data-part="shovel"]').style.display = on ? "" : "none"; } },
+      { id: "cloud-show", x: 300, y: 60, r: 32, name: { ko: "구름", en: "A cloud", ja: "雲" },
+        apply: function (svg, on) { svg.querySelector('[data-part="cloud"]').style.display = on ? "" : "none"; } }
+    ]
+  },
+  {
+    id: "market",
+    name: { ko: "시장 과일 가게", en: "Fruit shop", ja: "果物屋" },
+    svg: '<svg class="panel-svg" viewBox="0 0 640 420" role="img">' +
+      '<rect width="640" height="420" fill="#ffe9c4"/>' +
+      '<rect y="330" width="640" height="90" fill="#e8b07e"/>' +
+      '<g data-part="awning"><rect x="40" y="30" width="560" height="40" fill="#fffdf8"/><rect x="40" y="30" width="70" height="40" fill="#e74c3c"/><rect x="180" y="30" width="70" height="40" fill="#e74c3c"/><rect x="320" y="30" width="70" height="40" fill="#e74c3c"/><rect x="460" y="30" width="70" height="40" fill="#e74c3c"/></g>' +
+      '<rect data-part="sign" x="220" y="80" width="200" height="50" rx="10" fill="#fffdf8" stroke="#a06a35" stroke-width="4"/>' +
+      '<text x="320" y="116" text-anchor="middle" font-size="30" font-weight="900" fill="#4a2b12" font-family="Noto Sans KR, sans-serif">과일 가게</text>' +
+      '<rect x="80" y="300" width="480" height="20" rx="6" fill="#a06a35"/>' +
+      '<rect x="95" y="320" width="12" height="60" fill="#8a5a2b"/>' +
+      '<rect x="533" y="320" width="12" height="60" fill="#8a5a2b"/>' +
+      '<ellipse cx="160" cy="295" rx="60" ry="14" fill="#8a5a2b"/>' +
+      '<circle data-part="appleA1" cx="130" cy="282" r="13" fill="#d63c2f"/>' +
+      '<circle data-part="appleA2" cx="158" cy="278" r="13" fill="#d63c2f"/>' +
+      '<circle data-part="appleA3" cx="186" cy="283" r="13" fill="#d63c2f"/>' +
+      '<g data-part="banana"><path d="M280 290 Q300 310 320 292" stroke="#f2b705" stroke-width="10" fill="none" stroke-linecap="round"/><path d="M285 278 Q305 298 325 280" stroke="#f2b705" stroke-width="10" fill="none" stroke-linecap="round"/></g>' +
+      '<g data-part="orange"><circle cx="390" cy="282" r="14" fill="#f28c28"/><circle cx="416" cy="286" r="14" fill="#f28c28"/><circle cx="403" cy="268" r="14" fill="#f28c28"/></g>' +
+      '<g data-part="scale"><rect x="505" y="280" width="40" height="16" rx="4" fill="#c0c0c0"/><circle cx="525" cy="258" r="18" fill="#fffdf8" stroke="#a06a35" stroke-width="4"/><line x1="525" y1="258" x2="525" y2="246" stroke="#4a2b12" stroke-width="3"/></g>' +
+      '<g data-part="grapes" style="display:none"><circle cx="480" cy="330" r="10" fill="#7a68c8"/><circle cx="498" cy="330" r="10" fill="#7a68c8"/><circle cx="489" cy="344" r="10" fill="#7a68c8"/></g>' +
+      '<rect x="400" y="325" width="70" height="30" rx="6" fill="#fffdf8" stroke="#a06a35" stroke-width="3"/>' +
+      '<text data-part="price" x="435" y="347" text-anchor="middle" font-size="22" font-weight="900" fill="#4a2b12" font-family="Noto Sans KR, sans-serif">1000</text>' +
+      '</svg>',
+    diffs: [
+      { id: "awning-color", x: 320, y: 50, r: 34, name: { ko: "차양 색깔", en: "Awning color", ja: "ひさしの色" },
+        apply: function (svg, on) { const rs = svg.querySelector('[data-part="awning"]').querySelectorAll("rect"); for (let i = 1; i < rs.length; i++) rs[i].setAttribute("fill", on ? "#3f7fb8" : "#e74c3c"); } },
+      { id: "sign-color", x: 320, y: 105, r: 32, name: { ko: "간판 색깔", en: "Sign color", ja: "看板の色" },
+        apply: function (svg, on) { svg.querySelector('[data-part="sign"]').setAttribute("fill", on ? "#ffe3bd" : "#fffdf8"); } },
+      { id: "banana-hide", x: 300, y: 290, r: 30, name: { ko: "바나나", en: "Bananas", ja: "バナナ" },
+        apply: function (svg, on) { svg.querySelector('[data-part="banana"]').style.display = on ? "none" : ""; } },
+      { id: "orange-color", x: 403, y: 280, r: 32, name: { ko: "오렌지 색깔", en: "Orange color", ja: "オレンジの色" },
+        apply: function (svg, on) { const cs = svg.querySelector('[data-part="orange"]').querySelectorAll("circle"); for (let i = 0; i < cs.length; i++) cs[i].setAttribute("fill", on ? "#f2b705" : "#f28c28"); } },
+      { id: "scale-hide", x: 525, y: 262, r: 30, name: { ko: "저울", en: "A scale", ja: "はかり" },
+        apply: function (svg, on) { svg.querySelector('[data-part="scale"]').style.display = on ? "none" : ""; } },
+      { id: "grapes-show", x: 489, y: 337, r: 30, name: { ko: "포도", en: "Grapes", ja: "ぶどう" },
+        apply: function (svg, on) { svg.querySelector('[data-part="grapes"]').style.display = on ? "" : "none"; } },
+      { id: "price-text", x: 435, y: 340, r: 30, name: { ko: "가격표 숫자", en: "Price tag number", ja: "値札の数字" },
+        apply: function (svg, on) { svg.querySelector('[data-part="price"]').textContent = on ? "2000" : "1000"; } },
+      { id: "appleA2-hide", x: 158, y: 278, r: 28, name: { ko: "사과 하나", en: "An apple", ja: "りんごひとつ" },
+        apply: function (svg, on) { svg.querySelector('[data-part="appleA2"]').style.display = on ? "none" : ""; } }
+    ]
+  }
+];
+
+/* Draw one set of 5 games from a seed string.
+   Per game: scene fixed in order, N = game index + 3 differences picked from the
+   scene's 8 candidates, and a coin flip for which panel shows the changed version. */
+function buildSet(seedStr) {
+  const rand = mulberry32(hashSeed(seedStr));
+  const games = [];
+  for (let g = 0; g < 5; g++) {
+    const n = g + 3;
+    const picked = shuffle(SCENES[g].diffs, rand).slice(0, n);
+    games.push({ scene: SCENES[g], n: n, diffs: picked, swapped: rand() < 0.5 });
+  }
+  return games;
+}
+
+/* ---------- strings ---------- */
+const STRINGS = {
+  ko: {
+    badge: "오늘의 두뇌운동 · Day 20",
+    title: "틀린 그림 찾기",
+    lead: "오늘은 두 그림을 나란히 보고 다른 곳을 찾는 게임이에요. 왼쪽과 오른쪽, 뭐가 다른지 천천히 찾아보세요. 1번째 게임은 3개 차이, 5번째 게임은 7개 차이까지 있어요.",
+    progress: "{n}번째 게임 · 모두 5개",
+    totalProgress: "전체 결과",
+    readyTitle: "두 그림을 비교해 보세요",
+    readyDesc: "왼쪽 그림과 오른쪽 그림, 다른 곳이 숨어 있어요. 준비가 되면 아래 버튼을 눌러 주세요.",
+    startBtn: "틀린 그림 찾기 시작",
+    playTitle: "다른 곳을 찾아 눌러 보세요",
+    playDesc: "{n}개 차이가 숨어 있어요. 찾은 곳을 눌러 주세요.",
+    foundCount: "지금까지 <b>{n}</b>개 찾았어요",
+    leftLabel: "왼쪽 그림",
+    rightLabel: "오른쪽 그림",
+    hintBtn: "힌트 보기",
+    hintMsg: "주황 동그라미를 봐 보세요. 아직 못 찾은 곳이에요.",
+    wrongMsg: "여기는 같은 그림이에요. 천천히 다시 봐 보세요.",
+    alreadyMsg: "여기는 이미 찾았어요.",
+    scoreText: "{total}개 차이를 모두 찾았어요",
+    wrongLine0: "틀린 곳을 한 번도 누르지 않았어요",
+    wrongLine: "틀린 곳을 <b>{n}</b>번 눌렀어요. 괜찮아요.",
+    foundListTitle: "찾은 차이",
+    praisePerfect: "한 번도 틀리지 않고 다 찾았어요! 눈이 정말 밝으세요.",
+    praiseGreat: "끝까지 다 찾았어요! 아주 잘하셨어요.",
+    praiseGood: "다 찾았어요. 천천히 찾은 것이 진짜 연습이에요.",
+    nextBtn: "다음 게임 하기",
+    retryBtn: "이 게임 한 번 더",
+    finalBtn: "전체 결과 보기",
+    totalTitle: "오늘의 결과",
+    totalLine: "{i}번째 게임 ({n}개 차이) — 틀린 곳 {a}번",
+    totalScore: "5개 게임 중 {got}개를 틀리지 않고 완성했어요",
+    restartTodayBtn: "오늘 그림으로 처음부터",
+    newSetBtn: "새로운 그림으로 다시 하기",
+    soundOn: "소리 켜짐",
+    soundOff: "소리 꺼짐",
+    howTitle: "게임 방법",
+    steps: [
+      "두 그림을 나란히 봐요. 왼쪽과 오른쪽, <strong>뭐가 다른지</strong> 찾아보세요.",
+      "다른 곳을 찾으면 <strong>그곳을 눌러</strong> 주세요. 찾은 곳에는 초록 동그라미가 생겨요.",
+      "다 찾으면 <strong>다음 게임</strong>으로 넘어가요. 1번째 게임은 3개 차이, 5번째 게임은 7개 차이까지 있어요."
+    ],
+    diffTitle: "난이도 안내",
+    diffHead: ["게임", "찾을 차이", "난이도"],
+    diffRows: [
+      ["1번째 게임", "3개 차이", "아주 쉬워요"],
+      ["2번째 게임", "4개 차이", "쉬워요"],
+      ["3번째 게임", "5개 차이", "보통이에요"],
+      ["4번째 게임", "6개 차이", "조금 어려워요"],
+      ["5번째 게임", "7개 차이", "어려워요"]
+    ],
+    tipsTitle: "잘하는 요령",
+    tips: [
+      "<strong>색이 다른 곳부터 찾아요</strong> — 색이 바뀐 곳은 눈에 잘 띄어요. 색부터 살펴보세요.",
+      "<strong>없어진 물건이 있나 봐요</strong> — 한쪽에만 있는 물건, 한쪽에만 없는 물건을 찾아보세요.",
+      "<strong>하나씩 천천히 봐요</strong> — 왼쪽과 오른쪽을 번갈아 보세요. 서두르지 않아도 됩니다.",
+      "<strong>틀려도 괜찮아요</strong> — 못 찾겠으면 힌트를 눌러 보세요. 힌트를 봐도 연습이 돼요."
+    ],
+    closing: "오늘도 두뇌 운동 한 판, 수고하셨어요."
+  },
+  en: {
+    badge: "Today's Brain Exercise · Day 20",
+    title: "Spot the Difference",
+    lead: "Today, look at two pictures side by side and find what is different. Left and right — take your time. Game 1 has 3 differences, and game 5 has 7.",
+    progress: "Game {n} of 5",
+    totalProgress: "Total result",
+    readyTitle: "Compare the two pictures",
+    readyDesc: "Something is different between the left picture and the right picture. When you're ready, press the button below.",
+    startBtn: "Start finding differences",
+    playTitle: "Find a difference and tap it",
+    playDesc: "{n} differences are hiding. Tap the place you find.",
+    foundCount: "You've found <b>{n}</b> so far",
+    leftLabel: "Left picture",
+    rightLabel: "Right picture",
+    hintBtn: "Show a hint",
+    hintMsg: "Look at the orange circle. That's a place you haven't found yet.",
+    wrongMsg: "Those two places look the same. Look again slowly.",
+    alreadyMsg: "You already found this one.",
+    scoreText: "You found all {total} differences",
+    wrongLine0: "You never tapped a wrong place",
+    wrongLine: "You tapped a wrong place <b>{n}</b> times. That's fine.",
+    foundListTitle: "Differences you found",
+    praisePerfect: "You found them all without a single wrong tap! Your eyes are sharp.",
+    praiseGreat: "You found them all! Great job.",
+    praiseGood: "You found them all. Looking slowly is the real practice.",
+    nextBtn: "Next game",
+    retryBtn: "Play this game again",
+    finalBtn: "See the total result",
+    totalTitle: "Today's result",
+    totalLine: "Game {i} ({n} differences) — {a} wrong taps",
+    totalScore: "You finished {got} of 5 games without a wrong tap",
+    restartTodayBtn: "Start over with today's pictures",
+    newSetBtn: "Play with new pictures",
+    soundOn: "Sound on",
+    soundOff: "Sound off",
+    howTitle: "How to play",
+    steps: [
+      "Look at the two pictures side by side. Find <strong>what is different</strong> between the left and the right.",
+      "When you find one, <strong>tap that place</strong>. A green circle appears where you found it.",
+      "When you find them all, go to the <strong>next game</strong>. Game 1 has 3 differences, and game 5 has 7."
+    ],
+    diffTitle: "Difficulty guide",
+    diffHead: ["Game", "Differences", "Level"],
+    diffRows: [
+      ["Game 1", "3 differences", "Very easy"],
+      ["Game 2", "4 differences", "Easy"],
+      ["Game 3", "5 differences", "Medium"],
+      ["Game 4", "6 differences", "A bit hard"],
+      ["Game 5", "7 differences", "Hard"]
+    ],
+    tipsTitle: "Tips",
+    tips: [
+      "<strong>Start with colors</strong> — A changed color is easy to spot. Look at colors first.",
+      "<strong>Look for something missing</strong> — Is there something in one picture but not in the other?",
+      "<strong>Go slowly, one at a time</strong> — Look left, then right. No need to rush.",
+      "<strong>Mistakes are fine</strong> — If you get stuck, press the hint. A hint is still practice."
+    ],
+    closing: "Great work — that's today's brain exercise done."
+  },
+  ja: {
+    badge: "今日の脳トレ · Day 20",
+    title: "まちがい探し",
+    lead: "今日は二枚の絵を並べて見て、ちがうところを探すゲームです。左と右、ゆっくり探してみましょう。1つ目のゲームは3つ、5つ目のゲームは7つのちがいがあります。",
+    progress: "{n}つ目のゲーム · 全部で5つ",
+    totalProgress: "全体の結果",
+    readyTitle: "二枚の絵をくらべてみましょう",
+    readyDesc: "左の絵と右の絵、ちがうところがかくれています。準備ができたら、下のボタンを押してください。",
+    startBtn: "まちがい探しをはじめる",
+    playTitle: "ちがうところを探して押してください",
+    playDesc: "{n}つのちがいがかくれています。見つけたところを押してください。",
+    foundCount: "今まで <b>{n}</b> つ見つけました",
+    leftLabel: "左の絵",
+    rightLabel: "右の絵",
+    hintBtn: "ヒントを見る",
+    hintMsg: "オレンジの丸を見てください。まだ見つけていないところです。",
+    wrongMsg: "ここは同じ絵です。ゆっくりもう一度見てみましょう。",
+    alreadyMsg: "ここはもう見つけました。",
+    scoreText: "{total}つのちがいを全部見つけました",
+    wrongLine0: "まちがえたところを一度も押しませんでした",
+    wrongLine: "まちがえたところを <b>{n}</b> 回押しました。大丈夫です。",
+    foundListTitle: "見つけたちがい",
+    praisePerfect: "一度もまちがえずに全部見つけました！目がとてもいいですね。",
+    praiseGreat: "最後まで全部見つけました！とてもよくできました。",
+    praiseGood: "全部見つけました。ゆっくり探すことが本当の練習です。",
+    nextBtn: "次のゲームへ",
+    retryBtn: "このゲームをもう一度",
+    finalBtn: "全体の結果を見る",
+    totalTitle: "今日の結果",
+    totalLine: "{i}つ目のゲーム（{n}つのちがい）— まちがえたところ {a}回",
+    totalScore: "5つのゲームのうち {got}つをまちがえずにできました",
+    restartTodayBtn: "今日の絵で最初から",
+    newSetBtn: "新しい絵ではじめる",
+    soundOn: "音あり",
+    soundOff: "音なし",
+    howTitle: "遊び方",
+    steps: [
+      "二枚の絵を並べて見ます。左と右の <strong>ちがうところ</strong>を探しましょう。",
+      "ちがうところを見つけたら、<strong>そこを押して</strong>ください。見つけたところに緑の丸が出ます。",
+      "全部見つけたら、<strong>次のゲーム</strong>へ進みます。1つ目のゲームは3つ、5つ目のゲームは7つのちがいまであります。"
+    ],
+    diffTitle: "むずかしさの案内",
+    diffHead: ["ゲーム", "探すちがい", "むずかしさ"],
+    diffRows: [
+      ["1つ目のゲーム", "3つのちがい", "とてもやさしい"],
+      ["2つ目のゲーム", "4つのちがい", "やさしい"],
+      ["3つ目のゲーム", "5つのちがい", "ふつう"],
+      ["4つ目のゲーム", "6つのちがい", "すこしむずかしい"],
+      ["5つ目のゲーム", "7つのちがい", "むずかしい"]
+    ],
+    tipsTitle: "上手にやるコツ",
+    tips: [
+      "<strong>色のちがいから探す</strong> — 色が変わったところは目につきやすいです。まず色を見てみましょう。",
+      "<strong>なくなったものがないか見る</strong> — 片方にだけあるもの、片方にだけないものを探してみましょう。",
+      "<strong>一つずつゆっくり見る</strong> — 左と右を交互に見ましょう。あわてなくて大丈夫です。",
+      "<strong>まちがえても大丈夫</strong> — わからなくなったらヒントを押してみましょう。ヒントを見ても練習になります。"
+    ],
+    closing: "今日も脳トレを一回分、おつかれさまでした。"
+  }
+};
+
+/* ---------- state ---------- */
+let lang = "ko";
+let setSeed = dateSeedStr();
+let games = buildSet(setSeed);
+let cur = 0;                 // current game index 0..4
+let phase = "ready";         // ready | play | result | total
+let found = new Set();       // found difference ids in the current game
+let wrongTaps = 0;           // wrong taps in the current game
+let hintId = null;
+let soundOn = true;
+let statusKind = null;       // null | "wrong" | "already" | "hint"
+let statusToken = 0;
+let resultToken = 0;
+let scores = [null, null, null, null, null]; // {n, wrong} per game
+
+function S() { return STRINGS[lang]; }
+function el(id) { return document.getElementById(id); }
+function fmt(tpl, map) {
+  return tpl.replace(/\{(\w+)\}/g, function (_, k) { return map[k]; });
+}
+function fastMs(ms) { return window.__SPOT_FAST__ ? Math.min(ms, 60) : ms; }
+
+/* ---------- sound (Web Audio, guarded so the game works without it) ---------- */
+let audioCtx = null;
+function beep(freq, durMs) {
+  if (!soundOn) return;
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    if (!audioCtx) audioCtx = new AC();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = "sine";
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.25, audioCtx.currentTime + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + durMs / 1000);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime + durMs / 1000 + 0.05);
+  } catch (e) { /* audio unavailable — the game still works with pictures only */ }
+}
+
+/* ---------- static texts (explicit function — no MutationObserver) ---------- */
+function applyStaticTexts() {
+  const L = S();
+  el("badge").textContent = L.badge;
+  el("title").textContent = L.title;
+  el("lead").textContent = L.lead;
+  el("newSetBtn").textContent = L.newSetBtn;
+  el("howTitle").textContent = L.howTitle;
+  el("howSection").setAttribute("aria-label", L.howTitle);
+  el("stepsList").innerHTML = L.steps.map(function (s, i) {
+    return "<li><span class=\"num\">" + (i + 1) + "</span><p>" + s + "</p></li>";
+  }).join("");
+  el("diffTitle").textContent = L.diffTitle;
+  el("diffSection").setAttribute("aria-label", L.diffTitle);
+  el("diffHead").innerHTML = L.diffHead.map(function (h) { return "<th>" + h + "</th>"; }).join("");
+  el("diffBody").innerHTML = L.diffRows.map(function (r) {
+    return "<tr><td>" + r[0] + "</td><td>" + r[1] + "</td><td>" + r[2] + "</td></tr>";
+  }).join("");
+  el("tipsTitle").textContent = L.tipsTitle;
+  el("tipsSection").setAttribute("aria-label", L.tipsTitle);
+  el("tipsList").innerHTML = L.tips.map(function (s) { return "<li><p>" + s + "</p></li>"; }).join("");
+  el("closing").textContent = L.closing;
+  document.querySelectorAll(".lang-btn").forEach(function (b) {
+    b.classList.toggle("active", b.getAttribute("data-lang") === lang);
+  });
+  document.documentElement.lang = lang;
+  renderProgress();
+  renderGame();
+}
+
+/* ---------- rendering ---------- */
+function renderProgress() {
+  const L = S();
+  if (phase === "total") {
+    el("progressText").textContent = L.totalProgress;
+  } else {
+    el("progressText").textContent = fmt(L.progress, { n: cur + 1 });
+  }
+  let dots = "";
+  for (let i = 0; i < 5; i++) {
+    let cls = "dot";
+    if (phase === "total" || scores[i] !== null) cls += " done";
+    else if (i === cur) cls += " now";
+    dots += "<span class=\"" + cls + "\"></span>";
+  }
+  el("dots").innerHTML = dots;
+}
+
+/* Build one panel (left or right) as HTML. The changed version goes to one
+   panel only; which one is decided by the game seed. */
+function buildPanel(side) {
+  const g = games[cur];
+  const changed = side === "left" ? g.swapped : !g.swapped;
+  const tmp = document.createElement("div");
+  tmp.innerHTML = g.scene.svg;
+  const svg = tmp.querySelector("svg");
+  svg.setAttribute("data-side", side);
+  svg.setAttribute("aria-label", g.scene.name[lang] + " - " + (side === "left" ? S().leftLabel : S().rightLabel));
+  g.diffs.forEach(function (d) { d.apply(svg, changed); });
+  const ns = "http://www.w3.org/2000/svg";
+  const overlay = document.createElementNS(ns, "g");
+  overlay.setAttribute("class", "overlay");
+  g.diffs.forEach(function (d) {
+    const c = document.createElementNS(ns, "circle");
+    c.setAttribute("cx", d.x);
+    c.setAttribute("cy", d.y);
+    c.setAttribute("r", d.r);
+    c.setAttribute("class", "hot" + (hintId === d.id ? " hint-ring" : ""));
+    c.setAttribute("data-diff", d.id);
+    c.setAttribute("fill", "transparent");
+    overlay.appendChild(c);
+    if (found.has(d.id)) {
+      const ring = document.createElementNS(ns, "circle");
+      ring.setAttribute("cx", d.x);
+      ring.setAttribute("cy", d.y);
+      ring.setAttribute("r", d.r);
+      ring.setAttribute("class", "found-ring");
+      overlay.appendChild(ring);
+    }
+  });
+  svg.appendChild(overlay);
+  const label = side === "left" ? S().leftLabel : S().rightLabel;
+  return "<div class=\"panel\"><div class=\"panel-label\">" + label + "</div>" + tmp.innerHTML + "</div>";
+}
+
+function panelsHtml() {
+  return "<div class=\"panels\">" + buildPanel("left") + buildPanel("right") + "</div>";
+}
+
+function soundRowHtml() {
+  const L = S();
+  return "<div class=\"sound-row\"><button class=\"sound-btn\" data-act=\"toggle-sound\">" +
+    (soundOn ? L.soundOn : L.soundOff) + "</button></div>";
+}
+
+function statusHtml() {
+  const L = S();
+  if (phase !== "play") return "<p class=\"status-line\">&nbsp;</p>";
+  if (statusKind === "wrong") return "<p class=\"status-line wrong\">" + L.wrongMsg + "</p>";
+  if (statusKind === "already") return "<p class=\"status-line\">" + L.alreadyMsg + "</p>";
+  if (statusKind === "hint") return "<p class=\"status-line\">" + L.hintMsg + "</p>";
+  return "<p class=\"status-line\">" + fmt(L.foundCount, { n: found.size }) + "</p>";
+}
+
+function renderGame() {
+  const L = S();
+  const area = el("gameArea");
+  if (phase === "total") { area.innerHTML = totalHtml(); return; }
+  const g = games[cur];
+  let html = "";
+  if (phase === "ready") {
+    html += "<h3 class=\"phase-title\">" + L.readyTitle + "</h3>";
+    html += "<p class=\"phase-desc\">" + L.readyDesc + "</p>";
+    html += panelsHtml();
+    html += "<div class=\"btn-row\"><button class=\"btn btn-primary\" data-act=\"start\">" + L.startBtn + "</button></div>";
+  } else if (phase === "play") {
+    html += "<h3 class=\"phase-title\">" + L.playTitle + "</h3>";
+    html += "<p class=\"phase-desc\">" + fmt(L.playDesc, { n: g.n }) + "</p>";
+    html += soundRowHtml();
+    html += statusHtml();
+    html += panelsHtml();
+    html += "<div class=\"btn-row\"><button class=\"btn btn-ghost\" data-act=\"hint\">" + L.hintBtn + "</button></div>";
+  } else { // result
+    const sc = scores[cur];
+    html += "<p class=\"score-line\">" + fmt(L.scoreText, { total: sc.n }) + "</p>";
+    html += "<p class=\"praise\">" + praiseFor(sc.wrong) + "</p>";
+    html += "<p class=\"attempts-line\">" + (sc.wrong === 0 ? L.wrongLine0 : fmt(L.wrongLine, { n: sc.wrong })) + "</p>";
+    html += "<p class=\"found-list-title\">" + L.foundListTitle + "</p>";
+    html += "<ul class=\"found-list\">" + g.diffs.map(function (d) {
+      return "<li>" + d.name[lang] + "</li>";
+    }).join("") + "</ul>";
+    html += "<div class=\"btn-row\">";
+    if (cur < 4) html += "<button class=\"btn btn-primary\" data-act=\"next\">" + L.nextBtn + "</button>";
+    else html += "<button class=\"btn btn-primary\" data-act=\"final\">" + L.finalBtn + "</button>";
+    html += "<button class=\"btn btn-ghost\" data-act=\"retry-game\">" + L.retryBtn + "</button></div>";
+  }
+  area.innerHTML = html;
+}
+
+function praiseFor(wrong) {
+  const L = S();
+  if (wrong === 0) return L.praisePerfect;
+  if (wrong <= 2) return L.praiseGreat;
+  return L.praiseGood;
+}
+
+function totalHtml() {
+  const L = S();
+  let clean = 0;
+  let html = "<h3 class=\"phase-title\">" + L.totalTitle + "</h3>";
+  html += "<ul class=\"total-list\">";
+  scores.forEach(function (sc, i) {
+    if (sc && sc.wrong === 0) clean++;
+    html += "<li>" + fmt(L.totalLine, { i: i + 1, n: games[i].n, a: sc ? sc.wrong : 0 }) + "</li>";
+  });
+  html += "</ul>";
+  html += "<p class=\"total-score\">" + fmt(L.totalScore, { got: clean }) + "</p>";
+  const totalPraise = clean >= 5 ? 0 : (clean >= 3 ? 2 : 3);
+  html += "<p class=\"praise\">" + praiseFor(totalPraise) + "</p>";
+  html += "<div class=\"btn-row\"><button class=\"btn btn-primary\" data-act=\"restart-today\">" + L.restartTodayBtn + "</button></div>";
+  return html;
+}
+
+function renderAll() { renderProgress(); renderGame(); }
+
+function setStatus(kind) {
+  const token = ++statusToken;
+  statusKind = kind;
+  renderGame();
+  setTimeout(function () {
+    if (token !== statusToken) return;
+    statusKind = null;
+    if (phase === "play") renderGame();
+  }, fastMs(1600));
+}
+
+function startSet(seedStr) {
+  setSeed = seedStr;
+  games = buildSet(seedStr);
+  resultToken++;
+  statusToken++;
+  cur = 0;
+  phase = "ready";
+  found = new Set();
+  wrongTaps = 0;
+  hintId = null;
+  statusKind = null;
+  scores = [null, null, null, null, null];
+  renderAll();
+}
+
+function nextGame() {
+  cur += 1;
+  found = new Set();
+  wrongTaps = 0;
+  hintId = null;
+  statusKind = null;
+  phase = "ready";
+  renderAll();
+}
+
+/* ---------- hotspot / tap handling ---------- */
+function onHotspot(id) {
+  const g = games[cur];
+  if (found.has(id)) { setStatus("already"); return; }
+  found.add(id);
+  hintId = null;
+  beep(660, 250);
+  if (found.size >= g.n) {
+    scores[cur] = { n: g.n, wrong: wrongTaps };
+    renderGame();
+    const token = ++resultToken;
+    setTimeout(function () {
+      if (token !== resultToken) return;
+      if (phase !== "play") return;
+      phase = "result";
+      renderAll();
+    }, fastMs(600));
+    return;
+  }
+  renderGame();
+}
+
+function onWrongTap(evt, svgEl) {
+  wrongTaps++;
+  beep(160, 200);
+  setStatus("wrong");
+  // brief red ring where the reader tapped (skipped when no layout, e.g. tests)
+  try {
+    const rect = svgEl.getBoundingClientRect();
+    if (rect && rect.width > 0 && evt.clientX !== undefined) {
+      const x = (evt.clientX - rect.left) * 640 / rect.width;
+      const y = (evt.clientY - rect.top) * 420 / rect.height;
+      const svg = document.querySelector('.panel-svg[data-side="' + svgEl.getAttribute("data-side") + '"]');
+      if (svg) {
+        const ns = "http://www.w3.org/2000/svg";
+        const ring = document.createElementNS(ns, "circle");
+        ring.setAttribute("cx", x);
+        ring.setAttribute("cy", y);
+        ring.setAttribute("r", 30);
+        ring.setAttribute("class", "wrong-ring");
+        svg.appendChild(ring);
+        const token = ++resultToken;
+        setTimeout(function () {
+          if (token !== resultToken) return;
+          if (ring.parentNode) ring.parentNode.removeChild(ring);
+        }, fastMs(1200));
+      }
+    }
+  } catch (e) { /* layout unavailable — the count and message still work */ }
+}
+
+function showHint() {
+  const g = games[cur];
+  const remaining = g.diffs.filter(function (d) { return !found.has(d.id); });
+  if (!remaining.length) return;
+  hintId = remaining[0].id;
+  setStatus("hint");
+}
+
+/* ---------- events (explicit handlers only) ---------- */
+document.addEventListener("click", function (e) {
+  const langBtn = e.target.closest("button[data-lang]");
+  if (langBtn) {
+    const next = langBtn.getAttribute("data-lang");
+    if (next !== lang) { lang = next; applyStaticTexts(); } // game state is kept
+    return;
+  }
+  const btn = e.target.closest("button[data-act]");
+  if (btn && !btn.disabled) {
+    const act = btn.getAttribute("data-act");
+    if (act === "toggle-sound") {
+      soundOn = !soundOn;
+      renderGame();
+      return;
+    } else if (act === "start") {
+      if (phase === "ready") { phase = "play"; renderAll(); }
+      return;
+    } else if (act === "hint") {
+      if (phase === "play") showHint();
+      return;
+    } else if (act === "retry-game") {
+      scores[cur] = null;
+      found = new Set();
+      wrongTaps = 0;
+      hintId = null;
+      statusKind = null;
+      phase = "ready";
+      renderAll();
+      return;
+    } else if (act === "next") {
+      nextGame();
+      return;
+    } else if (act === "final") {
+      phase = "total";
+      renderAll();
+      return;
+    } else if (act === "restart-today") {
+      startSet(dateSeedStr());
+      return;
+    } else if (act === "new-set") {
+      startSet(dateSeedStr() + "-alt-" + Date.now());
+      return;
+    }
+    return;
+  }
+  // picture taps (play phase only; ignore once all differences are found)
+  if (phase !== "play") return;
+  if (found.size >= games[cur].n) return;
+  const hot = e.target.closest ? e.target.closest("[data-diff]") : null;
+  if (hot) { onHotspot(hot.getAttribute("data-diff")); return; }
+  const svgEl = e.target.closest ? e.target.closest(".panel-svg") : null;
+  if (svgEl) onWrongTap(e, svgEl);
+});
+
+/* Test/debug accessor: read-only view of the current game state. */
+window.__spot = {
+  phase: function () { return phase; },
+  diffs: function () { return games[cur].diffs.map(function (d) { return d.id; }); },
+  setSignature: function () {
+    return games.map(function (g) { return g.diffs.map(function (d) { return d.id; }).join("+") + (g.swapped ? "L" : "R"); }).join("|");
+  },
+  sceneName: function () { return games[cur].scene.id; },
+  foundCount: function () { return found.size; },
+  wrongTaps: function () { return wrongTaps; },
+  scores: function () {
+    return scores.map(function (s) { return s ? { n: s.n, wrong: s.wrong } : null; });
+  }
+};
+
+/* ---------- init ---------- */
+applyStaticTexts();
+</script>
+</body>
+</html>
