@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 22 슐테 표 숫자 순서대로 찾기 | 오늘의 두뇌운동</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fff6e9;
+    --bg-soft: #ffedd3;
+    --card: #fffdf8;
+    --ink: #4a2b12;
+    --ink-soft: #7a5230;
+    --line: #f0cf9f;
+    --orange: #d95f06;
+    --orange-deep: #b34a02;
+    --orange-soft: #ffe3bd;
+    --selected-bg: #ffd9a3;
+    --selected-line: #d95f06;
+    --good: #2e7d32;
+    --good-bg: #e2f2df;
+    --missed-bg: #fff0d6;
+    --wrong: #b3261e;
+    --wrong-bg: #fbe3e0;
+    --shadow: 0 6px 20px rgba(146, 84, 20, 0.14);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #251305;
+      --bg-soft: #3a2110;
+      --card: #38220f;
+      --ink: #fdeed3;
+      --ink-soft: #dcbd93;
+      --line: #6e4a26;
+      --orange: #f08a2e;
+      --orange-deep: #ffb066;
+      --orange-soft: #54340f;
+      --selected-bg: #7a4d16;
+      --selected-line: #f08a2e;
+      --good: #8fd694;
+      --good-bg: #1e3d1c;
+      --missed-bg: #4d3608;
+      --wrong: #ff9d94;
+      --wrong-bg: #4d1a15;
+      --shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Noto Sans KR", sans-serif;
+    font-size: 1.25rem;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+
+  /* language buttons */
+  .lang-bar { display: flex; justify-content: center; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 1.4rem; }
+  .lang-btn {
+    border-radius: 999px; border: 3px solid var(--line); background: var(--card);
+    color: var(--ink-soft); min-height: 56px; font-size: 1.25rem; font-weight: 900;
+    padding: 0.55rem 1.4rem; cursor: pointer; font-family: inherit;
+  }
+  .lang-btn.active { background: var(--orange); border-color: var(--orange); color: #fff; }
+
+  /* header */
+  header { text-align: center; margin-bottom: 1.6rem; }
+  .day-badge {
+    display: inline-block; border-radius: 999px; background: var(--orange-soft);
+    color: var(--orange-deep); font-size: 1.15rem; font-weight: 700; padding: 0.35rem 1.1rem;
+  }
+  h1 {
+    font-family: "Jua", sans-serif; font-size: clamp(2.4rem, 9vw, 3.6rem);
+    line-height: 1.2; margin: 0.9rem 0 0.6rem; font-weight: 400;
+  }
+  .lead { font-size: 1.35rem; color: var(--ink-soft); max-width: 34rem; margin: 0 auto; }
+
+  /* section titles */
+  h2.section-title { font-family: "Jua", sans-serif; font-weight: 400; font-size: 1.9rem; text-align: center; margin: 2.4rem 0 1rem; }
+
+  /* game shell */
+  .game-shell {
+    background: var(--card); border: 2px solid var(--line); border-radius: 24px;
+    box-shadow: var(--shadow); padding: 1.5rem 1.25rem 1.75rem;
+  }
+  .progress-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.2rem; }
+  .progress-text { font-size: 1.4rem; font-weight: 900; color: var(--orange-deep); }
+  .dots { display: flex; gap: 0.5rem; }
+  .dot { width: 20px; height: 20px; border-radius: 50%; border: 3px solid var(--orange); background: transparent; }
+  .dot.done { background: var(--orange); }
+  .dot.now { background: var(--orange-soft); box-shadow: 0 0 0 3px var(--bg), 0 0 0 6px var(--orange); }
+
+  .phase-title { font-family: "Jua", sans-serif; font-weight: 400; font-size: 1.9rem; text-align: center; margin: 0.4rem 0 0.3rem; line-height: 1.3; }
+  .phase-desc { text-align: center; color: var(--ink-soft); font-size: 1.3rem; margin: 0 0 1.2rem; }
+
+  /* schulte board: shuffled numbers, tap 1, 2, 3 ... in order */
+  .schulte-grid { display: grid; gap: 0.7rem; max-width: 560px; margin: 0 auto 1.3rem; }
+  .schulte-tile {
+    border: 3px solid var(--line); border-radius: 18px; min-height: 96px;
+    font-family: "Jua", sans-serif; font-size: 2.2rem; font-weight: 400; cursor: pointer;
+    background: var(--bg-soft); color: var(--ink);
+    transition: transform 0.12s, background 0.12s, box-shadow 0.12s;
+  }
+  .schulte-grid.size-3 .schulte-tile { min-height: 120px; font-size: 2.6rem; }
+  .schulte-grid.size-4 .schulte-tile { min-height: 104px; font-size: 2.4rem; }
+  .schulte-grid.size-5 .schulte-tile { min-height: 88px; font-size: 2.1rem; }
+  .schulte-tile.found {
+    background: var(--good-bg); color: var(--good); border-color: var(--good);
+  }
+  .schulte-tile.wrong-flash {
+    background: var(--wrong-bg); color: var(--wrong); border-color: var(--wrong);
+  }
+  .schulte-tile:disabled { cursor: default; }
+  .schulte-tile:active { transform: scale(0.97); }
+
+  .sound-row { text-align: center; margin-bottom: 0.9rem; }
+  .sound-btn {
+    background: transparent; border: 2px solid var(--line); border-radius: 999px;
+    padding: 0.35rem 1.1rem; font-size: 1.15rem; font-weight: 700;
+    color: var(--ink-soft); cursor: pointer; font-family: inherit;
+  }
+  .status-line { text-align: center; font-size: 1.4rem; font-weight: 700; color: var(--ink-soft); margin: 0 0 1.1rem; min-height: 2.2rem; }
+  .status-line.wrong { color: var(--wrong); }
+  .status-line b { color: var(--orange-deep); }
+
+
+
+  .score-line { font-family: "Jua", sans-serif; font-size: 2.1rem; text-align: center; margin: 0.6rem 0 0.3rem; line-height: 1.3; }
+  .praise { text-align: center; font-size: 1.35rem; color: var(--ink-soft); margin: 0 0 0.6rem; }
+  .attempts-line { text-align: center; font-size: 1.3rem; margin: 0 0 1.2rem; }
+  .attempts-line b { color: var(--orange-deep); }
+
+  .btn-row { display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap; margin-top: 0.4rem; }
+  .btn {
+    border-radius: 999px; border: 3px solid var(--orange); font-size: 1.4rem; font-weight: 900;
+    min-height: 64px; padding: 0.8rem 2rem; cursor: pointer; font-family: inherit;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--orange); color: #fff; }
+  .btn-ghost { background: transparent; color: var(--orange-deep); }
+  .new-set-row { text-align: center; margin-top: 1.1rem; }
+
+  .total-list { list-style: none; margin: 0 0 1.2rem; padding: 0; }
+  .total-list li { font-size: 1.35rem; padding: 0.55rem 0.2rem; border-bottom: 2px dashed var(--line); text-align: center; }
+  .total-list li:last-child { border-bottom: none; }
+  .total-score { font-family: "Jua", sans-serif; font-size: 2rem; text-align: center; margin: 0.4rem 0 0.3rem; line-height: 1.3; }
+
+  /* steps & tips cards */
+  .steps, .tips { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.8rem; }
+  .steps li, .tips li {
+    background: var(--card); border: 2px solid var(--line); border-radius: 18px;
+    font-size: 1.35rem; padding: 1rem 1.1rem; display: flex; gap: 1rem; align-items: flex-start;
+  }
+  .steps .num {
+    flex: 0 0 auto; width: 52px; height: 52px; border-radius: 50%; background: var(--orange);
+    color: #fff; font-family: "Jua", sans-serif; font-size: 1.6rem;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .steps li p, .tips li p { margin: 0.35rem 0 0; }
+  .steps strong, .tips strong { color: var(--orange-deep); }
+
+  /* difficulty table */
+  .diff-wrap { background: var(--card); border: 2px solid var(--line); border-radius: 18px; overflow: hidden; }
+  table.diff { width: 100%; border-collapse: collapse; font-size: 1.3rem; }
+  table.diff th, table.diff td { padding: 0.8rem 1rem; text-align: left; }
+  table.diff thead th { background: var(--orange-soft); color: var(--orange-deep); font-weight: 900; }
+  table.diff tbody tr + tr td, table.diff tbody tr + tr th { border-top: 2px solid var(--line); }
+
+  .closing { text-align: center; font-size: 1.3rem; color: var(--ink-soft); margin-top: 2.4rem; }
+
+  button:focus-visible, a:focus-visible { outline: 4px solid var(--orange); outline-offset: 3px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+  @media (max-width: 480px) {
+    .btn-row { flex-direction: column; }
+    .btn-row .btn { width: 100%; }
+    .new-set-row .btn { width: 100%; }
+    .lang-bar { flex-wrap: nowrap; }
+    .lang-btn { flex: 1 1 30%; padding: 0.55rem 0.4rem; }
+    table.diff { font-size: 1.18rem; }
+    .progress-text { font-size: 1.25rem; }
+    .schulte-grid.size-5 .schulte-tile { min-height: 72px; font-size: 1.8rem; }
+    .schulte-grid.size-4 .schulte-tile { min-height: 84px; font-size: 2rem; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="lang-bar" id="langBar" role="group" aria-label="Language">
+    <button class="lang-btn active" data-lang="ko">한국어</button>
+    <button class="lang-btn" data-lang="en">English</button>
+    <button class="lang-btn" data-lang="ja">日本語</button>
+  </div>
+
+  <header>
+    <span class="day-badge" id="badge"></span>
+    <h1 id="title"></h1>
+    <p class="lead" id="lead"></p>
+  </header>
+
+  <main>
+    <section class="game-shell" aria-label="Game">
+      <div class="progress-row">
+        <div class="progress-text" id="progressText"></div>
+        <div class="dots" id="dots" aria-hidden="true"></div>
+      </div>
+      <div id="gameArea"></div>
+    </section>
+    <div class="new-set-row">
+      <button class="btn btn-ghost" id="newSetBtn" data-act="new-set"></button>
+    </div>
+
+    <section id="howSection">
+      <h2 class="section-title" id="howTitle"></h2>
+      <ol class="steps" id="stepsList"></ol>
+    </section>
+
+    <section id="diffSection">
+      <h2 class="section-title" id="diffTitle"></h2>
+      <div class="diff-wrap">
+        <table class="diff">
+          <thead><tr id="diffHead"></tr></thead>
+          <tbody id="diffBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="tipsSection">
+      <h2 class="section-title" id="tipsTitle"></h2>
+      <ul class="tips" id="tipsList"></ul>
+    </section>
+
+    <p class="closing" id="closing"></p>
+  </main>
+</div>
+
+<script>
+"use strict";
+
+/* ---------- schulte boards: 5 games, board sizes 3x3 -> 4x4 -> 5x5 -> 5x5 -> 5x5 ---------- */
+const BOARD_SIZES = [3, 4, 5, 5, 5];
+
+/* ---------- strings ---------- */
+const STRINGS = {
+  ko: {
+    badge: "오늘의 두뇌운동 · Day 22",
+    title: "슐테 표 숫자 순서대로 찾기",
+    lead: "오늘은 흩어진 숫자 중에서 1, 2, 3… 순서대로 찾아 누르는 게임이에요. 숫자판이 점점 커져요. 시간을 재지 않으니 천천히 찾아보세요.",
+    progress: "{n}번째 게임 · 모두 5개",
+    totalProgress: "전체 결과",
+    readyTitle: "숫자를 순서대로 찾아보세요",
+    readyDesc: "준비가 되면 아래 버튼을 눌러 주세요. 숫자판에서 1부터 순서대로 숫자를 찾아 누르면 돼요.",
+    startBtn: "숫자판 보여 주세요",
+    playTitle: "숫자를 찾아보세요",
+    playDesc: "다음 숫자는 {n}이에요. 숫자판에서 찾아 눌러 주세요.",
+    foundCount: "지금까지 <b>{n}</b>개 찾았어요",
+    wrongMsg: "아, 그 숫자가 아니에요. 다음 숫자는 {n}이에요.",
+    scoreText: "{total}개 숫자를 모두 찾았어요",
+    mistakesLine: "틀린 횟수 <b>{n}</b>번",
+    praisePerfect: "한 번도 틀리지 않았어요! 눈이 정말 빠르시네요.",
+    praiseGreat: "조금 헷갈렸지만 끝까지 찾았어요! 잘하셨어요.",
+    praiseGood: "끝까지 포기하지 않았어요. 잘하셨어요.",
+    nextBtn: "다음 게임 하기",
+    retryBtn: "이 게임 한 번 더",
+    finalBtn: "전체 결과 보기",
+    totalTitle: "오늘의 결과",
+    totalLine: "{i}번째 게임 ({n}개 숫자) — 틀린 횟수 {a}번",
+    totalScore: "모두 {total}개 숫자를 찾았어요. 틀린 횟수는 모두 {wrong}번이에요.",
+    restartTodayBtn: "오늘 숫자판으로 처음부터",
+    newSetBtn: "새로운 숫자판으로 다시 하기",
+    soundOn: "소리 켜짐",
+    soundOff: "소리 꺼짐",
+    howTitle: "게임 방법",
+    steps: [
+      "<strong>숫자판 보여 주세요</strong>를 누르면 숫자가 흩어져 나와요. 1부터 순서대로 찾아보세요.",
+      "맞는 숫자를 누르면 초록색으로 바뀌어요. 틀려도 괜찮아요. 다시 찾으면 돼요.",
+      "숫자를 다 찾으면 다음 게임이에요. 숫자판이 점점 커져요."
+    ],
+    diffTitle: "난이도 안내",
+    diffHead: ["게임", "찾을 숫자", "난이도"],
+    diffRows: [
+      ["1번째 게임", "9개 숫자 · 3×3", "아주 쉬워요"],
+      ["2번째 게임", "16개 숫자 · 4×4", "쉬워요"],
+      ["3번째 게임", "25개 숫자 · 5×5", "보통이에요"],
+      ["4번째 게임", "25개 숫자 · 5×5 · 새 판", "조금 어려워요"],
+      ["5번째 게임", "25개 숫자 · 5×5 · 새 판", "어려워요"]
+    ],
+    tipsTitle: "잘하는 요령",
+    tips: [
+      "<strong>가로줄로 훑어요</strong> — 위쪽 줄부터 왼쪽에서 오른쪽으로 훑으면 숫자가 눈에 잘 들어와요.",
+      "<strong>다음 숫자만 봐요</strong> — 다음에 찾을 숫자 하나만 생각하면 마음이 편해져요.",
+      "<strong>눈을 크게 움직여요</strong> — 숫자판을 한 번에 보려고 눈을 크게 움직여 보세요.",
+      "<strong>틀려도 괜찮아요</strong> — 틀린 건 기록이 아니에요. 천천히 다시 찾으면 돼요."
+    ],
+    closing: "오늘도 두뇌 운동 한 판, 수고하셨어요."
+  },
+  en: {
+    badge: "Today's Brain Exercise · Day 22",
+    title: "Schulte Table: Find the Numbers in Order",
+    lead: "Today, find the scattered numbers in order — 1, 2, 3, and so on. The board gets bigger as you go. There is no timer, so take your time.",
+    progress: "Game {n} of 5",
+    totalProgress: "Total result",
+    readyTitle: "Find the numbers in order",
+    readyDesc: "When you're ready, press the button below. Find the numbers on the board starting from 1, in order.",
+    startBtn: "Show the number board",
+    playTitle: "Find the numbers",
+    playDesc: "The next number is {n}. Find it on the board and tap it.",
+    foundCount: "You've found <b>{n}</b> so far",
+    wrongMsg: "Oops, that's not it. The next number is {n}.",
+    scoreText: "You found all {total} numbers",
+    mistakesLine: "Wrong taps: <b>{n}</b>",
+    praisePerfect: "Not a single wrong tap! Your eyes are quick.",
+    praiseGreat: "A little tricky, but you found them all. Well done.",
+    praiseGood: "You didn't give up. Well done.",
+    nextBtn: "Next game",
+    retryBtn: "Play this game again",
+    finalBtn: "See the total result",
+    totalTitle: "Today's result",
+    totalLine: "Game {i} ({n} numbers) — {a} wrong taps",
+    totalScore: "You found all {total} numbers. Wrong taps in total: {wrong}.",
+    restartTodayBtn: "Start over with today's board",
+    newSetBtn: "Play with a new board",
+    soundOn: "Sound on",
+    soundOff: "Sound off",
+    howTitle: "How to play",
+    steps: [
+      "Press <strong>Show the number board</strong>. The numbers are scattered around. Find them starting from 1.",
+      "Tap the right number and it turns green. If you tap a wrong one, that's fine — just look again.",
+      "When you find all the numbers, the next game begins. The board gets bigger."
+    ],
+    diffTitle: "Difficulty guide",
+    diffHead: ["Game", "Numbers to find", "Level"],
+    diffRows: [
+      ["Game 1", "9 numbers · 3×3", "Very easy"],
+      ["Game 2", "16 numbers · 4×4", "Easy"],
+      ["Game 3", "25 numbers · 5×5", "Medium"],
+      ["Game 4", "25 numbers · 5×5 · new board", "A bit hard"],
+      ["Game 5", "25 numbers · 5×5 · new board", "Hard"]
+    ],
+    tipsTitle: "Tips",
+    tips: [
+      "<strong>Scan row by row</strong> — Sweep each row from left to right, starting at the top. The numbers pop out more easily.",
+      "<strong>Think of one number only</strong> — Just hold the next number in mind. That keeps it calm.",
+      "<strong>Move your eyes widely</strong> — Try to take in the whole board with big eye movements.",
+      "<strong>Mistakes are fine</strong> — A wrong tap is not a score. Just look again, slowly."
+    ],
+    closing: "Great work — that's today's brain exercise done."
+  },
+  ja: {
+    badge: "今日の脳トレ · Day 22",
+    title: "シュルテ表 数字を順番に見つける",
+    lead: "今日は、ばらばらになった数字を1、2、3…の順番に見つけて押すゲームです。盤はだんだん大きくなります。時間を計らないので、ゆっくり探してみましょう。",
+    progress: "{n}つ目のゲーム · 全部で5つ",
+    totalProgress: "全体の結果",
+    readyTitle: "数字を順番に探しましょう",
+    readyDesc: "準備ができたら、下のボタンを押してください。1から順番に数字を探して押してください。",
+    startBtn: "数字盤を見せて",
+    playTitle: "数字を探しましょう",
+    playDesc: "次の数字は {n} です。盤の中から見つけて押してください。",
+    foundCount: "今まで <b>{n}</b> つ見つけました",
+    wrongMsg: "あ、その数字ではありません。次の数字は {n} です。",
+    scoreText: "{total}つの数字を全部見つけました",
+    mistakesLine: "まちがえた回数 <b>{n}</b>回",
+    praisePerfect: "一度もまちがえませんでした！目がとても速いですね。",
+    praiseGreat: "少し迷いましたが、最後まで見つけました！よくできました。",
+    praiseGood: "最後まであきらめませんでした。よくできました。",
+    nextBtn: "次のゲームへ",
+    retryBtn: "このゲームをもう一度",
+    finalBtn: "全体の結果を見る",
+    totalTitle: "今日の結果",
+    totalLine: "{i}つ目のゲーム（{n}つの数字）— まちがえた回数 {a}回",
+    totalScore: "{total}つの数字を全部見つけました。まちがえた回数は全部で {wrong}回でした。",
+    restartTodayBtn: "今日の数字盤で最初から",
+    newSetBtn: "新しい数字盤ではじめる",
+    soundOn: "音あり",
+    soundOff: "音なし",
+    howTitle: "遊び方",
+    steps: [
+      "<strong>数字盤を見せて</strong>を押すと、数字がばらばらに出ます。1から順番に探しましょう。",
+      "合っている数字を押すと緑色になります。まちがえても大丈夫です。もう一度探しましょう。",
+      "数字を全部見つけたら次のゲームです。盤はだんだん大きくなります。"
+    ],
+    diffTitle: "むずかしさの案内",
+    diffHead: ["ゲーム", "探す数字", "むずかしさ"],
+    diffRows: [
+      ["1つ目のゲーム", "9つの数字 · 3×3", "とてもやさしい"],
+      ["2つ目のゲーム", "16つの数字 · 4×4", "やさしい"],
+      ["3つ目のゲーム", "25つの数字 · 5×5", "ふつう"],
+      ["4つ目のゲーム", "25つの数字 · 5×5 · 新しい盤", "すこしむずかしい"],
+      ["5つ目のゲーム", "25つの数字 · 5×5 · 新しい盤", "むずかしい"]
+    ],
+    tipsTitle: "上手にやるコツ",
+    tips: [
+      "<strong>行ごとに見る</strong> — 上の行から左から右へなぞると、数字が目に入りやすくなります。",
+      "<strong>次の数字だけ考える</strong> — 次に探す数字ひとつだけを考えると、気持ちが楽になります。",
+      "<strong>目を大きく動かす</strong> — 盤全体を大きく目を動かして見てみましょう。",
+      "<strong>まちがえても大丈夫</strong> — まちがえたことは記録ではありません。ゆっくりもう一度探しましょう。"
+    ],
+    closing: "今日も脳トレを一回分、おつかれさまでした。"
+  }
+};
+
+/* ---------- seeded random (string seed -> hash -> mulberry32) ---------- */
+function hashSeed(str) {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function todayStr() {
+  const d = new Date();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return d.getFullYear() + "-" + mm + "-" + dd;
+}
+function dateSeedStr() { return "day22-" + todayStr(); }
+
+/* Draw one set of 5 games from a seed string.
+   Per game: a shuffled board of size*size numbers 1..max (Fisher-Yates). */
+function buildSet(seedStr) {
+  const rand = mulberry32(hashSeed(seedStr));
+  const games = [];
+  for (let g = 0; g < 5; g++) {
+    const size = BOARD_SIZES[g];
+    const max = size * size;
+    const grid = [];
+    for (let n = 1; n <= max; n++) grid.push(n);
+    for (let i = grid.length - 1; i > 0; i--) {
+      const j = Math.floor(rand() * (i + 1));
+      const tmp = grid[i]; grid[i] = grid[j]; grid[j] = tmp;
+    }
+    games.push({ size: size, max: max, grid: grid });
+  }
+  return games;
+}
+
+/* ---------- state ---------- */
+let lang = "ko";
+let setSeed = dateSeedStr();
+let games = buildSet(setSeed);
+let cur = 0;                 // current game index 0..4
+let phase = "ready";         // ready | play | result | total
+let nextNum = 1;             // next number to find (1..max)
+let foundCount = 0;          // numbers found so far in the current game
+let mistakes = 0;            // wrong taps in the current game
+let wrongFlash = 0;          // wrongly tapped number, shown briefly
+let soundOn = true;
+let scores = [null, null, null, null, null]; // {n, wrong} per game
+
+function S() { return STRINGS[lang]; }
+function el(id) { return document.getElementById(id); }
+function fmt(tpl, map) {
+  return tpl.replace(/\{(\w+)\}/g, function (_, k) { return map[k]; });
+}
+/* ---------- sound (Web Audio, guarded so the game works without it) ---------- */
+let audioCtx = null;
+function beep(freq, durMs) {
+  if (!soundOn) return;
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    if (!audioCtx) audioCtx = new AC();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = "sine";
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.25, audioCtx.currentTime + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + durMs / 1000);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime + durMs / 1000 + 0.05);
+  } catch (e) { /* audio unavailable — the game still works with light only */ }
+}
+/* ---------- static texts (explicit function — no MutationObserver) ---------- */
+function applyStaticTexts() {
+  const L = S();
+  el("badge").textContent = L.badge;
+  el("title").textContent = L.title;
+  el("lead").textContent = L.lead;
+  el("newSetBtn").textContent = L.newSetBtn;
+  el("howTitle").textContent = L.howTitle;
+  el("howSection").setAttribute("aria-label", L.howTitle);
+  el("stepsList").innerHTML = L.steps.map(function (s, i) {
+    return "<li><span class=\"num\">" + (i + 1) + "</span><p>" + s + "</p></li>";
+  }).join("");
+  el("diffTitle").textContent = L.diffTitle;
+  el("diffSection").setAttribute("aria-label", L.diffTitle);
+  el("diffHead").innerHTML = L.diffHead.map(function (h) { return "<th>" + h + "</th>"; }).join("");
+  el("diffBody").innerHTML = L.diffRows.map(function (r) {
+    return "<tr><td>" + r[0] + "</td><td>" + r[1] + "</td><td>" + r[2] + "</td></tr>";
+  }).join("");
+  el("tipsTitle").textContent = L.tipsTitle;
+  el("tipsSection").setAttribute("aria-label", L.tipsTitle);
+  el("tipsList").innerHTML = L.tips.map(function (s) { return "<li><p>" + s + "</p></li>"; }).join("");
+  el("closing").textContent = L.closing;
+  document.querySelectorAll(".lang-btn").forEach(function (b) {
+    b.classList.toggle("active", b.getAttribute("data-lang") === lang);
+  });
+  document.documentElement.lang = lang;
+  renderProgress();
+  renderGame();
+}
+
+/* ---------- rendering ---------- */
+function renderProgress() {
+  const L = S();
+  if (phase === "total") {
+    el("progressText").textContent = L.totalProgress;
+  } else {
+    el("progressText").textContent = fmt(L.progress, { n: cur + 1 });
+  }
+  let dots = "";
+  for (let i = 0; i < 5; i++) {
+    let cls = "dot";
+    if (phase === "total" || scores[i] !== null) cls += " done";
+    else if (i === cur) cls += " now";
+    dots += "<span class=\"" + cls + "\"></span>";
+  }
+  el("dots").innerHTML = dots;
+}
+
+function schulteGridHtml(disabled) {
+  const g = games[cur];
+  let html = "<div class=\"schulte-grid size-" + g.size + "\" style=\"grid-template-columns: repeat(" + g.size + ", 1fr);\">";
+  g.grid.forEach(function (num) {
+    const found = num < nextNum;
+    let cls = "schulte-tile";
+    if (found) cls += " found";
+    if (wrongFlash === num) cls += " wrong-flash";
+    html += "<button class=\"" + cls + "\" data-act=\"schulte\" data-num=\"" + num + "\"" +
+      ((disabled || found) ? " disabled" : "") + ">" + num + "</button>";
+  });
+  return html + "</div>";
+}
+
+function soundRowHtml() {
+  const L = S();
+  return "<div class=\"sound-row\"><button class=\"sound-btn\" data-act=\"toggle-sound\">" +
+    (soundOn ? L.soundOn : L.soundOff) + "</button></div>";
+}
+
+function renderGame() {
+  const L = S();
+  const area = el("gameArea");
+  if (phase === "total") { area.innerHTML = totalHtml(); return; }
+  const g = games[cur];
+  let html = "";
+  if (phase === "ready") {
+    html += "<h3 class=\"phase-title\">" + L.readyTitle + "</h3>";
+    html += "<p class=\"phase-desc\">" + L.readyDesc + "</p>";
+    html += soundRowHtml();
+    html += "<p class=\"status-line\">&nbsp;</p>";
+    html += schulteGridHtml(true);
+    html += "<div class=\"btn-row\"><button class=\"btn btn-primary\" data-act=\"start-board\">" + L.startBtn + "</button></div>";
+  } else if (phase === "play") {
+    html += "<h3 class=\"phase-title\">" + L.playTitle + "</h3>";
+    html += "<p class=\"phase-desc\">" + fmt(L.playDesc, { n: nextNum }) + "</p>";
+    html += soundRowHtml();
+    if (wrongFlash) {
+      html += "<p class=\"status-line wrong\">" + fmt(L.wrongMsg, { n: nextNum }) + "</p>";
+    } else {
+      html += "<p class=\"status-line\">" + fmt(L.foundCount, { n: foundCount }) + "</p>";
+    }
+    html += schulteGridHtml(false);
+  } else { // result
+    const sc = scores[cur];
+    html += "<p class=\"score-line\">" + fmt(L.scoreText, { total: sc.n }) + "</p>";
+    html += "<p class=\"praise\">" + praiseFor(sc.wrong) + "</p>";
+    html += "<p class=\"attempts-line\">" + fmt(L.mistakesLine, { n: sc.wrong }) + "</p>";
+    html += "<div class=\"btn-row\">";
+    if (cur < 4) html += "<button class=\"btn btn-primary\" data-act=\"next\">" + L.nextBtn + "</button>";
+    else html += "<button class=\"btn btn-primary\" data-act=\"final\">" + L.finalBtn + "</button>";
+    html += "<button class=\"btn btn-ghost\" data-act=\"retry-game\">" + L.retryBtn + "</button></div>";
+  }
+  area.innerHTML = html;
+}
+
+function praiseFor(wrong) {
+  const L = S();
+  if (wrong <= 0) return L.praisePerfect;
+  if (wrong <= 2) return L.praiseGreat;
+  return L.praiseGood;
+}
+
+function totalHtml() {
+  const L = S();
+  let totalWrong = 0;
+  let totalNums = 0;
+  let html = "<h3 class=\"phase-title\">" + L.totalTitle + "</h3>";
+  html += "<ul class=\"total-list\">";
+  scores.forEach(function (sc, i) {
+    if (sc) { totalWrong += sc.wrong; totalNums += sc.n; }
+    html += "<li>" + fmt(L.totalLine, { i: i + 1, n: games[i].max, a: sc ? sc.wrong : 0 }) + "</li>";
+  });
+  html += "</ul>";
+  html += "<p class=\"total-score\">" + fmt(L.totalScore, { total: totalNums, wrong: totalWrong }) + "</p>";
+  html += "<p class=\"praise\">" + praiseFor(totalWrong) + "</p>";
+  html += "<div class=\"btn-row\"><button class=\"btn btn-primary\" data-act=\"restart-today\">" + L.restartTodayBtn + "</button></div>";
+  return html;
+}
+
+function renderAll() { renderProgress(); renderGame(); }
+
+function startSet(seedStr) {
+  setSeed = seedStr;
+  games = buildSet(seedStr);
+  cur = 0;
+  phase = "ready";
+  nextNum = 1;
+  foundCount = 0;
+  mistakes = 0;
+  wrongFlash = 0;
+  scores = [null, null, null, null, null];
+  renderAll();
+}
+
+function nextGame() {
+  cur += 1;
+  nextNum = 1;
+  foundCount = 0;
+  mistakes = 0;
+  wrongFlash = 0;
+  phase = "ready";
+  renderAll();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+/* ---------- events (explicit handlers only) ---------- */
+document.addEventListener("click", function (e) {
+  const langBtn = e.target.closest("button[data-lang]");
+  if (langBtn) {
+    const next = langBtn.getAttribute("data-lang");
+    if (next !== lang) { lang = next; applyStaticTexts(); } // game state is kept
+    return;
+  }
+  const btn = e.target.closest("button[data-act]");
+  if (!btn || btn.disabled) return;
+  const act = btn.getAttribute("data-act");
+  if (act === "toggle-sound") {
+    soundOn = !soundOn;
+    renderGame();
+  } else if (act === "start-board") {
+    phase = "play";
+    renderAll();
+  } else if (act === "schulte") {
+    if (phase !== "play") return;
+    const num = Number(btn.getAttribute("data-num"));
+    const g = games[cur];
+    if (num === nextNum) {
+      beep(300 + num * 12, 180);
+      nextNum++;
+      foundCount++;
+      wrongFlash = 0;
+      if (nextNum > g.max) {
+        scores[cur] = { n: g.max, wrong: mistakes };
+        phase = "result";
+        renderAll();
+      } else {
+        renderGame();
+      }
+    } else {
+      mistakes++;
+      wrongFlash = num;
+      beep(140, 300);
+      renderGame();
+      setTimeout(function () {
+        if (wrongFlash === num && phase === "play") { wrongFlash = 0; renderGame(); }
+      }, 900);
+    }
+  } else if (act === "retry-game") {
+    scores[cur] = null;
+    nextNum = 1;
+    foundCount = 0;
+    mistakes = 0;
+    wrongFlash = 0;
+    phase = "ready";
+    renderAll();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } else if (act === "next") {
+    nextGame();
+  } else if (act === "final") {
+    phase = "total";
+    renderAll();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } else if (act === "restart-today") {
+    startSet(dateSeedStr());
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } else if (act === "new-set") {
+    startSet(dateSeedStr() + "-alt-" + Date.now());
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+});
+
+/* Test/debug accessor: read-only view of the current game state. */
+window.__schulte = {
+  phase: function () { return phase; },
+  nextNum: function () { return nextNum; },
+  found: function () { return foundCount; },
+  mistakes: function () { return mistakes; },
+  grid: function () { return games[cur].grid.slice(); },
+  size: function () { return games[cur].size; },
+  max: function () { return games[cur].max; },
+  scores: function () {
+    return scores.map(function (sc) { return sc ? { n: sc.n, wrong: sc.wrong } : null; });
+  }
+};
+
+/* ---------- init ---------- */
+applyStaticTexts();
+</script>
+</body>
+</html>
